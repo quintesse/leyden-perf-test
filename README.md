@@ -8,13 +8,7 @@ The requiremtns are that you have both Java and [oha](https://github.com/hatoo/o
 The first time you have to run:
 
 ```
-$ ./clone.sh
-```
-
-and
-
-```
-$ ./compile.sh
+$ ./setup.sh
 ```
 
 After that you can activate the JVM you're interested in testing and run
@@ -24,5 +18,3 @@ After that you can activate the JVM you're interested in testing and run
 ```
 
 The test results for each application are written to `*.out` files.
-
-

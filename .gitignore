@@ -1,4 +1,2 @@
-spring-petclinic
-quarkus-petclinic
+spring-quarkus-perf-comparison
 *.out
-
