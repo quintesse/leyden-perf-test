@@ -3,70 +3,26 @@ set -euo pipefail
 
 trap ctrl_c INT
 
+source ./_functions.sh
+source ./_perftest_spring.sh
+source ./_perftest_quarkus.sh
+
 spring_test() {
-	DB_CONTAINER_NAME="fruits_db"
-	DB_INITDB=./spring-quarkus-perf-comparison/scripts/dbdata
-	stop_postgres > /dev/null 2>&1 # First make sure postgres not already running
-	start_postgres
-	echo "Starting Spring Boot test application..."
-	java ${TEST_JAVA_OPTS} -jar ./spring-quarkus-perf-comparison/springboot3/target/*.jar > ${TEST_OUT_DIR}/spring-app.out &
-	JAVA_PID=$!
-	sleep 10
-	if kill -0 $JAVA_PID > /dev/null 2>&1; then
-		./_perftest_spring.sh || true
-		echo "Stopping Spring Boot test application..."
-		kill $JAVA_PID || true
-		unset JAVA_PID
-		sleep 3
-	else
-		echo Spring Boot application not running
-	fi
-	stop_postgres
+	do_aot_test_run spring spring_test_run ${TEST_USE_AOT:-false}
+}
+
+spring_test_run() {
+	local NAME=${1:-spring}
+	do_test_run_with_postgres ${NAME} ./spring-quarkus-perf-comparison/springboot3/target/*.jar perftest_spring fruits_db ./spring-quarkus-perf-comparison/scripts/dbdata
 }
 
 quarkus_test() {
-	DB_CONTAINER_NAME="fruits_db"
-	DB_INITDB=./spring-quarkus-perf-comparison/scripts/dbdata
-	stop_postgres > /dev/null 2>&1 # First make sure postgres not already running
-	start_postgres
-	echo "Starting Quarkus test application..."
-	java -DleydenPerfTest=true ${TEST_JAVA_OPTS} -jar ./spring-quarkus-perf-comparison/quarkus3/target/quarkus-app/quarkus-run.jar > ${TEST_OUT_DIR}/quarkus-app.out &
-	JAVA_PID=$!
-	sleep 10
-	if kill -0 $JAVA_PID > /dev/null 2>&1; then
-		./_perftest_quarkus.sh || true
-		echo "Stopping Quarkus test application..."
-		kill $JAVA_PID || true
-		unset JAVA_PID
-		sleep 3
-	else
-		echo Quarkus application not running
-	fi
-	stop_postgres
+	do_aot_test_run quarkus quarkus_test_run ${TEST_USE_AOT:-false}
 }
 
-start_postgres() {
-  echo "Starting PostgreSQL server..."
-  # Using MSYS_NO_PATHCONV=1 to avoid Git Bash on Windows from messing up the volume mount path
-  MSYS_NO_PATHCONV=1 ${ENGINE} run -d --rm --name ${DB_CONTAINER_NAME} -v ${DB_INITDB}:/docker-entrypoint-initdb.d/ -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17 > /dev/null
-
-  echo "Waiting for PostgreSQL to be ready..."
-  timeout 90s bash -c "until ${ENGINE} exec $DB_CONTAINER_NAME pg_isready ; do sleep 5 ; done"
-}
-
-stop_postgres() {
-  echo "Stopping PostgreSQL database..."
-  ${ENGINE} stop ${DB_CONTAINER_NAME} || true
-}
-
-function ctrl_c() {
-	echo "Caught Ctrl-C, cleaning up..."
-	if [[ -n ${JAVA_PID} ]]; then
-		echo "Stopping test application..."
-		kill $JAVA_PID || true
-	fi
-	stop_postgres || true
-	exit 1
+quarkus_test_run() {
+	local NAME=${1:-quarkus}
+	do_test_run_with_postgres ${NAME} ./spring-quarkus-perf-comparison/quarkus3/target/quarkus-app/quarkus-run.jar perftest_quarkus fruits_db ./spring-quarkus-perf-comparison/scripts/dbdata
 }
 
 if ! command -v oha >/dev/null 2>&1
@@ -86,13 +42,13 @@ else
 fi
 
 TEST_JAVA_OPTS=${TEST_JAVA_OPTS:-}
+TEST_USE_AOT=${TEST_USE_AOT:-}
+TEST_AOT_OPTS=${TEST_AOT_OPTS:-}
 JAVA_PID=""
+CONTAINER_NM=""
 
 if [[ -z ${TEST_OUT_DIR:-} ]]; then
 	TEST_OUT_DIR="."
-	if [[ $1 ]]; then
-		TEST_OUT_DIR="$1}"
-	fi
 fi
 
 spring_test

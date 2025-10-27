@@ -17,4 +17,10 @@ After that you can activate the JVM you're interested in testing and run
 ./run.sh
 ```
 
-The test results for each application are written to `*.out` files.
+The test results for each application are written to `*.out` files in a `test-results` folder.
+
+To enable AOT run:
+
+```
+TEST_USE_AOT=true ./run.sh
+```

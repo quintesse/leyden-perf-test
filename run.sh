@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-export TEST_OUT_DIR=./test-results/test-run-$(date +%Y%m%d-%H%M%S)
+export TEST_OUT_DIR=./test-results/test-run-$(date +%Y%m%d-%H%M%S)${1:-}
 mkdir -p ${TEST_OUT_DIR}
 
 ./_test.sh
