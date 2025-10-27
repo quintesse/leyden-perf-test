@@ -43,8 +43,9 @@ do_test_run() {
 	sleep 10
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
 		${TEST_FUNC} ${NAME} || true
+		exit
 		echo "Stopping ${NAME} test application..."
-		kill -INT ${JAVA_PID} || true
+		kill -TERM ${JAVA_PID} || true
         local CNT=0
     	while kill -0 ${JAVA_PID} > /dev/null 2>&1 && [[ $CNT -lt 12 ]]; do
             echo "Waiting for ${NAME} test application to exit..."
@@ -53,7 +54,7 @@ do_test_run() {
         done
     	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
             echo "Killing ${NAME} test application..."
-            kill ${JAVA_PID} || true
+            kill -KILL ${JAVA_PID} || true
     		sleep 5
         else
             echo "${NAME} test application exited cleanly"
@@ -70,7 +71,7 @@ start_postgres() {
 
 	echo "Starting PostgreSQL server..."
 	# Using MSYS_NO_PATHCONV=1 to avoid Git Bash on Windows from messing up the volume mount path
-	MSYS_NO_PATHCONV=1 ${ENGINE} run -d --rm --name ${CONTAINER_NAME} -v ${INITDB_PATH}:/docker-entrypoint-initdb.d/ -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17 > /dev/null
+	MSYS_NO_PATHCONV=1 ${ENGINE} run -d --rm --name ${CONTAINER_NAME} -v ${INITDB_PATH}:/docker-entrypoint-initdb.d/ -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits docker.io/library/postgres:17 > /dev/null
     CONTAINER_NM=${CONTAINER_NAME}
 
 	echo "Waiting for PostgreSQL to be ready..."
@@ -89,7 +90,7 @@ function ctrl_c() {
 	echo "Caught Ctrl-C, cleaning up..."
 	if [[ -n ${JAVA_PID} ]]; then
 		echo "Killing test application..."
-		kill ${JAVA_PID} || true
+		kill -KILL ${JAVA_PID} || true
         JAVA_PID=""
 	fi
 	if [[ -n ${CONTAINER_NM} ]]; then
