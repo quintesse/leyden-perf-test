@@ -41,14 +41,26 @@ do_test_run() {
 	java -DleydenPerfTest=true ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar ${JAR_PATH} > ${TEST_OUT_DIR}/${NAME}-app.out &
 	JAVA_PID=$!
 	sleep 10
-	if kill -0 $JAVA_PID > /dev/null 2>&1; then
+	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
 		${TEST_FUNC} ${NAME} || true
 		echo "Stopping ${NAME} test application..."
-		kill $JAVA_PID || true
+		kill -INT ${JAVA_PID} || true
+        local CNT=0
+    	while kill -0 ${JAVA_PID} > /dev/null 2>&1 && [[ $CNT -lt 12 ]]; do
+            echo "Waiting for ${NAME} test application to exit..."
+    		sleep 5
+            CNT=$((CNT+1))
+        done
+    	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
+            echo "Killing ${NAME} test application..."
+            kill ${JAVA_PID} || true
+    		sleep 5
+        else
+            echo "${NAME} test application exited cleanly"
+        fi
         JAVA_PID=""
-		sleep 3
 	else
-		echo ${NAME} application not running
+		echo ${NAME} test application not running
 	fi
 }
 
@@ -76,8 +88,8 @@ stop_postgres() {
 function ctrl_c() {
 	echo "Caught Ctrl-C, cleaning up..."
 	if [[ -n ${JAVA_PID} ]]; then
-		echo "Stopping test application..."
-		kill $JAVA_PID || true
+		echo "Killing test application..."
+		kill ${JAVA_PID} || true
         JAVA_PID=""
 	fi
 	if [[ -n ${CONTAINER_NM} ]]; then

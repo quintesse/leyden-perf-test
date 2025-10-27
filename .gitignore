@@ -1,2 +1,2 @@
 spring-quarkus-perf-comparison
-*.out
+test-results/
