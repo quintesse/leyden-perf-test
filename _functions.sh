@@ -42,6 +42,7 @@ do_test_run() {
 	JAVA_PID=$!
 	sleep 10
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
+		echo "Running tests for ${NAME}..."
 		${TEST_FUNC} ${NAME} || true
 		exit
 		echo "Stopping ${NAME} test application..."
