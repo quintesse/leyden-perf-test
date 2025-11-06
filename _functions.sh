@@ -44,22 +44,7 @@ do_test_run() {
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
 		echo "Running tests for ${NAME}..."
 		${TEST_FUNC} ${NAME} || true
-		exit
-		echo "Stopping ${NAME} test application..."
-		kill -TERM ${JAVA_PID} || true
-        local CNT=0
-    	while kill -0 ${JAVA_PID} > /dev/null 2>&1 && [[ $CNT -lt 12 ]]; do
-            echo "Waiting for ${NAME} test application to exit..."
-    		sleep 5
-            CNT=$((CNT+1))
-        done
-    	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
-            echo "Killing ${NAME} test application..."
-            kill -KILL ${JAVA_PID} || true
-    		sleep 5
-        else
-            echo "${NAME} test application exited cleanly"
-        fi
+		stop_process ${JAVA_PID} ${NAME}
         JAVA_PID=""
 	else
 		echo ${NAME} test application not running
@@ -87,6 +72,31 @@ stop_postgres() {
     CONTAINER_NM=""
 }
 
+stop_process() {
+	local pid=$1
+	local name=$2
+
+	echo "Stopping ${name} test application..."
+	if [[ "${OS}" == "windows" ]]; then
+		kill -INT ${pid} || true
+	else
+		kill -TERM ${pid} || true
+	fi
+	local CNT=0
+	while kill -0 ${pid} > /dev/null 2>&1 && [[ $CNT -lt 12 ]]; do
+		echo "Waiting for ${name} test application to exit..."
+		sleep 5
+		CNT=$((CNT+1))
+	done
+	if kill -0 ${pid} > /dev/null 2>&1; then
+		echo "Killing ${name} test application..."
+		kill -KILL ${pid} || true
+		sleep 5
+	else
+		echo "${name} test application exited cleanly"
+	fi
+}
+
 function ctrl_c() {
 	echo "Caught Ctrl-C, cleaning up..."
 	if [[ -n ${JAVA_PID} ]]; then
@@ -99,3 +109,17 @@ function ctrl_c() {
 	fi
 	exit 1
 }
+
+case "$(uname -s)" in
+  Linux*)
+    export OS=linux
+    ;;
+  Darwin*)
+    export OS=mac
+    ;;
+  CYGWIN*|MINGW*|MSYS*)
+    export OS=windows
+	;;
+  *)
+    export OS=
+esac

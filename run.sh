@@ -91,7 +91,9 @@ currentJdkVersion=${currentJdkVersionString##* }
 
 run_all_tests "$@"
 
+restorejdk
+
+echo ""
+echo "--------------------------------------------------------------"
 echo "Tests completed. Results can be found in ${TEST_OUT_BASE}:"
 ls -R ${TEST_OUT_BASE}
-
-restorejdk
