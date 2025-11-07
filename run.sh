@@ -44,7 +44,13 @@ run_all_tests() {
 
 function cleanup() {
     # We clean up empty folders to avoid clutter
-    rmdir "${TEST_OUT_DIR}" >/dev/null 2>&1 || true
+	if [[ -v TEST_OUT_DIR && -n "${TEST_OUT_DIR}" ]]; then
+        rmdir "${TEST_OUT_DIR}" >/dev/null 2>&1 || true
+    fi
+	if [[ -v TEST_OUT_BASE && -n "${TEST_OUT_BASE}" ]]; then
+        rmdir "${TEST_OUT_BASE}" >/dev/null 2>&1 || true
+    fi
+    rmdir "./test-results" >/dev/null 2>&1 || true
 }
 
 switch_jdk() {
@@ -54,8 +60,10 @@ switch_jdk() {
 }
 
 function restorejdk() {
-    echo "Restoring JDK to ${currentJdkVersion}..."
-    switch_jdk "${currentJdkVersion}"
+    if [[ -v currentJdkVersion ]]; then
+        echo "Restoring JDK to ${currentJdkVersion}..."
+        switch_jdk "${currentJdkVersion}"
+    fi
 }
 
 function ctrl_c() {
