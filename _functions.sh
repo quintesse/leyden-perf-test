@@ -38,7 +38,7 @@ do_test_run() {
 	local TEST_FUNC=$3
 	
 	echo "Starting ${NAME} test application..."
-	java -DleydenPerfTest=true ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar ${JAR_PATH} > ${TEST_OUT_DIR}/${NAME}-app.out &
+	java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar ${JAR_PATH} > ${TEST_OUT_DIR}/${NAME}-app.out &
 	JAVA_PID=$!
 	sleep 10
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then

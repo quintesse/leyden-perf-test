@@ -1,4 +1,1 @@
-http://localhost:8080/
-http://localhost:8080/owners
-http://localhost:8080/owners?lastName=Davis
-http://localhost:8080/vets.html
+http://localhost:8080/fruits
