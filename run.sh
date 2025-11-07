@@ -109,4 +109,7 @@ restorejdk
 echo ""
 echo "--------------------------------------------------------------"
 echo "Tests completed. Results can be found in ${TEST_OUT_BASE}:"
-ls -R ${TEST_OUT_BASE}
+ls -R "${TEST_OUT_BASE}"
+
+echo ""
+jbang util/Collate.java "${TEST_OUT_BASE}"
