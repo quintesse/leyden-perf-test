@@ -73,6 +73,17 @@ function ctrl_c() {
     exit 2
 }
 
+userExtra=""
+if [[ $# -gt 0 && ("$1" == "-t" || "$1" == "--tag") ]] ; then
+    shift
+    if [[ $# -eq 0 ]]; then
+        echo "Error: Tag option specified but no tag value provided."
+        exit 4
+    fi
+    userExtra="$1"
+    shift
+fi
+
 if [ $# -eq 0 ]; then
     echo "No JDK versions supplied, please provide at least one JDK version to test."
     echo "Try for example: ./run.sh 25 26"
@@ -84,12 +95,6 @@ if ! command -v oha >/dev/null 2>&1
 then
     echo "Command 'oha' not found, please install it, see https://github.com/hatoo/oha"
     exit 1
-fi
-
-userExtra=""
-if ! [[ $1 =~ '^[0-9]+$' ]] ; then
-    userExtra="$1"
-    shift
 fi
 
 TEST_OUT_BASE=./test-results/test-run-$(date +%Y%m%d-%H%M%S)${userExtra:+-$userExtra}

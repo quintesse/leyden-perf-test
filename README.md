@@ -29,4 +29,4 @@ If you want to pass specific Java options to the test applications, you can do s
 TEST_JAVA_OPTS="-Xms128m -Xmx256m" ./run.sh 24 25 26
 ```
 
-NB: The `run.sh` script has an optional first parameter that is a user-defined "tag" that can be used to mark the test-run folder. It is simply added to the name of the folder, so for example running `TEST_JAVA_OPTS="-Xms128m -Xmx256m" ./run.sh lowmem 24 25 26` would create a folder like `test-run-XXXXX-lowmem`.
+NB: The `run.sh` script has an optional first parameter, `--tag <tag>` or `-t <tag>`, that is a user-defined "tag" that can be used to mark the test-run folder. It is simply added to the name of the folder, so for example running `TEST_JAVA_OPTS="-Xms128m -Xmx256m" ./run.sh -t lowmem 24 25 26` would create a folder like `test-run-XXXXX-lowmem`.
