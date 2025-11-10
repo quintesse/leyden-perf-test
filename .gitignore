@@ -1,2 +1,4 @@
 spring-quarkus-perf-comparison
 test-results/
+.vscode/
+.idea/

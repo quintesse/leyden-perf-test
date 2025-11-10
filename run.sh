@@ -13,7 +13,7 @@ run_jdk_tests() {
     switch_jdk "${version}"
     
     export TEST_OUT_DIR=${TEST_OUT_BASE}/j${version}${extra}
-    mkdir -p ${TEST_OUT_DIR}
+    mkdir -p "${TEST_OUT_DIR}"
     echo "Created test output folder ${TEST_OUT_DIR}"
 
     ./_test.sh
@@ -27,7 +27,7 @@ run_jdkaot_tests() {
     export TEST_USE_AOT=false
     run_jdk_tests "${version}" ""
 
-    if ([ "${version}" -lt 25 ]); then
+    if [ "${version}" -lt 25 ]; then
         # AOT not supported before JDK 25
         return
     fi
@@ -56,7 +56,7 @@ function cleanup() {
 switch_jdk() {
 	local version=$1
 
-	./jbang jdk default ${version}
+	./jbang jdk default "${version}"
 }
 
 function restorejdk() {

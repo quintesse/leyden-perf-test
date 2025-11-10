@@ -3,7 +3,7 @@
 source ./_functions.sh
 
 spring_test() {
-	do_aot_test_run spring spring_test_run ${TEST_USE_AOT:-false}
+	do_aot_test_run spring spring_test_run "${TEST_USE_AOT:-false}"
 }
 
 spring_test_run() {
@@ -13,7 +13,7 @@ spring_test_run() {
 
 perftest_spring() {
     echo "[TEST] Time to First Request test..."
-    oha -n 1 -u ms --no-tui --urls-from-file urls.txt --output-format json -o ${TEST_OUT_DIR:-.}/spring-test-ttfr.json
+    oha -n 1 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/spring-test-ttfr.json
 
     echo "[TEST] Running some warm-up tests..."
     oha -n 10 -u ms --no-tui --urls-from-file urls.txt > /dev/null 2>&1
@@ -21,5 +21,5 @@ perftest_spring() {
     sleep 5
 
     echo "[TEST] Running perf tests..."
-    oha -n 10000 -u ms --no-tui --urls-from-file urls.txt --output-format json -o ${TEST_OUT_DIR:-.}/spring-test.json
+    oha -n 10000 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/spring-test.json
 }
