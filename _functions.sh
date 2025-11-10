@@ -38,8 +38,11 @@ do_test_run() {
 	local TEST_FUNC=$3
 	
 	echo "Starting ${NAME} test application..."
-	echo java "${TEST_JAVA_OPTS}" "${TEST_AOT_OPTS}" -jar "${JAR_PATH}" > "${TEST_OUT_DIR}"/"${NAME}"-app.out
-	java "${TEST_JAVA_OPTS}" "${TEST_AOT_OPTS}" -jar "${JAR_PATH}" >> "${TEST_OUT_DIR}"/"${NAME}"-app.out 2>&1 &
+	local outfile="${TEST_OUT_DIR}/${NAME}-app.out"
+	local cmd="java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar \"${JAR_PATH}\""
+	echo "Command: $cmd"
+	echo "$cmd" > "$outfile"
+	java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
 	JAVA_PID=$!
 	sleep 10
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
@@ -77,14 +80,14 @@ stop_process() {
 	local pid=$1
 	local name=$2
 
-	echo "Stopping ${name} test application..."
+	echo "Stopping ${name} test application (#${pid})..."
 	if [[ "${OS}" == "windows" ]]; then
 		kill -INT "${pid}" || true
 	else
 		kill -TERM "${pid}" || true
 	fi
 	local CNT=0
-	while kill -0 "${pid}" > /dev/null 2>&1 && [[ $CNT -lt 12 ]]; do
+	while kill -0 "${pid}" > /dev/null 2>&1 && [[ $CNT -lt 30 ]]; do
 		echo "Waiting for ${name} test application to exit..."
 		sleep 5
 		CNT=$((CNT+1))
