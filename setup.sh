@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ./_functions.sh
+
 clone() {
     local repository=$1
 	local repo_url=$2
@@ -47,4 +49,10 @@ else
 fi
 
 clone "spring-quarkus-perf-comparison" "https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
+
+save_jdk
+switch_jdk "21+"
+
 compile "spring-quarkus-perf-comparison"
+
+restore_jdk

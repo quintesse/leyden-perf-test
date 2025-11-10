@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-do_aot_test_run() {
+function do_aot_test_run() {
 	local NAME=$1
 	local TEST_FUNC=$2
     local USE_AOT=${3:-false}
@@ -17,7 +17,7 @@ do_aot_test_run() {
 	${TEST_FUNC} "${NAME}"
 }
 
-do_test_run_with_postgres() {
+function do_test_run_with_postgres() {
 	local NAME=$1
 	local JAR_PATH=$2
 	local TEST_FUNC=$3
@@ -32,7 +32,7 @@ do_test_run_with_postgres() {
 	stop_postgres "${CONTAINER_NAME}"
 }
 
-do_test_run() {
+function do_test_run() {
 	local NAME=$1
 	local JAR_PATH=$2
 	local TEST_FUNC=$3
@@ -55,7 +55,7 @@ do_test_run() {
 	fi
 }
 
-start_postgres() {
+function start_postgres() {
 	local CONTAINER_NAME=$1
 	local INITDB_PATH=$2
 
@@ -68,7 +68,7 @@ start_postgres() {
 	timeout 90s bash -c "until ${ENGINE} exec ${CONTAINER_NAME} pg_isready ; do sleep 5 ; done"
 }
 
-stop_postgres() {
+function stop_postgres() {
 	local CONTAINER_NAME=$1
 	
 	echo "Stopping PostgreSQL database..."
@@ -76,7 +76,7 @@ stop_postgres() {
     CONTAINER_NM=""
 }
 
-stop_process() {
+function stop_process() {
 	local pid=$1
 	local name=$2
 
@@ -99,6 +99,27 @@ stop_process() {
 	else
 		echo "${name} test application exited cleanly"
 	fi
+}
+
+function save_jdk() {
+	local currentJdkVersionString
+
+	currentJdkVersionString=$(jbang jdk default 2>&1)
+	export SAVEDJDKVERSION=${currentJdkVersionString##* }
+}
+
+function switch_jdk() {
+	local version=$1
+
+	echo "Switching JDK to ${version}..."
+	./jbang jdk default "${version}"
+}
+
+function restore_jdk() {
+    if [[ -v SAVEDJDKVERSION ]]; then
+        echo "Restoring JDK to ${SAVEDJDKVERSION}..."
+        switch_jdk "${SAVEDJDKVERSION}"
+    fi
 }
 
 function ctrl_c() {

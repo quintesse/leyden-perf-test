@@ -9,7 +9,6 @@ run_jdk_tests() {
 	local version=${1}
     local extra=${2}
 
-	echo "Switching to JDK ${version}..."
     switch_jdk "${version}"
     
     export TEST_OUT_DIR=${TEST_OUT_BASE}/j${version}${extra}
@@ -53,19 +52,6 @@ function cleanup() {
     rmdir "./test-results" >/dev/null 2>&1 || true
 }
 
-switch_jdk() {
-	local version=$1
-
-	./jbang jdk default "${version}"
-}
-
-function restorejdk() {
-    if [[ -v currentJdkVersion ]]; then
-        echo "Restoring JDK to ${currentJdkVersion}..."
-        switch_jdk "${currentJdkVersion}"
-    fi
-}
-
 function ctrl_c() {
 	echo "Caught Ctrl-C, cleaning up..."
     cleanup
@@ -99,12 +85,11 @@ fi
 
 TEST_OUT_BASE=./test-results/test-run-$(date +%Y%m%d-%H%M%S)${userExtra:+-$userExtra}
 
-currentJdkVersionString=$(jbang jdk default 2>&1)
-currentJdkVersion=${currentJdkVersionString##* }
+save_jdk
 
 run_all_tests "$@"
 
-restorejdk
+restore_jdk
 
 echo ""
 echo "--------------------------------------------------------------"
