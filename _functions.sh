@@ -38,7 +38,8 @@ do_test_run() {
 	local TEST_FUNC=$3
 	
 	echo "Starting ${NAME} test application..."
-	java "${TEST_JAVA_OPTS}" "${TEST_AOT_OPTS}" -jar "${JAR_PATH}" > "${TEST_OUT_DIR}"/"${NAME}"-app.out &
+	echo java "${TEST_JAVA_OPTS}" "${TEST_AOT_OPTS}" -jar "${JAR_PATH}" > "${TEST_OUT_DIR}"/"${NAME}"-app.out
+	java "${TEST_JAVA_OPTS}" "${TEST_AOT_OPTS}" -jar "${JAR_PATH}" >> "${TEST_OUT_DIR}"/"${NAME}"-app.out 2>&1 &
 	JAVA_PID=$!
 	sleep 10
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then

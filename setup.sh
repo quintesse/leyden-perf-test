@@ -1,37 +1,40 @@
 #!/bin/bash
 
 clone() {
-    repository="spring-quarkus-perf-comparison"
-    if [ ! -d $repository ]; then
-      echo "Clone Spring Quarkus Performance Comparison repository"
-      git clone --depth 1 https://github.com/quarkusio/spring-quarkus-perf-comparison.git 
+    local repository=$1
+	local repo_url=$2
+
+    if [[ ! -d $repository ]]; then
+      echo "Clone repository '$repository'"
+      git clone --depth 1 "$repo_url" "$repository"
       if [ $? -ne 0 ]; then
-         echo -e "   - \033[0;31m✗ "$repository" failed to clone.\033[0m"
+         echo -e "   - \033[0;31m✗ '$repository' failed to clone.\033[0m"
       else 
-         echo -e "   - \033[0;32m✓ "$repository" cloned.\033[0m"
+         echo -e "   - \033[0;32m✓ '$repository' cloned.\033[0m"
       fi
     else 
-      cd $repository
+      pushd "$repository"
       git reset HEAD --hard >> /dev/null
       git pull >> /dev/null 
       if [ $? -ne 0 ]; then
-         echo -e "   - \033[0;31m✗ "$repository" failed to update.\033[0m"
+         echo -e "   - \033[0;31m✗ '$repository' failed to update.\033[0m"
       else 
-         echo -e "   - \033[0;32m✓ "$repository" updated.\033[0m"
+         echo -e "   - \033[0;32m✓ '$repository' updated.\033[0m"
       fi
-      cd ..
+      popd
     fi
 }
 
 compile() {
-    echo "Compile application"
-    repository="spring-quarkus-perf-comparison"
-    pushd $repository
-    ./mvnw package -Dquarkus.hibernate-orm.sql-load-script=import.sql -DskipTests
+    local repository=$1
+
+    echo "Compile application '$repository'"
+    pushd "$repository"
+    ./mvnw clean package -DskipTests
     if [ $? -ne 0 ]; then
-       echo -e "   - \033[0;31m✗ "$repository" failed to build.\033[0m"
+       echo -e "   - \033[0;31m✗ '$repository' failed to build.\033[0m"
     else 
-       echo -e "   - \033[0;32m✓ "$repository" built.\033[0m"
+       echo -e "   - \033[0;32m✓ '$repository' built.\033[0m"
     fi
     popd
 }
@@ -43,5 +46,5 @@ else
     echo -e "   - \033[0;32m✓ oha   : Command is installed.\033[0m"
 fi
 
-clone
-compile
+clone "spring-quarkus-perf-comparison" "https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
+compile "spring-quarkus-perf-comparison"
