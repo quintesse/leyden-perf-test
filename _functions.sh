@@ -9,10 +9,10 @@ function do_aot_test_run() {
 	TEST_AOT_OPTS=""
 	if [[ "${USE_AOT}" == "true" ]]; then
 		echo "AOT enabled, starting ${NAME} training run..."
-		TEST_AOT_OPTS="-XX:AOTCacheOutput=${TEST_OUT_DIR}/${NAME}-app.aot"
+		TEST_AOT_OPTS="-XX:AOTCacheOutput=${TEST_OUT_DIR}/${NAME}-app.aot -Xlog:aot+map=trace,aot+map+oops=trace:file=${TEST_OUT_DIR}/${NAME}-aot.map:none:filesize=0 -Xlog:aot+resolve*=trace,aot+codecache+exit=debug:file=${TEST_OUT_DIR}/${NAME}-training.log:level,tags"
 		${TEST_FUNC} "${NAME}"-training
 		echo "AOT enabled, starting ${NAME} test run..."
-		TEST_AOT_OPTS="-XX:AOTCache=${TEST_OUT_DIR}/${NAME}-app.aot"
+		TEST_AOT_OPTS="-XX:AOTCache=${TEST_OUT_DIR}/${NAME}-app.aot -Xlog:class+load=info,aot+codecache=debug:file=${TEST_OUT_DIR}/${NAME}-production.log:level,tags"
 	fi
 	${TEST_FUNC} "${NAME}"
 }
