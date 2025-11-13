@@ -4,7 +4,7 @@ source ./_functions.sh
 quarkus_uber_jar_test() {
 	# We need to recompile first to build the uber-jar
 	pushd "spring-quarkus-perf-comparison/quarkus3"
-	./mvnw clean package -Dquarkus.package.jar.type=uber-jar -DskipTests
+	./mvnw clean package -Dquarkus.package.jar.type=uber-jar -DskipTests > /dev/null
 	popd
 	do_aot_test_run quarkus-uber-jar quarkus_uber_jar_test_run "${TEST_USE_AOT:-false}"
 
