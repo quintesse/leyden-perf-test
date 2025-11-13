@@ -5,6 +5,7 @@ trap ctrl_c INT
 
 source ./_perftest_spring.sh
 source ./_perftest_quarkus.sh
+source ./_perftest_quarkus-uber-jar.sh
 
 ENGINE=""
 if command -v podman >/dev/null 2>&1; then
@@ -28,3 +29,4 @@ fi
 
 spring_test
 quarkus_test
+quarkus_uber_jar_test
