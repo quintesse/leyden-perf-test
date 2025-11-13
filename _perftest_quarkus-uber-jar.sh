@@ -11,7 +11,7 @@ quarkus_uber_jar_test() {
 }
 
 quarkus_uber_jar_test_run() {
-	local name=${1:-quarkus}
+	local name=${1:-quarkus-uber-jar}
 	do_test_run_with_postgres "${name}" ./spring-quarkus-perf-comparison/quarkus3/target/quarkus3-runner.jar perftest_quarkus_uber_jar fruits_db ./spring-quarkus-perf-comparison/scripts/dbdata
 }
 
