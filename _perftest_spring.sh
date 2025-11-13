@@ -3,6 +3,10 @@
 source ./_functions.sh
 
 spring_test() {
+	# We need to recompile to clean the AOT version of Spring
+	pushd "spring-quarkus-perf-comparison/springboot3"
+	./mvnw clean package -DskipTests > /dev/null
+	popd
 	do_aot_test_run spring spring_test_run "${TEST_USE_AOT:-false}"
 }
 

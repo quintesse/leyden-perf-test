@@ -4,6 +4,7 @@ set -euo pipefail
 trap ctrl_c INT
 
 source ./_perftest_spring.sh
+source ./_perftest_spring-buildpack-executable.sh
 source ./_perftest_quarkus.sh
 
 ENGINE=""
@@ -27,4 +28,5 @@ if [[ -z ${TEST_OUT_DIR:-} ]]; then
 fi
 
 spring_test
+spring_buildpack_executable_test
 quarkus_test
