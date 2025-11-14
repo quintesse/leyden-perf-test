@@ -8,7 +8,7 @@ spring_test() {
 
 spring_test_run() {
 	local name=${1:-spring}
-	do_test_run_with_postgres "${name}" "${TEST_BUILDS_DIR}/spring-quarkus-perf-comparison/springboot3/spring-buildpack/application/springboot3.jar" perftest_spring_buildpack fruits_db "${TEST_APPS_DIR}/spring-quarkus-perf-comparison/scripts/dbdata"
+	do_test_run_with_postgres "${name}" "${TEST_BUILDS_DIR}/spring-quarkus-perf-comparison/springboot3/spring-normal/application/springboot3.jar" perftest_spring_normal fruits_db "${TEST_APPS_DIR}/spring-quarkus-perf-comparison/scripts/dbdata"
 }
 
 perftest_spring() {
