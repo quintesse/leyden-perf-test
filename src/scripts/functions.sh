@@ -7,15 +7,15 @@ function compile_maven() {
 
     echo "Compiling application '$repository'..."
     pushd "apps/$repository" > /dev/null
-    ./mvnw clean package -DskipTests $opts
-	local result=$?
+    ./mvnw clean package -DskipTests $opts > /dev/null
+    local result=$?
     if [ $result -ne 0 ]; then
        echo -e "   - \033[0;31m✗ '$repository' failed to build.\033[0m"
     else 
        echo -e "   - \033[0;32m✓ '$repository' built.\033[0m"
     fi
     popd > /dev/null
-	return $result
+    return $result
 }
 
 function copy_build_artifacts() {
