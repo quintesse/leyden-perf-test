@@ -65,16 +65,37 @@ function ctrl_c() {
     exit 2
 }
 
+TEST_TTFR_CNT=${TEST_TTFR_CNT:-100}
+TEST_WARMUP_CNT=${TEST_WARMUP_CNT:-100}
+TEST_PERF_CNT=${TEST_PERF_CNT:-10000}
+
 userExtra=""
-if [[ $# -gt 0 && ("$1" == "-t" || "$1" == "--tag") ]] ; then
-    shift
-    if [[ $# -eq 0 ]]; then
-        echo "Error: Tag option specified but no tag value provided."
-        exit 4
-    fi
-    userExtra="$1"
-    shift
-fi
+outputPath=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -t|--tag)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "Error: Tag option specified but no tag value provided."
+                exit 4
+            fi
+            userExtra="$1"
+            shift
+            ;;
+        -o|--output)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "Error: Output option specified but no path provided."
+                exit 4
+            fi
+            outputPath="$1"
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ $# -eq 0 ]; then
     echo "No JDK versions supplied, please provide at least one JDK version to test."
@@ -89,7 +110,7 @@ then
     exit 1
 fi
 
-TEST_OUT_BASE=./test-results/test-run-$(date +%Y%m%d-%H%M%S)${userExtra:+-$userExtra}
+TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${userExtra:+-$userExtra}}
 
 save_jdk
 

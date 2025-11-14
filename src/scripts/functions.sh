@@ -84,7 +84,10 @@ function do_test_run() {
 		stop_process ${JAVA_PID} "${NAME}"
         JAVA_PID=""
 	else
-		echo "${NAME}" test application not running
+		echo "${NAME} test application not running"
+		echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		cat "$outfile"
+		echo "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
 	fi
 }
 

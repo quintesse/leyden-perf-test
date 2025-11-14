@@ -13,13 +13,13 @@ spring_test_run() {
 
 perftest_spring() {
     echo "[TEST] Time to First Request test..."
-    oha -n 100 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/spring-test-ttfr.json --db-url "${TEST_OUT_DIR:-.}"/spring-test-ttfr.db
+    oha -n "${TEST_TTFR_CNT:-100}" -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/spring-test-ttfr.json --db-url "${TEST_OUT_DIR:-.}"/spring-test-ttfr.db
 
     echo "[TEST] Running some warm-up tests..."
-    oha -n 100 -u ms --no-tui --urls-from-file urls.txt > /dev/null 2>&1
+    oha -n "${TEST_WARMUP_CNT:-100}" -u ms --no-tui --urls-from-file urls.txt > /dev/null 2>&1
 
     sleep 5
 
     echo "[TEST] Running perf tests..."
-    oha -n 10000 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/spring-test.json --db-url "${TEST_OUT_DIR:-.}"/spring-test.db
+    oha -n "${TEST_PERF_CNT:-10000}" -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/spring-test.json --db-url "${TEST_OUT_DIR:-.}"/spring-test.db
 }
