@@ -19,30 +19,30 @@ public class Collate {
         Map<String, Result> results = readResults(resultsFolder);
 
         System.out.println("Total duration (lower is better)");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().total() * 1000d), "%5.1fms"));
+        System.out.println(Graph.graph(pick(results, r -> r.summary().total() * 1000d), "%6.1fms"));
         System.out.println();
 
         System.out.println("Requests per second (higher is better)");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().requestsPerSec()), "%5.0fr/s"));
+        System.out.println(Graph.graph(pick(results, r -> r.summary().requestsPerSec()), "%6.0fr/s"));
         System.out.println();
 
         System.out.println("Slowest (lower is better)");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().slowest() * 1000d), "%5.1fms"));
+        System.out.println(Graph.graph(pick(results, r -> r.summary().slowest() * 1000d), "%6.1fms"));
         System.out.println();
 
         System.out.println("Fastest (lower is better)");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().fastest() * 1000d), "%5.1fms"));
+        System.out.println(Graph.graph(pick(results, r -> r.summary().fastest() * 1000d), "%6.1fms"));
         System.out.println();
 
         System.out.println("Average (lower is better)");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().average() * 1000d), "%5.1fms"));
+        System.out.println(Graph.graph(pick(results, r -> r.summary().average() * 1000d), "%6.1fms"));
         System.out.println();
 
         Map<String, List<Oha>> requests = readRequests(resultsFolder);
         requests.forEach((k, ohas) -> {
             System.out.println("Request durations for " + k);
             Map<String, Number> avgDurations = avgRequestDurations(ohas, 10);
-            System.out.println(Graph.graph(avgDurations, "%5.1fms"));
+            System.out.println(Graph.graph(avgDurations, "%6.1fms"));
             System.out.println();
         });
     }

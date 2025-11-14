@@ -13,6 +13,8 @@ spring_buildpack_test_run() {
 }
 
 perftest_spring_buildpack() {
+	rm -f "${TEST_OUT_DIR:-.}"/spring-buildpack-test*.db
+
     echo "[TEST] Time to First Request test..."
     oha -n "${TEST_TTFR_CNT:-100}" -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/spring-buildpack-test-ttfr.json --db-url "${TEST_OUT_DIR:-.}"/spring-buildpack-test-ttfr.db
 
