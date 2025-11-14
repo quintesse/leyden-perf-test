@@ -12,7 +12,9 @@ function compile_spring_quarkus_perf_comparison() {
 
 	# Compile Spring Boot app normally
 	compile_maven "spring-quarkus-perf-comparison/springboot3" ""
-	copy_build_artifacts "spring-quarkus-perf-comparison/springboot3" "spring-normal" "target/springboot3.jar"
+	echo "Extracting Spring Boot Buildpack Executable..."
+	java -Djarmode=tools -jar "${target}/springboot3.jar" extract --destination "${target}/application" > /dev/null
+	copy_build_artifacts "spring-quarkus-perf-comparison/springboot3" "spring-normal" "target/application"
 
 	# Compile Spring Boot app as Spring Boot Buildpack Executable
 	# Which means preparing for AOT cache and production environment
