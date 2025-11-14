@@ -20,20 +20,24 @@ public class Collate {
         }
         Map<String, Result> results = readResults(resultsFolder);
 
-        System.out.println("Total duration");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().total() * 1000d), "ms"));
+        System.out.println("Total duration (lower is better)");
+        System.out.println(Graph.graph(pick(results, r -> r.summary().total() * 1000d), "%5.1fms"));
         System.out.println();
         
-        System.out.println("Slowest");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().slowest() * 1000d), "ms"));
+        System.out.println("Requests per second (higher is better)");
+        System.out.println(Graph.graph(pick(results, r -> r.summary().requestsPerSec()), "%5.0fr/s"));
         System.out.println();
         
-        System.out.println("Fastest");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().fastest() * 1000d), "ms"));
+        System.out.println("Slowest (lower is better)");
+        System.out.println(Graph.graph(pick(results, r -> r.summary().slowest() * 1000d), "%5.1fms"));
         System.out.println();
         
-        System.out.println("Average");
-        System.out.println(Graph.graph(pick(results, r -> r.summary().average() * 1000d), "ms"));
+        System.out.println("Fastest (lower is better)");
+        System.out.println(Graph.graph(pick(results, r -> r.summary().fastest() * 1000d), "%5.1fms"));
+        System.out.println();
+        
+        System.out.println("Average (lower is better)");
+        System.out.println(Graph.graph(pick(results, r -> r.summary().average() * 1000d), "%5.1fms"));
         System.out.println();
     }
 

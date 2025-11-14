@@ -19,13 +19,13 @@ public class Graph {
         this.width = width;
     }
 
-    public String render(Map<String, Number> data, String unit) {
+    public String render(Map<String, Number> data, String format) {
         StringBuilder sb = new StringBuilder();
         for (var entry : data.entrySet()) {
             String label = entry.getKey();
             Number value = entry.getValue();
             String bar = Bar.bar(value, minValue, maxValue, width);
-            sb.append(String.format("%-25s | %5.1f%s | %s%n", label, value, unit, bar));
+            sb.append(String.format("%-25s | " + format + " | %s%n", label, value, bar));
         }
         return sb.toString();
     }
