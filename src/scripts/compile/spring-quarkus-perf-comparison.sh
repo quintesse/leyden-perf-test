@@ -13,6 +13,7 @@ function compile_spring_quarkus_perf_comparison() {
 	# Compile Spring Boot app normally
 	compile_maven "spring-quarkus-perf-comparison/springboot3" ""
 	echo "Extracting Spring Boot Buildpack Executable..."
+	local target="${TEST_APPS_DIR}/spring-quarkus-perf-comparison/springboot3/target"
 	java -Djarmode=tools -jar "${target}/springboot3.jar" extract --destination "${target}/application" > /dev/null
 	copy_build_artifacts "spring-quarkus-perf-comparison/springboot3" "spring-normal" "target/application"
 
@@ -22,7 +23,6 @@ function compile_spring_quarkus_perf_comparison() {
 	# and in https://docs.spring.io/spring-boot/reference/packaging/aot.html
 	compile_maven "spring-quarkus-perf-comparison/springboot3" "-Pnative"
 	echo "Extracting Spring Boot Buildpack Executable..."
-	local target="${TEST_APPS_DIR}/spring-quarkus-perf-comparison/springboot3/target"
 	java -Djarmode=tools -jar "${target}/springboot3.jar" extract --destination "${target}/application" > /dev/null
 	copy_build_artifacts "spring-quarkus-perf-comparison/springboot3" "spring-buildpack" "target/application"
 }
