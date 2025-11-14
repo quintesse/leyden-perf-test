@@ -7,12 +7,14 @@ function compile_maven() {
 
     echo "Compiling application '$repository'..."
     pushd "apps/$repository" > /dev/null
-    ./mvnw clean package -DskipTests $opts > /dev/null
+    ./mvnw clean package -DskipTests $opts > /tmp/leyden-perf-test-build-$$.log 2>&1
     local result=$?
     if [ $result -ne 0 ]; then
        echo -e "   - \033[0;31m✗ '$repository' failed to build.\033[0m"
+	   cat /tmp/leyden-perf-test-build-$$.log
     else 
        echo -e "   - \033[0;32m✓ '$repository' built.\033[0m"
+	   rm /tmp/leyden-perf-test-build-$$.log
     fi
     popd > /dev/null
     return $result
