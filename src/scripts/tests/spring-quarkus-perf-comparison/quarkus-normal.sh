@@ -1,17 +1,14 @@
 #!/bin/bash
-source ./_functions.sh
+
+source "${TEST_SRC_DIR}"/scripts/functions.sh
 
 quarkus_test() {
-	#We need to recompile in case the uber-jar compilation was the last one
-	pushd "spring-quarkus-perf-comparison/quarkus3"
-	./mvnw clean package -DskipTests > /dev/null
-	popd
 	do_aot_test_run quarkus quarkus_test_run "${TEST_USE_AOT:-false}"
 }
 
 quarkus_test_run() {
 	local name=${1:-quarkus}
-	do_test_run_with_postgres "${name}" ./spring-quarkus-perf-comparison/quarkus3/target/quarkus-app/quarkus-run.jar perftest_quarkus fruits_db ./spring-quarkus-perf-comparison/scripts/dbdata
+	do_test_run_with_postgres "${name}" "${TEST_BUILDS_DIR}/spring-quarkus-perf-comparison/quarkus3/quarkus3-normal/quarkus-app/quarkus-run.jar" perftest_quarkus fruits_db "${TEST_APPS_DIR}/spring-quarkus-perf-comparison/scripts/dbdata"
 }
 
 perftest_quarkus() {

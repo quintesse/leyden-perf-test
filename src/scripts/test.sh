@@ -3,10 +3,10 @@ set -euo pipefail
 
 trap ctrl_c INT
 
-source ./_perftest_spring.sh
-source ./_perftest_spring-buildpack-executable.sh
-source ./_perftest_quarkus.sh
-source ./_perftest_quarkus-uber-jar.sh
+source "${TEST_SRC_DIR}"/scripts/tests/spring-quarkus-perf-comparison/spring-normal.sh
+source "${TEST_SRC_DIR}"/scripts/tests/spring-quarkus-perf-comparison/spring-buildpack.sh
+source "${TEST_SRC_DIR}"/scripts/tests/spring-quarkus-perf-comparison/quarkus-normal.sh
+source "${TEST_SRC_DIR}"/scripts/tests/spring-quarkus-perf-comparison/quarkus-uberjar.sh
 
 ENGINE=""
 if command -v podman >/dev/null 2>&1; then
@@ -29,6 +29,6 @@ if [[ -z ${TEST_OUT_DIR:-} ]]; then
 fi
 
 spring_test
-spring_buildpack_executable_test
+spring_buildpack_test
 quarkus_test
-quarkus_uber_jar_test
+quarkus_uberjar_test

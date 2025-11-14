@@ -1,6 +1,37 @@
 #!/bin/bash
 set -euo pipefail
 
+function compile_maven() {
+    local repository=$1
+	local opts=$2
+
+    echo "Compiling application '$repository'..."
+    pushd "apps/$repository" > /dev/null
+    ./mvnw clean package -DskipTests $opts
+	local result=$?
+    if [ $result -ne 0 ]; then
+       echo -e "   - \033[0;31m✗ '$repository' failed to build.\033[0m"
+    else 
+       echo -e "   - \033[0;32m✓ '$repository' built.\033[0m"
+    fi
+    popd > /dev/null
+	return $result
+}
+
+function copy_build_artifacts() {
+	local repository=$1
+	local subfolder=$2
+	local artifacts=( "${@:3}" )
+
+	local dest="${TEST_BUILDS_DIR}/$repository/$subfolder"
+	echo "Copying build artifacts for '$repository' to '$dest'..."
+	rm -rf "${dest:?}"
+	mkdir -p "$dest"
+	pushd "$TEST_APPS_DIR/$repository" > /dev/null
+	cp -a "${artifacts[@]}" "$dest"
+	popd > /dev/null
+}
+
 function do_aot_test_run() {
 	local NAME=$1
 	local TEST_FUNC=$2

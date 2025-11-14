@@ -3,7 +3,13 @@ set -uo pipefail
 
 trap ctrl_c INT
 
-source ./_functions.sh
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+export TEST_SRC_DIR=${script_dir}/src
+export TEST_APPS_DIR=${script_dir}/apps
+export TEST_BUILDS_DIR=${script_dir}/builds
+
+source "${TEST_SRC_DIR}"/scripts/functions.sh
 
 run_jdk_tests() {
 	local version=${1}
@@ -15,7 +21,7 @@ run_jdk_tests() {
     mkdir -p "${TEST_OUT_DIR}"
     echo "Created test output folder ${TEST_OUT_DIR}"
 
-    ./_test.sh
+    "${TEST_SRC_DIR}"/scripts/test.sh
 
     cleanup
 }
@@ -97,4 +103,4 @@ echo "Tests completed. Results can be found in ${TEST_OUT_BASE}:"
 ls -R "${TEST_OUT_BASE}"
 
 echo ""
-jbang util/Collate.java "${TEST_OUT_BASE}"
+jbang "${TEST_SRC_DIR}"/java/util/Collate.java "${TEST_OUT_BASE}"

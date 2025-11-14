@@ -1,4 +1,5 @@
-spring-quarkus-perf-comparison
+apps/
+builds/
 test-results/
 .vscode/
 .idea/

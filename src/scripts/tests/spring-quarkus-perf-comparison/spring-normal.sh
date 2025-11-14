@@ -1,18 +1,14 @@
 #!/bin/bash
 
-source ./_functions.sh
+source "${TEST_SRC_DIR}"/scripts/functions.sh
 
 spring_test() {
-	# We need to recompile to clean the AOT version of Spring
-	pushd "spring-quarkus-perf-comparison/springboot3"
-	./mvnw clean package -DskipTests > /dev/null
-	popd
 	do_aot_test_run spring spring_test_run "${TEST_USE_AOT:-false}"
 }
 
 spring_test_run() {
 	local name=${1:-spring}
-	do_test_run_with_postgres ${name} ./spring-quarkus-perf-comparison/springboot3/target/*.jar perftest_spring fruits_db ./spring-quarkus-perf-comparison/scripts/dbdata
+	do_test_run_with_postgres "${name}" "${TEST_BUILDS_DIR}/spring-quarkus-perf-comparison/springboot3/spring-normal/springboot3.jar" perftest_spring fruits_db "${TEST_APPS_DIR}/spring-quarkus-perf-comparison/scripts/dbdata"
 }
 
 perftest_spring() {

@@ -1,44 +1,41 @@
 #!/bin/bash
 
-source ./_functions.sh
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+export TEST_SRC_DIR=${script_dir}/src
+export TEST_APPS_DIR=${script_dir}/apps
+export TEST_BUILDS_DIR=${script_dir}/builds
+
+source "${TEST_SRC_DIR}"/scripts/functions.sh
+source "${TEST_SRC_DIR}"/scripts/compile/spring-quarkus-perf-comparison.sh
 
 clone() {
-    local repository=$1
+	local repository=$1
 	local repo_url=$2
 
-    if [[ ! -d $repository ]]; then
+	local result
+    if [[ ! -d ${TEST_APPS_DIR}/$repository ]]; then
       echo "Clone repository '$repository'"
-      git clone --depth 1 "$repo_url" "$repository"
-      if [ $? -ne 0 ]; then
+      git clone --depth 1 "$repo_url" "${TEST_APPS_DIR}/$repository"
+	  result=$?
+      if [ $result -ne 0 ]; then
          echo -e "   - \033[0;31m✗ '$repository' failed to clone.\033[0m"
       else 
          echo -e "   - \033[0;32m✓ '$repository' cloned.\033[0m"
       fi
     else 
-      pushd "$repository"
+      pushd "${TEST_APPS_DIR}/$repository" > /dev/null
       git reset HEAD --hard >> /dev/null
       git pull >> /dev/null 
-      if [ $? -ne 0 ]; then
+	  result=$?
+      if [ $result -ne 0 ]; then
          echo -e "   - \033[0;31m✗ '$repository' failed to update.\033[0m"
       else 
          echo -e "   - \033[0;32m✓ '$repository' updated.\033[0m"
       fi
-      popd
+      popd > /dev/null
     fi
-}
-
-compile() {
-    local repository=$1
-
-    echo "Compile application '$repository'"
-    pushd "$repository"
-    ./mvnw clean package -DskipTests
-    if [ $? -ne 0 ]; then
-       echo -e "   - \033[0;31m✗ '$repository' failed to build.\033[0m"
-    else 
-       echo -e "   - \033[0;32m✓ '$repository' built.\033[0m"
-    fi
-    popd
+	return $result
 }
 
 if ! command -v oha >/dev/null 2>&1
@@ -53,6 +50,6 @@ clone "spring-quarkus-perf-comparison" "https://github.com/quarkusio/spring-quar
 save_jdk
 switch_jdk "21+"
 
-compile "spring-quarkus-perf-comparison"
+compile_spring_quarkus_perf_comparison
 
 restore_jdk
