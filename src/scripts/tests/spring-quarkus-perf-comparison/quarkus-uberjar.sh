@@ -13,7 +13,7 @@ quarkus_uberjar_test_run() {
 
 perftest_quarkus_uberjar() {
     echo "[TEST] Time to First Request test..."
-    oha -n 1 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/quarkus-uberjar-test-ttfr.json
+    oha -n 1 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/quarkus-uberjar-test-ttfr.json --db-url "${TEST_OUT_DIR:-.}"/quarkus-uberjar-test-ttfr.db
 
     echo "[TEST] Running some warm-up tests..."
     oha -n 10 -u ms --no-tui --urls-from-file urls.txt > /dev/null 2>&1
@@ -21,5 +21,5 @@ perftest_quarkus_uberjar() {
     sleep 5
 
     echo "[TEST] Running perf tests..."
-    oha -n 10000 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/quarkus-uberjar-test.json
+    oha -n 10000 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/quarkus-uberjar-test.json --db-url "${TEST_OUT_DIR:-.}"/quarkus-uberjar-test.db
 }

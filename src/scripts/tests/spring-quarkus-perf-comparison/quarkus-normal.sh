@@ -13,13 +13,13 @@ quarkus_test_run() {
 
 perftest_quarkus() {
     echo "[TEST] Time to First Request test..."
-    oha -n 1 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/quarkus-test-ttfr.json
+    oha -n 100 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/quarkus-test-ttfr.json --db-url "${TEST_OUT_DIR:-.}"/quarkus-test-ttfr.db
 
     echo "[TEST] Running some warm-up tests..."
-    oha -n 10 -u ms --no-tui --urls-from-file urls.txt > /dev/null 2>&1
+    oha -n 100 -u ms --no-tui --urls-from-file urls.txt > /dev/null 2>&1
 
     sleep 5
 
     echo "[TEST] Running perf tests..."
-    oha -n 10000 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/quarkus-test.json
+    oha -n 10000 -u ms --no-tui --urls-from-file urls.txt --output-format json -o "${TEST_OUT_DIR:-.}"/quarkus-test.json --db-url "${TEST_OUT_DIR:-.}"/quarkus-test.db
 }

@@ -1,10 +1,8 @@
-//SOURCES Result.java Graph.java
+//SOURCES Result.java Oha.java Graph.java
 //JAVA 21+
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.TreeMap;
-import java.util.Map;
+import java.nio.file.*;
+import java.util.*;
 import java.util.function.Function;
 
 public class Collate {
@@ -23,43 +21,105 @@ public class Collate {
         System.out.println("Total duration (lower is better)");
         System.out.println(Graph.graph(pick(results, r -> r.summary().total() * 1000d), "%5.1fms"));
         System.out.println();
-        
+
         System.out.println("Requests per second (higher is better)");
         System.out.println(Graph.graph(pick(results, r -> r.summary().requestsPerSec()), "%5.0fr/s"));
         System.out.println();
-        
+
         System.out.println("Slowest (lower is better)");
         System.out.println(Graph.graph(pick(results, r -> r.summary().slowest() * 1000d), "%5.1fms"));
         System.out.println();
-        
+
         System.out.println("Fastest (lower is better)");
         System.out.println(Graph.graph(pick(results, r -> r.summary().fastest() * 1000d), "%5.1fms"));
         System.out.println();
-        
+
         System.out.println("Average (lower is better)");
         System.out.println(Graph.graph(pick(results, r -> r.summary().average() * 1000d), "%5.1fms"));
         System.out.println();
+
+        Map<String, List<Oha>> requests = readRequests(resultsFolder);
+        requests.forEach((k, ohas) -> {
+            System.out.println("Request durations for " + k);
+            Map<String, Number> avgDurations = avgRequestDurations(ohas, 10);
+            System.out.println(Graph.graph(avgDurations, "%5.1fms"));
+            System.out.println();
+        });
+    }
+
+    // Collapse a list of requests and return a list of durations of maximum
+    // `maxEntries` entries, calculating the average duration for each entry.
+    // The key of each entry is either its index in the original list, or if
+    // we have more than `maxEntries` entries, a range like "21-30"
+    private static Map<String, Number> avgRequestDurations(List<Oha> requests, int maxEntries) {
+        Map<String, Number> result = new LinkedHashMap<>();
+        int size = requests.size();
+        if (size == 0) return result;
+
+        if (size <= maxEntries) {
+            for (int i = 0; i < size; i++) {
+                result.put(String.valueOf(i + 1), requests.get(i).duration() * 1000d);
+            }
+        } else {
+            int groupSize = (int) Math.ceil(size / (double) maxEntries);
+            for (int i = 0; i < maxEntries; i++) {
+                int startIdx = i * groupSize;
+                int endIdx = Math.min(startIdx + groupSize, size);
+                if (startIdx >= endIdx) break;
+                double avg = 0;
+                for (int j = startIdx; j < endIdx; j++) {
+                    avg += requests.get(j).duration() * 1000d;
+                }
+                avg /= (endIdx - startIdx);
+                String key = (startIdx + 1) + "-" + endIdx;
+                result.put(key, avg);
+            }
+        }
+        return result;
     }
 
     private static Map<String, Result> readResults(Path resultsFolder) {
         Map<String, Result> results = new TreeMap<>();
         try (var paths = Files.walk(resultsFolder)) {
             paths.filter(path -> path.getFileName().toString().endsWith("-test.json"))
-                 .forEach(path -> {
-                     try {
-                         Result result = Result.parse(path);
-                         String key = path.getParent().getFileName() + "-" + path.getFileName().toString().replace("-test.json", "");
-                         results.put(key, result);
-                     } catch (Exception e) {
-                         System.err.println("Failed to parse result file: " + path);
-                         e.printStackTrace();
-                     }
-                 });
+                    .forEach(path -> {
+                        try {
+                            Result result = Result.parse(path);
+                            String key = path.getParent().getFileName() + "-"
+                                    + path.getFileName().toString().replace("-test.json", "");
+                            results.put(key, result);
+                        } catch (Exception e) {
+                            System.err.println("Failed to parse result file: " + path);
+                            e.printStackTrace();
+                        }
+                    });
         } catch (Exception e) {
-            System.err.println("Error walking results folder: " + resultsFolder);
+            System.err.println("Error walking results folder OHA json files: " + resultsFolder);
             e.printStackTrace();
         }
         return results;
+    }
+
+    private static Map<String, List<Oha>> readRequests(Path resultsFolder) {
+        Map<String, List<Oha>> result = new TreeMap<>();
+        try (var paths = Files.walk(resultsFolder)) {
+            paths.filter(path -> path.getFileName().toString().endsWith("-ttfr.db"))
+                    .forEach(path -> {
+                        try {
+                            List<Oha> ohaList = Oha.read(path);
+                            String key = path.getParent().getFileName() + "-"
+                                    + path.getFileName().toString().replace("-ttfr.db", "");
+                            result.put(key, ohaList);
+                        } catch (Exception e) {
+                            System.err.println("Failed to read OHA database file: " + path);
+                            e.printStackTrace();
+                        }
+                    });
+        } catch (Exception e) {
+            System.err.println("Error walking results folder for OHA databases: " + resultsFolder);
+            e.printStackTrace();
+        }
+        return result;
     }
 
     private static Map<String, Number> pick(Map<String, Result> data, Function<Result, Number> picker) {
