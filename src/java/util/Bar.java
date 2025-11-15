@@ -2,7 +2,7 @@
 public final class Bar {
 
     private static final String BLOCK_FULL = "\u2588";
-    private static final char FOO = '\u2589';
+    private static final String BLOCK_OVERFLOW = "\u2593";
     // Unicode fractional blocks ascend; offset points at 1/8 block
     private static final char BLOCK_7_8 = (char) (BLOCK_FULL.codePointAt(0) + 1);
     private static final char BLOCK_1_8 = (char) (BLOCK_FULL.codePointAt(0) + 7);
@@ -25,26 +25,30 @@ public final class Bar {
      * @return A string containing the rendered bar
      */
     public static String bar(Number value, Number minValue, Number maxValue, int width) {
-        double dx = value.doubleValue();
         double dmin = minValue.doubleValue();
         double dmax = maxValue.doubleValue();
+        double dx = Math.max(value.doubleValue(), dmin); // clamp value to minimum
 
-        if (!(dmin < dmax && dx >= dmin && dx <= dmax)) {
+        if (dmin >= dmax) {
             throw new IllegalArgumentException("Values out of range");
         }
 
         int fracWidth = width * 8;
         double interval = dmax - dmin;
         int barWidth = (int) (((dx - dmin) / interval) * fracWidth);
-        int fullChunks = barWidth / 8;
-        int remainder = barWidth % 8;
+        int fullChunks = barWidth <= fracWidth ? barWidth / 8 : width - 1;
+        int remainder = barWidth <= fracWidth ? barWidth % 8 : 0;
 
-        StringBuilder sb = new StringBuilder(width + 1);
+        StringBuilder sb = new StringBuilder(width);
         for (int i = 0; i < fullChunks; i++) {
             sb.append(BLOCK_7_8);
         }
-        // Always append a fractional block
-        sb.append((char) (BLOCK_1_8 - remainder));
+        if (remainder > 0) {
+            sb.append((char) (BLOCK_1_8 - remainder + 1));
+        }
+        if (barWidth > fracWidth) {
+            sb.append(BLOCK_OVERFLOW);
+        }
 
         return sb.toString();
     }
