@@ -30,8 +30,12 @@ public class Graph {
         return sb.toString();
     }
 
-    public static String graph(Map<String, Number> data, String unit) {
+    public static String graph(Map<String, Number> data, String format) {
         double maxValue = data.values().stream().mapToDouble(Number::doubleValue).max().orElse(1);
-        return new Graph(0, maxValue).render(data, unit);
+        return new Graph(0, maxValue).render(data, format);
+    }
+
+    public static String graph(Map<String, Number> data, String format, double maxValue) {
+        return new Graph(0, maxValue).render(data, format);
     }
 }

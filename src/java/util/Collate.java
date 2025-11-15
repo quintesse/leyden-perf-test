@@ -39,21 +39,24 @@ public class Collate {
         System.out.println();
 
         Map<String, List<Oha>> requests = readRequests(resultsFolder);
-        requests.forEach((k, ohas) -> {
-            System.out.println("Request durations for " + k);
-            Map<String, Number> avgDurations = avgRequestDurations(ohas, 10);
-            System.out.println(Graph.graph(avgDurations, "%6.1fms"));
-            System.out.println();
-        });
+
+        for (int limit : List.of(10, 100, 1000, 10000)) {
+            requests.forEach((k, ohas) -> {
+                System.out.println("Timings for first " + limit + " requests for " + k);
+                Map<String, Number> avgDurations = avgRequestDurations(ohas, 10, limit);
+                System.out.println(Graph.graph(avgDurations, "%6.1fms"));
+                System.out.println();
+            });
+        }
     }
 
     // Collapse a list of requests and return a list of durations of maximum
     // `maxEntries` entries, calculating the average duration for each entry.
     // The key of each entry is either its index in the original list, or if
     // we have more than `maxEntries` entries, a range like "21-30"
-    private static Map<String, Number> avgRequestDurations(List<Oha> requests, int maxEntries) {
+    private static Map<String, Number> avgRequestDurations(List<Oha> requests, int maxEntries, int limit) {
         Map<String, Number> result = new LinkedHashMap<>();
-        int size = requests.size();
+        int size = Math.min(requests.size(), limit);
         if (size == 0) return result;
 
         if (size <= maxEntries) {
@@ -103,12 +106,12 @@ public class Collate {
     private static Map<String, List<Oha>> readRequests(Path resultsFolder) {
         Map<String, List<Oha>> result = new TreeMap<>();
         try (var paths = Files.walk(resultsFolder)) {
-            paths.filter(path -> path.getFileName().toString().endsWith("-ttfr.db"))
+            paths.filter(path -> path.getFileName().toString().endsWith("-test.db"))
                     .forEach(path -> {
                         try {
                             List<Oha> ohaList = Oha.read(path);
                             String key = path.getParent().getFileName() + "-"
-                                    + path.getFileName().toString().replace("-ttfr.db", "");
+                                    + path.getFileName().toString().replace("-test.db", "");
                             result.put(key, ohaList);
                         } catch (Exception e) {
                             System.err.println("Failed to read OHA database file: " + path);
