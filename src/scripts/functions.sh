@@ -75,9 +75,16 @@ function do_test_run() {
 	local cmd="java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar \"${JAR_PATH}\""
 	echo "Command: $cmd"
 	echo "$cmd" > "$outfile"
-	java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
-	JAVA_PID=$!
-	sleep 10
+	if [ $HARDWARE_CONFIGURED == true ];then
+            java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
+	    JAVA_PID=$!
+            taskset --pid -c $PROCESSORS_TO_USE $JAVA_PID &
+            perf record --cpu $PROCESSORS_TO_USE -o ${TEST_OUT_DIR}/${NAME}.perf -p $JAVA_PID &
+	else
+	    java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
+	    JAVA_PID=$!
+	fi
+
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
 		echo "Running tests for ${NAME}..."
 		${TEST_FUNC} "${NAME}" || true
