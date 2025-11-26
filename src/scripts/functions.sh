@@ -1,9 +1,10 @@
 #!/bin/bash
+source hardware-tweaks.conf
 set -euo pipefail
 
 function compile_maven() {
     local repository=$1
-	local opts=$2
+    local opts=$2
 
     echo "Compiling application '$repository'..."
     pushd "apps/$repository" > /dev/null
