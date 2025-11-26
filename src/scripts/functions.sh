@@ -84,6 +84,8 @@ function do_test_run() {
 	    java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
 	    JAVA_PID=$!
 	fi
+	
+	wait_for_8080 ${NAME} "${TEST_OUT_DIR}/time-to-8080.csv"
 
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
 		echo "Running tests for ${NAME}..."
@@ -176,6 +178,24 @@ function ctrl_c() {
 		stop_postgres "${CONTAINER_NM}" || true
 	fi
 	exit 1
+}
+
+
+wait_for_8080() {
+    local time=$(date +%s%N)
+    local name=$1
+    local file=$2
+    echo "Waiting for port 8080..."
+    for ((i=0; i<60; i++)); do
+        # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
+        if (echo > /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
+            echo $name","$(expr $(date +%s%N) - $time) >> $file
+            return 0
+        fi
+        sleep .3
+    done
+    echo "Timeout waiting for port 8080"
+    return 1
 }
 
 case "$(uname -s)" in
