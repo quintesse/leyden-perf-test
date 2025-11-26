@@ -1,5 +1,5 @@
 #!/bin/bash
-source hardware-tweaks.conf
+
 set -euo pipefail
 
 function compile_maven() {
@@ -76,17 +76,17 @@ function do_test_run() {
 	local cmd="java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar \"${JAR_PATH}\""
 	echo "Command: $cmd"
 	echo "$cmd" > "$outfile"
-	if [ $HARDWARE_CONFIGURED == true ];then
-            java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
+	if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true ]]; then
+		java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
 	    JAVA_PID=$!
-            taskset --pid -c $PROCESSORS_TO_USE $JAVA_PID &
-            perf record --cpu $PROCESSORS_TO_USE -o ${TEST_OUT_DIR}/${NAME}.perf -p $JAVA_PID &
+		taskset --pid -c "$PROCESSORS_TO_USE" $JAVA_PID &
+		perf record --cpu "$PROCESSORS_TO_USE" -o "${TEST_OUT_DIR}/${NAME}.perf" -p $JAVA_PID &
 	else
-	    java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
+		java ${TEST_JAVA_OPTS} ${TEST_AOT_OPTS} -jar "${JAR_PATH}" >> "$outfile" 2>&1 &
 	    JAVA_PID=$!
 	fi
 	
-	wait_for_8080 ${NAME} "${TEST_OUT_DIR}/time-to-8080.csv"
+	wait_for_8080 "${NAME}" "${TEST_OUT_DIR}/time-to-8080.csv"
 
 	if kill -0 ${JAVA_PID} > /dev/null 2>&1; then
 		echo "Running tests for ${NAME}..."
@@ -190,7 +190,7 @@ wait_for_8080() {
     for ((i=0; i<60; i++)); do
         # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
         if (echo > /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
-            echo $name","$(expr $(date +%s%N) - $time) >> $file
+            echo "$name,$(($(date +%s%N) - time))" >> "$file"
             return 0
         fi
         sleep .3

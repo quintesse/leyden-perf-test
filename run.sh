@@ -61,7 +61,7 @@ function cleanup() {
 function ctrl_c() {
 	echo "Caught Ctrl-C, cleaning up..."
     cleanup
-    restorejdk
+    restore_jdk
     exit 2
 }
 
