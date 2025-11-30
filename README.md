@@ -1,32 +1,176 @@
-
 # Leyden Performance Tests
 
-These are some scripts to help with performance testing of different JVMs, especially focused on finding out the effect of the different AOT settings.
+These are some scripts to help with performance/load testing of different JVMs, especially focused on finding out the effect of the different Leyden AOT settings.
 
-The requirements are that you have both Java and [oha](https://github.com/hatoo/oha) installed and available on your PATH.
+## Requirements
 
-The first time you have to run:
+- Java (will be automatically downloaded by JBang if not present)
+- [oha](https://github.com/hatoo/oha) - HTTP load testing tool
+- Docker or Podman (for infrastructure services like PostgreSQL)
 
-```
-$ ./setup.sh
-```
+## Quick Start
 
-After that you can run `./run.sh <version>...` passing in the versions that you're interested in testing, for example:
+The first time you need to set up the test applications:
 
-```
-./run.sh 24 25 26
-```
-
-The results for each test run are written to a folder named `test-run-XXXXX/jdk<VERSION>` that gets created inside the `test-results` folder.
-For each test the performance results are written to a `<TESTNAME>-test.json` file and the standard output of the tests are written to `<TESTNAME>-app.out` files.
-When the selected Jdk version is at least 25 or higher, AOT versions of all tests are automatically run and their results stored in a folder named `jdk<VERSION>aot`.
-
-NB: the script uses [JBang](jbang.dev) to automatically switch between the selected Jdks. It will of course also automatically download any Jdks that aren't locally installed yet. But if you want to use specific builds of the Jdks it's up to you to make sure that you've explicitly/manually installed the correct Jdk using JBang before running the tests.
-
-If you want to pass specific Java options to the test applications, you can do so by setting the `TEST_JAVA_OPTS` environment variable. For example:
-
-```
-TEST_JAVA_OPTS="-Xms128m -Xmx256m" ./run.sh 24 25 26
+```bash
+./run setup
 ```
 
-NB: The `run.sh` script has an optional first parameter, `--tag <tag>` or `-t <tag>`, that is a user-defined "tag" that can be used to mark the test-run folder. It is simply added to the name of the folder, so for example running `TEST_JAVA_OPTS="-Xms128m -Xmx256m" ./run.sh -t lowmem 24 25 26` would create a folder like `test-run-XXXXX-lowmem`.
+This will clone and compile all the test applications.
+
+## Running Tests
+
+The test framework supports running individual tests or entire test suites:
+
+```bash
+# List all available test suites and tests
+./run list
+
+# Run all tests with Jdks 25 and 26
+./run test -j 25,26 all
+
+# Run a specific test suite with Jdk 26
+./run test -j 26 sqpc/spring-normal
+
+# Run all tests in a suite with Jdk 25
+./run test -j 25 'sqpc/*'
+
+# Run tests matching a pattern with Jdks 25 and 26
+./run test -j 25,26 'sqpc/quarkus-*'
+```
+
+## Test Output
+
+Test results are written to a folder in the `test-results/` directory with the format `test-run-YYYYMMDD-HHMMSS/j<VERSION>`. Each test produces:
+
+- `<testname>-oha.json` - Performance metrics from oha
+- `<testname>-oha.db` - SQLite database with detailed request timings
+- `<testname>-app.out` - Application console output
+- `time-to-8080.csv` - Application startup times
+
+## Advanced Options
+
+### Custom Java Options
+
+```bash
+TEST_JAVA_OPTS="-Xms128m -Xmx256m" ./run test sqpc/*
+```
+
+### Tagging Results
+
+```bash
+# Add a tag to the result folder name
+./run test --tag lowmem sqpc/*
+```
+
+Will result in the results of the tests being saved to `test-results/test-run-YYYYMMDD-HHMMSS-lowmem`.
+
+### Custom Output Path
+
+```bash
+./run test -o /path/to/results sqpc/*
+```
+
+### Select Driver
+
+Drivers are responsible for actually testing, or "friving", the test applications. You can select the one you want to use like this:
+
+```bash
+./run test -d oha sqpc/*
+```
+
+Right now there's only a single driver, named `oha`, which is the driver that will be used if you don't specify this option.
+When multiple drivers exist you can list the available ones running
+
+```bash
+./run list-drivers
+```
+
+### Profiles
+
+Profiles are source files defining sets of variables that can be passed to the test framework to make it behave in a certain way.
+Certain variables might affect the test applications themselves (eg. `TEST_JAVA_OPTIONS` for passing custom option to the Java runtime),
+others might affect the driver (eg. `TEST_DRIVER_CPUS`).
+
+The available profiles can be listed with:
+
+```bash
+./run list-profiles
+```
+
+And activated by running:
+
+```bash
+./run test -P lowmem sqpc/*
+```
+
+The activated profiles will be made part of the test output directory name so it will be easy to see which test runs where run with what profiles.
+
+## Manual Test Control
+
+You can manually control individual components:
+
+```bash
+# Manually start/stop infrastructure
+./run infra sqpc/spring-normal start
+./run infra sqpc/spring-normal stop
+
+# Manually start/stop application
+./run app sqpc/spring-normal start
+./run app sqpc/spring-normal stop
+```
+
+## Available Test Suites
+
+- **sqpc** - Spring Quarkus Performance Comparison
+  - `spring-normal` - Spring Boot compiled normally
+  - `spring-sbaot` - Spring Boot with Spring AOT optimization
+  - `quarkus-normal` - Quarkus compiled normally
+  - `quarkus-uberjar` - Quarkus packaged as uber-jar
+
+Run `./run list` to see all available tests with descriptions.
+
+## Creating New Tests
+
+Tests are organized in a hierarchical structure under `src/scripts/tests/`:
+
+```
+tests/
+  <suite-name>/
+    setup.sh              # Suite-level setup (clone repos, etc.)
+    infra.sh              # Suite-level infrastructure control
+    shared-vars.sh        # Shared variables for all tests in suite
+    urls.txt              # URLs to test with oha
+    DESCRIPTION           # One-line description of the suite
+    <test-name>/
+      setup.sh            # Test-specific setup (compilation, etc.)
+      app.sh              # Application start/stop control
+      infra.sh            # Test-specific infrastructure (optional)
+      DESCRIPTION         # One-line description of the test
+```
+
+See [`src/scripts/tests/_suite_template`](src/scripts/tests/_suite_template) for a complete template.
+
+## Performance Analysis
+
+Use the included Java utilities to analyze test results:
+
+```bash
+# Collate and compare results across multiple test runs
+jbang src/java/util/Collate.java test-results/test-run-YYYYMMDD-HHMMSS
+```
+
+This will display graphs comparing:
+- Total duration
+- Requests per second
+- Response time percentiles
+- Request timing breakdowns
+
+## Hardware Tweaks (Advanced)
+
+For more stable performance testing on Linux, you can use hardware tweaks:
+
+1. Edit [`hardware-tweaks.conf`](hardware-tweaks.conf) with your system's CPU settings
+2. Run tests with: `./local-run-with-hardware-tweaks.sh test sqpc/*`
+
+**Warning:** This script modifies CPU frequency scaling and turbo boost settings. Use with caution!

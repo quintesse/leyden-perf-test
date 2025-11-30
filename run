@@ -1,0 +1,62 @@
+#!/bin/bash
+set -uo pipefail
+
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+export TEST_DIR=${script_dir}
+export TEST_SRC_DIR=${TEST_DIR}/src
+export TEST_APPS_DIR=${TEST_DIR}/apps
+export TEST_BUILDS_DIR=${TEST_DIR}/builds
+
+source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
+
+if [ -t 1 ] ; then
+	export BOLD="\033[1m"
+	export NORMAL="\033[0m"
+	export RED="\033[31m"
+	export GREEN="\033[32m"
+	export CURUP="\033M"
+	export CLREOL="\033[0J"
+else
+	export BOLD=""
+	export NORMAL=""
+	export RED=""
+	export GREEN=""
+	export CURUP=""
+	export CLREOL=""
+fi
+
+function list_commands() {
+	for filename in "${TEST_SRC_DIR}"/scripts/bin/*.sh; do
+		name=$(basename "$filename" ".sh")
+		description=$(grep -m 1 '^# DESCRIPTION=' "$filename" || true | cut -d'=' -f2-)
+		if [[ -z "${description}" ]]; then
+			echo -e "  ${BOLD}$name${NORMAL}"
+		else
+			echo -e "  ${BOLD}$name :${NORMAL} $description"
+		fi
+	done
+}
+
+if [[ $# -eq 0 || "$1" == "-h" || "$1" == "--help" ]]; then
+	if [[ $# -eq 0 ]]; then
+		echo "ERROR: Missing command."
+	fi
+	echo "This is the Leyden Performance Test runner."
+	echo "Usage: ./run <command> [<args>]"
+	echo ""
+	echo "Available commands:"
+	list_commands
+	exit 3
+fi
+
+command="$1"
+if [[ ! -f "${TEST_SRC_DIR}/scripts/bin/${command}.sh" ]]; then
+	echo "ERROR: Unknown command '${command}'."
+	echo "Available commands:"
+	list_commands
+	exit 1
+fi
+
+shift
+"${TEST_SRC_DIR}"/scripts/bin/"${command}".sh "$@"
