@@ -71,8 +71,18 @@ function start_container() {
 		cpuopts=("--cpuset-cpus=$TEST_INFRA_CPUS")
 	fi
 	
+	local outfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID:-${TEST_SUITE_NAME}}-${container_name}-infra.out"
+	local cmd="${TEST_ENGINE} run -d --rm --name ${container_name} ${cpuopts[*]} ${run_opts[*]} ${image}"
+	echo "   - Container: $cmd"
+	echo "$cmd" > "$outfile"
 	# Using MSYS_NO_PATHCONV=1 to avoid Git Bash on Windows from messing up any volume mount paths
-	MSYS_NO_PATHCONV=1 ${TEST_ENGINE} run -d --rm --name "${container_name}" "${cpuopts[@]}" "${run_opts[@]}" "${image}" > /dev/null
+	MSYS_NO_PATHCONV=1 ${TEST_ENGINE} run -d --rm --name "${container_name}" "${cpuopts[@]}" "${run_opts[@]}" "${image}" >> "$outfile" 2>&1 || true
+	local result=$?
+	if [[ $result -eq 0 ]]; then
+		echo -e "   - ${NORMAL}${RED}Error: Failed to start container ${display_name}.${NORMAL}"
+		cat "$outfile" 2>/dev/null || true
+		exit $result
+	fi
 
 	local cidfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID:-${TEST_SUITE_NAME}}-${container_name}.cid"
 	echo "${container_name}" >> "${cidfile}"
