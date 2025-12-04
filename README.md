@@ -136,19 +136,6 @@ And activated by running:
 
 The activated profiles will be made part of the test output directory name so it will be easy to see which test runs where run with what profiles.
 
-### Adding more tests
-
-Adding a new suite of tests is best done by making a copy of the `_suite_template` directory that you can
-find in the `./src/scripts/tests` directory and renaming it to something that will identify the tests that
-you want to add (we recommend something short, you migh tbe typing the name a lot).
-
-Once that copy is created take a look at each of the files in that directory, there's inline explanation in
-each of them on how they are to be used. Edit them to perform the desired actions.
-
-And finally for each of the tests that you want to add you make a copy of the `example_test` folder and
-give it a unique (and short!) name. Like the suite itself there are files in the directory that you will
-need to edit to run your tests in exactly the way you want them.
-
 ## Manual Test Control
 
 You can manually control individual components:
@@ -183,7 +170,6 @@ tests/
     setup.sh              # Suite-level setup (clone repos, etc.)
     infra.sh              # Suite-level infrastructure control
     shared-vars.sh        # Shared variables for all tests in suite
-    urls.txt              # URLs to test with oha
     DESCRIPTION           # One-line description of the suite
     <test-name>/
       setup.sh            # Test-specific setup (compilation, etc.)
@@ -192,7 +178,16 @@ tests/
       DESCRIPTION         # One-line description of the test
 ```
 
-See [`src/scripts/tests/_suite_template`](src/scripts/tests/_suite_template) for a complete template.
+Adding a new suite of tests is best done by making a copy of the [`_suite_template`](src/scripts/tests/_suite_template) 
+directory and renaming it to something that will identify the tests that you want to add (we recommend something short,
+you migh tbe typing the name a lot).
+
+Once that copy is created take a look at each of the files in that directory, there's inline explanation in
+each of them on how they are to be used. Edit them to perform the desired actions.
+
+And finally for each of the tests that you want to add you make a copy of the [`example_test`](src/scripts/tests/_suite_template/example_test)
+folder and give it a unique (and short!) name. Like the suite itself there are files in the directory that you will
+need to edit to run your tests in exactly the way you want them.
 
 ## Performance Analysis
 
