@@ -73,7 +73,7 @@ Will result in the results of the tests being saved to `test-results/test-run-YY
 
 ### Select Driver
 
-Drivers are responsible for actually testing, or "friving", the test applications. You can select the one you want to use like this:
+Drivers are responsible for actually testing, or "driving", the test applications. You can select the one you want to use like this:
 
 ```bash
 ./run test -d oha sqpc/*
@@ -84,6 +84,23 @@ When multiple drivers exist you can list the available ones running
 
 ```bash
 ./run list-drivers
+```
+
+### Select Strategies
+
+Strategies are responsible for the manner in which testing is performed. This includes things like which options are passed to the test application and in which order steps are performed.
+
+```bash
+./run test -s aot sqpc/*
+```
+
+Right now there are two strategies: "normal" and "aot".
+If no strategies are supplied the default is to use both "normal" and "aot", in that order.
+The "normal" strategy doesn't do anything special and will just run each test in turn.
+The "aot" strategy first performs a training run for each test and will then restart the test whith the newly created AOT cache.
+
+```bash
+./run list-strategies
 ```
 
 ### Profiles
