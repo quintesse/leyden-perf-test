@@ -209,6 +209,6 @@ This will display graphs comparing:
 For more stable performance testing on Linux, you can use hardware tweaks:
 
 1. Edit [`hardware-tweaks.conf`](hardware-tweaks.conf) with your system's CPU settings
-2. Run tests with: `./local-run-with-hardware-tweaks.sh test sqpc/*`
+2. Run tests with: `./hwtweaked-run test sqpc/*`
 
 **Warning:** This script modifies CPU frequency scaling and turbo boost settings. Use with caution!
