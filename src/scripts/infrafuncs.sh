@@ -19,7 +19,12 @@ fi
 function start_postgres() {
 	local container_name=$1
 	local postgres_args=("${@:2}")
-	start_container "PostgreSQL database" "${container_name}" "docker.io/library/postgres:17" "${postgres_args[@]}"
+
+	local result=0
+	start_container "PostgreSQL database" "${container_name}" "docker.io/library/postgres:17" "${postgres_args[@]}" || result=$?
+	if [[ $result -ne 0 ]]; then
+		return $result
+	fi
 	wait_postgres "${container_name}"
 }
 
@@ -76,12 +81,12 @@ function start_container() {
 	echo "   - Container: $cmd"
 	echo "$cmd" > "$outfile"
 	# Using MSYS_NO_PATHCONV=1 to avoid Git Bash on Windows from messing up any volume mount paths
-	MSYS_NO_PATHCONV=1 ${TEST_ENGINE} run -d --rm --name "${container_name}" "${cpuopts[@]}" "${run_opts[@]}" "${image}" >> "$outfile" 2>&1 || true
-	local result=$?
-	if [[ $result -eq 0 ]]; then
+	local result=0
+	MSYS_NO_PATHCONV=1 ${TEST_ENGINE} run -d --rm --name "${container_name}" "${cpuopts[@]}" "${run_opts[@]}" "${image}" >> "$outfile" 2>&1 || result=$?
+	if [[ $result -ne 0 ]]; then
 		echo -e "   - ${NORMAL}${RED}Error: Failed to start container ${display_name}.${NORMAL}"
 		cat "$outfile" 2>/dev/null || true
-		exit $result
+		return $result
 	fi
 
 	local cidfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID:-${TEST_SUITE_NAME}}-${container_name}.cid"

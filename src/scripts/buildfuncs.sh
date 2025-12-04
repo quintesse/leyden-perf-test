@@ -18,10 +18,8 @@ function clone() {
 	local result
     if [[ ! -d ${TEST_APPS_DIR}/$repository ]]; then
       echo "   - Cloning repository '$repository'..."
-	  set +e
-      git clone -q --depth 1 "$repo_url" "${TEST_APPS_DIR}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1
-	  result=$?
-	  set -e
+	  local result=0
+      git clone -q --depth 1 "$repo_url" "${TEST_APPS_DIR}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1 || result=$?
       if [ $result -ne 0 ]; then
          echo -e "   - ${NORMAL}${RED}✗ Repository '$repository' failed to clone.${NORMAL}"
       else 

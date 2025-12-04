@@ -120,7 +120,10 @@ function run_command() {
 	local -a aftersuitefunccall=("_noop")
 	local -a firstsuitefunccall=("_run_command_for_suite" "${cmd}" "${msg}")
 	local -a lastsuitefunccall=("_noop")
-	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall
+
+	local result=0
+	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall || result=$?
+	return $result
 }
 
 # Runs a command for a specific test.
@@ -140,7 +143,12 @@ function _run_command_for_test() {
 	local cmd_path="${TEST_TEST_DIR}/${cmd}.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test: ${TEST_SUITE_NAME}/${TEST_TEST_NAME} ..."
-		"${cmd_path}" "${args[@]}"
+		local result=0
+		"${cmd_path}" "${args[@]}" || result=$?
+		if [[ $result -ne 0 ]]; then
+			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Failed.${NORMAL}"
+			return $result
+		fi
 		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Done.${NORMAL}"
 	fi
 }
@@ -161,7 +169,12 @@ function _run_command_for_suite() {
 	local cmd_path="${TEST_SUITE_DIR}/${cmd}.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test suite: ${TEST_SUITE_NAME} ..."
-		"${cmd_path}" "${args[@]}"
+		local result=0
+		"${cmd_path}" "${args[@]}" || result=$?
+		if [[ $result -ne 0 ]]; then
+			echo -e "   - ${NORMAL}${RED}✗ ${msg} test suite ${TEST_SUITE_NAME}   : Failed.${NORMAL}"
+			return $result
+		fi
 		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test suite ${TEST_SUITE_NAME}   : Done.${NORMAL}"
 	fi
 }
@@ -199,33 +212,47 @@ function run_suite_funcs() {
 	local -n firstsuitefunc=$5
 	local -n lastsuitefunc=$6
 
+	local result=0
 	local cursuite=""
+	local skip_suite=false
 	local tests=( $(select_tests "${testpat}") )
 	for test in "${tests[@]}"; do
 		suitenm=${test%%/*}
 		testnm=${test#*/}
 		if [[ "${suitenm}" != "${cursuite}" ]]; then
+			skip_suite=false
 			if [[ "${cursuite}" != "" ]]; then
 				export TEST_SUITE_NAME="${cursuite}"
 				export TEST_SUITE_DIR="${TEST_SRC_DIR}/scripts/tests/${cursuite}"
 				export TEST_TEST_NAME=
 				export TEST_TEST_DIR=
-				"${lastsuitefunc[@]}"
+				result=0
+				"${lastsuitefunc[@]}" || result=$?
 			fi
 			export TEST_SUITE_NAME="${suitenm}"
 			export TEST_SUITE_DIR="${TEST_SRC_DIR}/scripts/tests/${suitenm}"
 			export TEST_TEST_NAME=
 			export TEST_TEST_DIR=
-			"${firstsuitefunc[@]}"
+			result=0
+			"${firstsuitefunc[@]}" || result=$?
+			if [[ $result -ne 0 ]]; then
+				skip_suite=true
+				continue
+			fi
+		elif [[ "${skip_suite}" == true ]]; then
+			continue
 		fi
 		export TEST_SUITE_NAME="${suitenm}"
 		export TEST_SUITE_DIR="${TEST_SRC_DIR}/scripts/tests/${suitenm}"
 		export TEST_TEST_NAME="${testnm}"
 		export TEST_TEST_DIR="${TEST_SRC_DIR}/scripts/tests/${suitenm}/${testnm}"
-		"${beforesuitefunc[@]}"
-		"${testfunc[@]}"
-		"${aftersuitefunc[@]}"
 		cursuite=${suitenm}
+		result=0
+		"${beforesuitefunc[@]}" || result=$?
+		if [[ $result -eq 0 ]]; then
+			"${testfunc[@]}" || result=$?
+			"${aftersuitefunc[@]}" || result=$?
+		fi
 	done
 	if [[ "${cursuite}" != "" ]]; then
 		export TEST_SUITE_NAME="${cursuite}"
