@@ -24,4 +24,11 @@ else
     echo -e "   - ${NORMAL}${GREEN}✓ oha   : Command is installed.${NORMAL}"
 fi
 
+if [[ $# -gt 0 && "$1" == "--clean" ]]; then
+	rm -rf "${TEST_APPS_DIR}" > /dev/null || true
+	rm -rf "${TEST_BUILDS_DIR}" > /dev/null || true
+	echo -e "   - ${NORMAL}${GREEN}✓ Cleaned 'apps' and 'builds' directories${NORMAL}"
+	shift
+fi
+
 run_command "${1:-all}" "setup" "Setting up"
