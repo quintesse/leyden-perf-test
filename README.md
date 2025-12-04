@@ -80,11 +80,19 @@ Drivers are responsible for actually testing, or "driving", the test application
 ```
 
 Right now there's only a single driver, named `oha`, which is the driver that will be used if you don't specify this option.
-When multiple drivers exist you can list the available ones running
+
+When multiple drivers exist you can list the available ones running:
 
 ```bash
 ./run list-drivers
 ```
+
+Currently existing drivers:
+
+ - **oha** - Uses [oha](https://github.com/hatoo/oha) to perform load tests. Accepts an `TEST_DRIVER_OHA_RATE_LIMIT` env var to set a rate limit (requests per second) if so desired.
+
+Custom drivers can be implemented by making a copy of the `_template.sh` file in the `./src/scripts/drivers`
+directory, renaming it and editing it to add the desired implementation.
 
 ### Select Strategies
 
@@ -103,11 +111,16 @@ The "aot" strategy first performs a training run for each test and will then res
 ./run list-strategies
 ```
 
+Custom strategies can be implemented by making a copy of the `_template.sh` file in the
+`./src/scripts/strategies` directory, renaming it and editing it to add the desired implementation.
+
 ### Profiles
 
 Profiles are source files defining sets of variables that can be passed to the test framework to make it behave in a certain way.
 Certain variables might affect the test applications themselves (eg. `TEST_JAVA_OPTIONS` for passing custom option to the Java runtime),
-others might affect the driver (eg. `TEST_DRIVER_CPUS`).
+others might affect the driver (eg. `TEST_DRIVER_CPUS`). If no profile is given the profile named `default` will be activated
+automatically if it exists (by default it does _not_, you will have to create it yourself, for example by making a copy of the provided
+`_template.sh` file in the `./profiles` directory, renaming it to `default.sh` and editing its contents).
 
 The available profiles can be listed with:
 
@@ -122,6 +135,19 @@ And activated by running:
 ```
 
 The activated profiles will be made part of the test output directory name so it will be easy to see which test runs where run with what profiles.
+
+### Adding more tests
+
+Adding a new suite of tests is best done by making a copy of the `_suite_template` directory that you can
+find in the `./src/scripts/tests` directory and renaming it to something that will identify the tests that
+you want to add (we recommend something short, you migh tbe typing the name a lot).
+
+Once that copy is created take a look at each of the files in that directory, there's inline explanation in
+each of them on how they are to be used. Edit them to perform the desired actions.
+
+And finally for each of the tests that you want to add you make a copy of the `example_test` folder and
+give it a unique (and short!) name. Like the suite itself there are files in the directory that you will
+need to edit to run your tests in exactly the way you want them.
 
 ## Manual Test Control
 
