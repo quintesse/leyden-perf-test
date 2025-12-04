@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DESCRIPTION=Example driver script.
+# DESCRIPTION=Example driver script. Put your description here.
 
 set -euo pipefail
 

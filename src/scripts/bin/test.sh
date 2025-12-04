@@ -147,6 +147,10 @@ if [[ ${#strategies[@]} -eq 0 ]]; then
 	strategies=("normal" "aot")
 fi
 
+if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
+	profiles=("default")
+fi
+
 {
 	"${TEST_DIR}/run" list "${testPat}"
 	echo "Test driver: ${TEST_DRIVER}"
@@ -158,11 +162,16 @@ fi
 export TEST_OUT_DIR
 export TEST_TEST_RUNID
 
+for profile in "${profiles[@]}"; do
+	echo "   - Applying profile: ${profile}"
+	source "${TEST_DIR}/profiles/${profile}.sh"
+done
+
 echo "   - Selected java versions ${javaVersions[*]}"
 for javaVersion in "${javaVersions[@]}"; do
 	echo "   - Running tests with Java version ${javaVersion}"
 	export TEST_APP_JAVA=${javaVersion}
-
+	
 	for strategy in "${strategies[@]}"; do
 		echo "   - Using strategy: ${strategy}"
 		TEST_OUT_DIR=${TEST_OUT_BASE}/j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}

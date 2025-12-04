@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DESCRIPTION=Example test strategy script.
+# DESCRIPTION=Example test strategy script. Put your description here.
 
 set -euo pipefail
 
