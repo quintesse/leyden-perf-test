@@ -4,4 +4,4 @@
 
 set -aeuo pipefail
 
-TEST_JAVA_OPTS="-Xms128m -Xmx256m"
+TEST_JAVA_OPTS="${TEST_JAVA_OPTS:-} -Xms128m -Xmx256m"
