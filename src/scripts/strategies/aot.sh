@@ -13,14 +13,12 @@ fi
 
 function prepare_aot_training {
 	echo "   - AOT enabled, starting training run ${TEST_TEST_RUNID}..."
-	#export TEST_STRAT_OPTS=-XX:AOTCacheOutput=${TEST_OUT_DIR}/${TEST_SUITE_NAME}-${TEST_TEST_NAME}-app.aot
-	export TEST_STRAT_OPTS="-XX:AOTCacheOutput=${TEST_OUT_DIR}/${TEST_SUITE_NAME}-${TEST_TEST_NAME}-app.aot -Xlog:aot+map=trace,aot+map+oops=trace:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}-aot.map:none:filesize=0 -Xlog:aot+resolve*=trace,aot+codecache+exit=debug,aot=warning:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}.log:level,tags"
+	export TEST_STRAT_OPTS="-XX:AOTCacheOutput=${TEST_OUT_DIR}/${TEST_SUITE_NAME}-${TEST_TEST_NAME}-app.aot -Xlog:aot+map=trace,aot+map+oops=trace:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}-aot.map:none:filesize=0 -Xlog:${TEST_LOG_LABEL:-}aot=warning:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}.log:level,tags"
 }
 
 function prepare_aot_run {
 	echo "   - AOT enabled, starting test run ${TEST_TEST_RUNID}..."
-	#export TEST_STRAT_OPTS=-XX:AOTCache=${TEST_OUT_DIR}/${TEST_SUITE_NAME}-${TEST_TEST_NAME}-app.aot
-	export TEST_STRAT_OPTS="-XX:AOTCache=${TEST_OUT_DIR}/${TEST_SUITE_NAME}-${TEST_TEST_NAME}-app.aot -Xlog:class+load=info,aot+codecache=debug:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}.log:level,tags"
+	export TEST_STRAT_OPTS="-XX:AOTCache=${TEST_OUT_DIR}/${TEST_SUITE_NAME}-${TEST_TEST_NAME}-app.aot -Xlog:${TEST_LOG_LABEL:-}aot=warning:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}.log:level,tags"
 }
 
 # First we do a training run to create an AOT cache
