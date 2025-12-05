@@ -4,5 +4,5 @@
 
 set -aeuo pipefail
 
-TEST_LOG_LABEL="class+load=info,aot+resolve*=trace,aot+codecache+exit=debug,"
-TEST_JAVA_OPTS="-XX:+PrintCompilation"
+TEST_LOG_LABEL="${TEST_LOG_LABEL:-}class+load=info,aot+resolve*=trace,aot+codecache+exit=debug,"
+TEST_JAVA_OPTS="${TEST_JAVA_OPTS:-} -XX:+PrintCompilation"
