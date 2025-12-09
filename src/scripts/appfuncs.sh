@@ -160,7 +160,7 @@ function wait_for_8080() {
 			return 2
         fi
         # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
-        if (echo > /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
+        if (echo -n < /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
             echo "${results_name},$(($(date +%s%N) - time))" >> "${TEST_OUT_DIR}/time-to-8080.csv"
             return 0
         fi
