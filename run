@@ -8,6 +8,16 @@ export TEST_SRC_DIR=${TEST_DIR}/src
 export TEST_APPS_DIR=${TEST_DIR}/apps
 export TEST_BUILDS_DIR=${TEST_DIR}/builds
 
+export TEST_ENGINE=""
+if command -v podman >/dev/null 2>&1; then
+  TEST_ENGINE="podman"
+elif command -v docker >/dev/null 2>&1; then
+  TEST_ENGINE="docker"
+else
+  echo "Error: Neither podman nor docker can be found"
+  exit 3
+fi
+
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
 if [ -t 1 ] ; then

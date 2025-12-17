@@ -16,10 +16,11 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "Usage: ./run app [<options>] <test-suite>/<test-name> start|stop"
 	echo ""
 	echo "Options:"
-	echo "  -o, --output <path>   Path to the output folder."
-	echo "  -j, --java <version>  Java version to use for the test application."
-	echo "  --result-tag <tag>    Tag to add to the result folder name."
-	echo "  --jdk-tag <tag>       Tag to add to the JDK folder name."
+	echo "  -o, --output <path>    Path to the output folder."
+	echo "  -j, --java <version>   Java version to use for the test application."
+	echo "  -t|--tag <tag>         Tag to add to the test results folder name"
+	echo "  --jdk-tag <tag>        Tag to add to the JDK folder name."
+	echo "  -P|--profile <profile> Test profile to use (can be specified multiple times)"
 	echo ""
 	echo "This script can be used to manually start/stop a test application, and is normally"
 	echo "run with a <test-suite>/<test-name> argument referring to a single test. It is"
@@ -66,6 +67,7 @@ function run_app() {
 resultTag=""
 jdkTag=""
 outputPath=""
+profiles=()
 export TEST_APP_JAVA=""
 
 while [[ $# -gt 0 ]]; do
@@ -106,6 +108,21 @@ while [[ $# -gt 0 ]]; do
 			TEST_APP_JAVA="$1"
 			shift
 			;;
+        -P|--profile)
+			shift
+			if [[ $# -eq 0 ]]; then
+				echo "Error: Profile option specified but no value provided."
+				exit 4
+			fi
+			if [[ -f "${TEST_DIR}/profiles/$1.sh" ]]; then
+				profiles+=("$1")
+			else
+				echo "Error: Profile '$1' does not exist."
+				echo "Use './run list-profiles' to see the list of available profiles."
+				exit 4
+			fi
+			shift
+			;;
         *)
             break
             ;;
@@ -114,13 +131,19 @@ done
 
 javaVersion="${TEST_APP_JAVA:-Unknown}"
 
-export TEST_OUT_DIR
 if [[ ! -v TEST_OUT_DIR || -z "${TEST_OUT_DIR}" ]]; then
-	TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
-	TEST_OUT_DIR=${TEST_OUT_BASE}/j${javaVersion}${jdkTag:+-$jdkTag}
+	export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
+	mkdir -p "${TEST_OUT_BASE}"
+	export TEST_OUT_DIR=${TEST_OUT_BASE}/j${javaVersion}${jdkTag:+-$jdkTag}
 	mkdir -p "${TEST_OUT_DIR}"
 	echo "   - Created test output folder ${TEST_OUT_DIR}"
 fi
+export TEST_TEST_RUNID
+
+for profile in "${profiles[@]}"; do
+	echo "   - Applying profile: ${profile}"
+	source "${TEST_DIR}/profiles/${profile}.sh"
+done
 
 case "$2" in
 	start)

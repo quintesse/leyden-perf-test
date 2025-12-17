@@ -2,16 +2,6 @@
 
 set -euo pipefail
 
-TEST_ENGINE=""
-if command -v podman >/dev/null 2>&1; then
-  TEST_ENGINE="podman"
-elif command -v docker >/dev/null 2>&1; then
-  TEST_ENGINE="docker"
-else
-  echo "Error: Neither podman nor docker can be found"
-  exit 3
-fi
-
 # Starts a PostgreSQL container and waits for it to be ready.
 # Arguments:
 #   container_name - name of the container

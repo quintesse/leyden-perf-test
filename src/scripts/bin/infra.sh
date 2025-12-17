@@ -11,7 +11,12 @@ fi
 
 if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -ne 2 ]]; then
 	echo "This command starts/stops the required infrastructure for the tests."
-	echo "Usage: ./run infra <test-suite>/<test-name> start|stop"
+	echo "Usage: ./run infra [<options>] <test-suite>/<test-name> start|stop"
+	echo ""
+	echo "Options:"
+	echo "  -t|--tag <tag>               Tag to add to the test results folder name"
+	echo "  -o|--output <path>           Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
+	echo "  -P|--profile <profile>       Test profile to use (can be specified multiple times)"
 	echo ""
 	echo "This script can be used to manually start/stop infrastructure, and is normally"
 	echo "run with a <test-suite>/<test-name> argument referring to a single test. It is"
@@ -52,6 +57,65 @@ function run_infra() {
 	fi
 	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall
 }
+
+resultTag=""
+outputPath=""
+profiles=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -t|--tag)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "Error: Tag option specified but no tag value provided."
+                exit 4
+            fi
+            resultTag="$1"
+            shift
+            ;;
+        -o|--output)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "Error: Output option specified but no path provided."
+                exit 4
+            fi
+            outputPath="$1"
+            shift
+            ;;
+        -P|--profile)
+			shift
+			if [[ $# -eq 0 ]]; then
+				echo "Error: Profile option specified but no value provided."
+				exit 4
+			fi
+			if [[ -f "${TEST_DIR}/profiles/$1.sh" ]]; then
+				profiles+=("$1")
+			else
+				echo "Error: Profile '$1' does not exist."
+				echo "Use './run list-profiles' to see the list of available profiles."
+				exit 4
+			fi
+			shift
+			;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [[ ! -v TEST_OUT_DIR || -z "${TEST_OUT_DIR}" ]]; then
+	export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
+	mkdir -p "${TEST_OUT_BASE}"
+	export TEST_OUT_DIR=${TEST_OUT_BASE}/infra
+	mkdir -p "${TEST_OUT_DIR}"
+	echo "   - Created test output folder ${TEST_OUT_DIR}"
+fi
+export TEST_TEST_RUNID
+
+for profile in "${profiles[@]}"; do
+	echo "   - Applying profile: ${profile}"
+	source "${TEST_DIR}/profiles/${profile}.sh"
+done
 
 case "$2" in
 	start)
