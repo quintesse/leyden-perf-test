@@ -13,7 +13,7 @@ NAME=${2:-sqpc-quarkus-native}
 # The PID of the application is written to a file in the TEST_OUT_DIR.
 # Arguments:
 #   results_name - Base name to use for output files
-#   exec_path     - Path to the JAR file to run
+#   exec_path     - Path to the application to run
 # Variables used:
 #   TEST_OUT_DIR        - Directory where output files are written
 #   HARDWARE_CONFIGURED - If set to true, use taskset and perf to monitor the application
@@ -28,12 +28,11 @@ function start_app_native() {
 	fi
 	
 	local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
-	local cmd="${exec_path} "
-	echo "   - Command: $cmd"
-	echo "$cmd" > "$outfile"
+	echo "   - Command: $exec_path"
+	echo "${preamble[@]}" "'$exec_path'" > "$outfile"
 
 	local app_pid
-	"${preamble[@]}" $cmd >> "$outfile" 2>&1 &
+	eval "${preamble[@]}" "'$exec_path'" >> "$outfile" 2>&1 &
 	app_pid=$!
 
 	if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true ]]; then
