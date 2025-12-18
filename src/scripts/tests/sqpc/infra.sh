@@ -10,7 +10,7 @@ case "$1" in
 		# Not doing anything here, we want a clean infra state before each test
 		;;
 	start)
-		start_postgres "${PG_CONTAINER_NAME}" ${POSTGRES_ARGS}
+		start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_ARGS}"
 		;;
 	stop)
 		stop_postgres "${PG_CONTAINER_NAME}"
