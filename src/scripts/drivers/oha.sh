@@ -23,7 +23,9 @@ if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true && -v TEST_DRIVER
 	preamble=("taskset" "-c" "$TEST_DRIVER_CPUS")
 fi
 
-cmd="oha -n ${TEST_PERF_CNT:-10000} ${RATE_ARG[*]} -u ms --no-tui --urls-from-file ${TEST_SUITE_DIR}/urls.txt --output-format json -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json --db-url ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db"
+URL="http://localhost:8080/fruits"
+
+cmd="oha -n ${TEST_PERF_CNT:-10000} ${RATE_ARG[*]} -u ms --latency-correction --no-tui --output-format json -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json --db-url ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db $URL"
 echo "   - Driver command: ${cmd}"
 
-"${preamble[@]}" oha -n "${TEST_PERF_CNT:-10000}" "${RATE_ARG[@]}" -u ms --no-tui --urls-from-file "${TEST_SUITE_DIR}/urls.txt" --output-format json -o "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json" --db-url "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db"
+"${preamble[@]}" oha -n "${TEST_PERF_CNT:-10000}" "${RATE_ARG[@]}" -u ms --latency-correction --no-tui --output-format json -o "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json" --db-url "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db" "$URL"
