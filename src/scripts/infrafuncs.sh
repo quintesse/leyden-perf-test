@@ -4,15 +4,16 @@ set -euo pipefail
 
 # Starts a PostgreSQL container and waits for it to be ready.
 # Arguments:
-#   container_name - name of the container
-#   postgres_args  - additional arguments to pass to the PostgreSQL container
+#   container_name          - name of the container
+#   postgres_container_opts - additional arguments to pass to the PostgreSQL container
 function start_postgres() {
 	local container_name=$1
-	local postgres_args=("${@:2}")
+	local postgres_container_opts=$2
+
 	local postgres_conf="-c fsync=off -c synchronous_commit=off -c autovacuum=off -c full_page_writes=off -c wal_level=minimal -c archive_mode=off -c max_wal_senders=0 -c max_wal_size=4GB -c track_counts=off -c checkpoint_timeout=1h -c work_mem=32MB -c maintenance_work_mem=256MB"
 
 	local result=0
-	start_container "PostgreSQL database" "${container_name}"  "ghcr.io/quarkusio/postgres-17-perf:main" "${postgres_args[@]}" "${postgres_conf}" || result=$?
+	start_container "PostgreSQL database" "${container_name}"  "ghcr.io/quarkusio/postgres-17-perf:main" "${postgres_container_opts}" "${postgres_conf}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
@@ -43,8 +44,8 @@ function stop_postgres() {
 #   display_name   - name of the application
 #   container_name - name of the container
 #   image          - container image to use
-#   run_opts       - additional options to pass to the container runtime
-#   config_opts    - additional options to pass to the container runtime after the name of the image
+#   container_opts - additional options to pass to the container runtime
+#   container_args - additional arguments to pass to the container
 # Variables used:
 #   TEST_OUT_DIR        - output directory for storing container IDs
 #   TEST_TEST_RUNID     - id of the current test run (used for file names)
@@ -56,8 +57,8 @@ function start_container() {
 	local display_name=$1
 	local container_name=$2
 	local image=$3
-	local run_opts=("${@:4}")
-	local config_opts=("${@:5}")
+	local container_opts=$4
+	local container_args=$5
 
 	# First make sure the container is not already running
 	stop_container "${display_name}" "${container_name}" > /dev/null 2>&1 || true
@@ -70,12 +71,12 @@ function start_container() {
 	fi
 	
 	local outfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID:-${TEST_SUITE_NAME}}-${container_name}-infra.out"
-	local cmd="${TEST_ENGINE} run -d --rm --name ${container_name} ${cpuopts[*]} ${run_opts} ${image} ${config_opts[*]}"
+	local cmd="${TEST_ENGINE} run -d --rm --name ${container_name} ${cpuopts[*]} ${container_opts} ${image} ${container_args}"
 	echo "   - Container: $cmd"
 	echo "$cmd" > "$outfile"
 	# Using MSYS_NO_PATHCONV=1 to avoid Git Bash on Windows from messing up any volume mount paths
 	local result=0
-	MSYS_NO_PATHCONV=1 ${cmd} >> "$outfile" 2>&1 || result=$?
+	MSYS_NO_PATHCONV=1 ${TEST_ENGINE} run -d --rm --name "${container_name}" "${cpuopts[@]}" ${container_opts} "${image}" ${container_args} >> "$outfile" 2>&1 || result=$?
 	if [[ $result -ne 0 ]]; then
 		echo -e "   - ${NORMAL}${RED}Error: Failed to start container ${display_name}.${NORMAL}"
 		cat "$outfile" 2>/dev/null || true
