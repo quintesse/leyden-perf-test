@@ -87,7 +87,8 @@ else
 fi
 
 echo "Setting a constant CPU frequency"
-sudo cpupower frequency-set --min $TEST_FREQ --max $TEST_FREQ
+sudo cpupower frequency-set --min $TEST_FREQ
+sudo cpupower frequency-set --max $TEST_FREQ
 
 echo "Clearing IO Operations"
 sudo sync
@@ -101,7 +102,8 @@ sudo swapoff -a && sudo swapon -a
 
 echo "Trying to restore the hardware configuration"
 echo "Free CPU frequency"
-sudo cpupower frequency-set --min $MIN_FREQ --max $MAX_FREQ
+sudo cpupower frequency-set --min $MIN_FREQ 
+sudo cpupower frequency-set --max $MAX_FREQ
 
 echo "Re-enabling turbo boost"
 if [ $IS_INTEL == true ]; then
