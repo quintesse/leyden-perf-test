@@ -22,17 +22,17 @@ function start_app_native() {
 	local results_name=$1
 	local exec_path=$2
 
-	local preamble=()
+	local preamble=""
 	if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true ]]; then
-		preamble=("taskset" "-c" "$TEST_DRIVER_CPUS" " ")
+		preamble="taskset -c $TEST_DRIVER_CPUS "
 	fi
 	
 	local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
-	echo "   - Command: $exec_path"
-	echo "${preamble[@]}" "'$exec_path'" > "$outfile"
+	echo "   - Command: $preamble$exec_path"
+	echo "$preamble$exec_path" > "$outfile"
 
 	local app_pid
-	eval "${preamble[@]}" "'$exec_path'" >> "$outfile" 2>&1 &
+	$preamble$exec_path  >> "$outfile" 2>&1 &
 	app_pid=$!
 
 	if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true ]]; then
