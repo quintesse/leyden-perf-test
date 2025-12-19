@@ -26,4 +26,4 @@ function prepare_aot_run {
 run_all_tests "$1" "training" "prepare_aot_training"
 
 # Now run again using the AOT cache
-run_all_tests "$1" "" "prepare_aot_run"
+run_all_tests "$1" "aot" "prepare_aot_run"
