@@ -17,7 +17,12 @@ else
 	RATE_ARG=()
 fi
 
-URL="http://host.docker.internal:8080/fruits"
+# Prepare list of urls to use
+URL_FILE="${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-urls.txt"
+# Remove url file, in case it exists
+rm -f "$URL_FILE" > /dev/null 2>&1 || true
+URL="http:\/\/host.docker.internal:8080"
+sed -e "s/^/$URL/" "${TEST_SUITE_DIR}/urls.txt" > $URL_FILE
 
 cpuopts=()
 if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true && -v TEST_DRIVER_CPUS && -n "${TEST_DRIVER_CPUS}" ]]; then
@@ -30,7 +35,7 @@ else
 	HOST="host-gateway"
 fi
 
-cmd="${TEST_ENGINE} run -t --rm ${cpuopts[*]} --add-host=host.docker.internal:$HOST -v ${TEST_OUT_DIR:-.}:/test-results:z ghcr.io/hatoo/oha -n ${TEST_PERF_CNT:-10000} ${RATE_ARG[*]} -u ms --no-tui --output-format json -o /test-results/${TEST_TEST_RUNID}-oha.json --db-url /test-results/${TEST_TEST_RUNID}-oha.db ${URL}"
+cmd="${TEST_ENGINE} run -t --rm ${cpuopts[*]} --add-host=host.docker.internal:$HOST -v ${TEST_OUT_DIR:-.}:/test-results:z ghcr.io/hatoo/oha -n ${TEST_PERF_CNT:-10000} ${RATE_ARG[*]} -u ms --no-tui --output-format json -o /test-results/${TEST_TEST_RUNID}-oha.json --db-url /test-results/${TEST_TEST_RUNID}-oha.db  --urls-from-file $URL_FILE"
 echo "   - Driver command: ${cmd}"
 
-MSYS_NO_PATHCONV=1 ${TEST_ENGINE} run -t --rm "${cpuopts[@]}" "--add-host=host.docker.internal:$HOST" -v "${TEST_OUT_DIR:-.}:/test-results:z" ghcr.io/hatoo/oha -n "${TEST_PERF_CNT:-10000}" "${RATE_ARG[@]}" -u ms --no-tui --output-format json -o "/test-results/${TEST_TEST_RUNID}-oha.json" --db-url "/test-results/${TEST_TEST_RUNID}-oha.db" "${URL}"
+MSYS_NO_PATHCONV=1 ${TEST_ENGINE} run -t --rm "${cpuopts[@]}" "--add-host=host.docker.internal:$HOST" -v "${TEST_OUT_DIR:-.}:/test-results:z" ghcr.io/hatoo/oha -n "${TEST_PERF_CNT:-10000}" "${RATE_ARG[@]}" -u ms --no-tui --output-format json -o "/test-results/${TEST_TEST_RUNID}-oha.json" --db-url "/test-results/${TEST_TEST_RUNID}-oha.db"  --urls-from-file "${URL_FILE}"
