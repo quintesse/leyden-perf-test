@@ -62,7 +62,11 @@ function compile_maven() {
     echo "   - Compiling application '$repository'..."
 	set +e
     if pushd "${TEST_APPS_DIR}/$repository" > /tmp/leyden-perf-test-build-$$.log 2>&1; then
-	    ./mvnw clean package -DskipTests $opts > /tmp/leyden-perf-test-build-$$.log 2>&1
+		local repo="${TEST_APPS_DIR}/mvn_repo"
+		if [[ "$DETECTED_OS" == "windows" ]]; then
+			repo=$(cygpath -w "$repo")
+		fi
+	    ./mvnw clean deploy -s "${TEST_DIR}/local-settings.xml" "-Dperf.test.repo=${repo}" "-DaltDeploymentRepository=local-repo::default::file:${repo}" -DskipTests $opts > /tmp/leyden-perf-test-build-$$.log 2>&1
 	fi
     local result=$?
 	set -e

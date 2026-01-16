@@ -29,7 +29,7 @@ if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true && -v TEST_DRIVER
 	cpuopts=("--cpuset-cpus=$TEST_DRIVER_CPUS")
 fi
 
-if [[ "$(detectOs)" == "windows" ]]; then
+if [[ "$DETECTED_OS" == "windows" ]]; then
 	HOST=$(ping -4 -n 1 "$(hostname)" | grep -E -o -m 1 '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
 else
 	HOST="host-gateway"

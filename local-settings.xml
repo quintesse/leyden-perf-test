@@ -1,0 +1,18 @@
+<settings>
+  <profiles>
+    <profile>
+      <id>shared-repo-profile</id>
+      <repositories>
+        <repository>
+          <id>sibling-repo</id>
+          <url>file://${perf.test.repo}</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>shared-repo-profile</activeProfile>
+  </activeProfiles>
+</settings>

@@ -8,6 +8,13 @@ export TEST_SRC_DIR=${TEST_DIR}/src
 export TEST_APPS_DIR=${TEST_DIR}/apps
 export TEST_BUILDS_DIR=${TEST_DIR}/builds
 
+# Detects the operating system.
+case "$(uname -s)" in
+	Linux*)	export DETECTED_OS=linux;;
+	Darwin*) export DETECTED_OS=mac;;
+	CYGWIN*|MINGW*|MSYS*) export DETECTED_OS=windows;;
+esac
+
 export TEST_ENGINE=""
 if command -v podman >/dev/null 2>&1; then
   TEST_ENGINE="podman"

@@ -40,8 +40,7 @@ function start_app() {
 	echo "$cmd" > "$outfile"
 	java -version >> "$outfile" 2>&1
 
-	local os="$(detectOs)"
-	if [[ "$os" == "linux" ]]; then
+	if [[ "$DETECTED_OS" == "linux" ]]; then
 		echo "Flushing disk buffers..."
 		sudo sync
 
@@ -50,7 +49,7 @@ function start_app() {
 
 		echo "Clearing Swap..."
 		sudo swapoff -a && sudo swapon -a
-	elif [[ "$os" == "mac" ]]; then
+	elif [[ "$DETECTED_OS" == "mac" ]]; then
 		echo "Flushing disk buffers..."
 		sudo sync
 
@@ -130,7 +129,7 @@ function stop_process() {
 	local display_name=$2
 
 	echo "   - Stopping ${display_name} test application (#${pid})..."
-	if [[ "$(detectOs)" == "windows" ]]; then
+	if [[ "$DETECTED_OS" == "windows" ]]; then
 		kill -INT "${pid}" || true
 	else
 		kill -TERM "${pid}" || true
@@ -198,15 +197,4 @@ function require_java() {
 	echo "   - Ensuring Java $version is available..."
 	eval "$("${TEST_DIR}"/jbang jdk env "$version")"
 	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Java $version set as active.${NORMAL}${CLREOL}"
-}
-
-# Detects the operating system.
-# Returns:
-#   "linux", "mac", or "windows"
-function detectOs() {
-	case "$(uname -s)" in
-		Linux*)	echo linux;;
-		Darwin*) echo mac;;
-		CYGWIN*|MINGW*|MSYS*) echo windows;;
-	esac
 }
