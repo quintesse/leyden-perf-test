@@ -40,12 +40,23 @@ function start_app() {
 	echo "$cmd" > "$outfile"
 	java -version >> "$outfile" 2>&1
 
-	echo "Clearing IO Operations"
-	sudo sync
+	local os="$(detectOs)"
+	if [[ "$os" == "linux" ]]; then
+		echo "Flushing disk buffers..."
+		sudo sync
 
-	echo "Clearing Swap"
-	echo 3 | sudo tee /proc/sys/vm/drop_caches
-	sudo swapoff -a && sudo swapon -a
+		echo "Purging RAM caches..."
+		echo 3 | sudo tee /proc/sys/vm/drop_caches
+
+		echo "Clearing Swap..."
+		sudo swapoff -a && sudo swapon -a
+	elif [[ "$os" == "mac" ]]; then
+		echo "Flushing disk buffers..."
+		sudo sync
+
+		echo "Purging RAM caches..."
+		sudo purge
+	fi
 
 	local app_pid
 	"${preamble[@]}" java ${TEST_JAVA_OPTS} ${TEST_STRAT_OPTS} -jar "${jar_path}" >> "$outfile" 2>&1 &
