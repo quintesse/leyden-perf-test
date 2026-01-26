@@ -77,7 +77,11 @@ while [[ $# -gt 0 ]]; do
 				echo "Error: Java version option specified but no value provided."
 				exit 4
 			fi
-			IFS=',' read -r -a versions <<< "$1"
+			if [[ -f $1 ]]; then
+				IFS=$'\n' read -r -a versions < "$1"
+			else
+				IFS=',' read -r -a versions <<< "$1"
+			fi
 			javaVersions+=("${versions[@]}")
 			shift
 			;;

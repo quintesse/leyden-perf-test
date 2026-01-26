@@ -187,14 +187,19 @@ function wait_for_8080() {
     return 1
 }
 
-# Ensures that the specified Java version is available and set as active.
+# Ensures that the specified JDK is available and set as active.
 # Arguments:
-#   version - Java version to require
+#   version - JDK to activate (either version number or path to JAVA_HOME)
 # Variables used:
 #   TEST_DIR - Root directory of leyden-perf-test project
 function require_java() {
 	local version=$1
 	echo "   - Ensuring Java $version is available..."
-	eval "$("${TEST_DIR}"/jbang jdk env "$version")"
+	if [[ $1 =~ ^[0-9]+\+?$ ]]; then
+		eval "$("${TEST_DIR}"/jbang jdk env "$version")"
+	else
+		export JAVA_HOME=$version
+		export PATH="${JAVA_HOME}/bin:${PATH}"
+	fi
 	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Java $version set as active.${NORMAL}${CLREOL}"
 }
