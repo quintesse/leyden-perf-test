@@ -24,7 +24,9 @@ function start_app_native() {
 
 	local preamble=""
 	if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true ]]; then
-		preamble="LD_PRELOAD=${ASYNC_PROFILER} ASPROF_COMMAND=start,event=cpu,file=${TEST_OUT_DIR}/${results_name}-profile.html taskset -c $TEST_DRIVER_CPUS "
+		export LD_PRELOAD=${ASYNC_PROFILER}
+		export ASPROF_COMMAND=start,event=cpu,file=${TEST_OUT_DIR}/${results_name}-profile.html 
+		preamble="taskset -c $TEST_DRIVER_CPUS "
 	fi
 	
 	local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
