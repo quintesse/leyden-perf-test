@@ -37,6 +37,9 @@ function start_app_native() {
 	$preamble$exec_path  >> "$outfile" 2>&1 &
 	app_pid=$!
 
+	export LD_PRELOAD=
+	export ASPROF_COMMAND=
+
 	local pidfile="${TEST_OUT_DIR}/${results_name}-app.pid"
 	echo "$app_pid" > "$pidfile"
 }
