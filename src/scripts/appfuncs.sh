@@ -30,7 +30,7 @@ function start_app() {
 		preamble=("taskset" "-c" "$TEST_DRIVER_CPUS")
 
 		if [[ -n "${ASYNC_PROFILER}" ]]; then
-			TEST_JAVA_OPTS="${TEST_JAVA_OPTS} -agentpath:${ASYNC_PROFILER}=start,event=cpu,file=${TEST_OUT_DIR}/${results_name}-profile.html"
+			TEST_JAVA_OPTS="${TEST_JAVA_OPTS} -agentpath:${ASYNC_PROFILER}=start,event=cpu,file=${TEST_OUT_DIR}/${results_name}-profile.jfr"
 		fi
 	fi
 	
