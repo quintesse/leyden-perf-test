@@ -45,6 +45,9 @@ function _run_test() {
 	# don't exit on error yet!
 
 	_run_command_for_test "app" "Stopping test application for" "stop" "${name}" || result=$?
+	
+	generate_profiling_results ${name}
+	
 	return $result
 }
 
@@ -80,6 +83,7 @@ function _run_test_suite_after() {
 
 	local result=0
 	_run_command_for_suite "app" "Stopping test application for" "stop" || result=$?
+	
 	# don't exit on error yet!
 	_run_command_for_suite "infra" "Stopping infrastructure for" "stop" || result=$?
 	return $result
@@ -103,4 +107,13 @@ function _run_test_suite_last() {
 	# don't exit on error yet!
 	_run_command_for_suite "infra" "Stopping initial infrastructure for" "last" || result=$?
 	return $result
+}
+
+function generate_profiling_results() {
+	local name=${1:-}
+	# If we have JFR files, process them
+	java -jar lib/jfr-converter.jar ${TEST_OUT_DIR}/${name}-profile.jfr ${TEST_OUT_DIR}/${name}-profile.html
+	java -jar lib/jfr-converter.jar --output=tree ${TEST_OUT_DIR}/${name}-profile.jfr ${TEST_OUT_DIR}/${name}-profile-tree.html
+	java -jar lib/jfr-converter.jar ${TEST_OUT_DIR}/${name}-profile.jfr ${TEST_OUT_DIR}/${name}-profile.otlp	
+	java -jar lib/jfr-converter.jar ${TEST_OUT_DIR}/${name}-profile.jfr ${TEST_OUT_DIR}/${name}-profile.pprof	
 }
