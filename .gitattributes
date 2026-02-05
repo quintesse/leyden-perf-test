@@ -2,6 +2,7 @@
 *.sh text eol=lf
 run text eol=lf
 hwtweaked-run text eol=lf
+hardware-tweaks.conf text eol=lf
 jbang text eol=lf
 jbang.cmd text eol=crlf
 jbang.ps1 text eol=crlf

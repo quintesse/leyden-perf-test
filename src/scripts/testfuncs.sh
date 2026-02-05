@@ -45,8 +45,11 @@ function _run_test() {
 	# don't exit on error yet!
 
 	_run_command_for_test "app" "Stopping test application for" "stop" "${name}" || result=$?
-	
-	generate_profiling_results ${name}
+
+	if [[ -f "${TEST_OUT_DIR}/${name}-profile.jfr" ]]; then
+		# If we have JFR files, process them
+		generate_profiling_results "${name}"
+	fi
 	
 	return $result
 }
@@ -110,10 +113,11 @@ function _run_test_suite_last() {
 }
 
 function generate_profiling_results() {
-	local name=${1:-}
-	# If we have JFR files, process them
-	java -jar lib/jfr-converter.jar ${TEST_OUT_DIR}/${name}-profile.jfr ${TEST_OUT_DIR}/${name}-profile.html
-	java -jar lib/jfr-converter.jar --output=tree ${TEST_OUT_DIR}/${name}-profile.jfr ${TEST_OUT_DIR}/${name}-profile-tree.html
-	java -jar lib/jfr-converter.jar ${TEST_OUT_DIR}/${name}-profile.jfr ${TEST_OUT_DIR}/${name}-profile.otlp	
-	java -jar lib/jfr-converter.jar ${TEST_OUT_DIR}/${name}-profile.jfr ${TEST_OUT_DIR}/${name}-profile.pprof	
+	local name=$1
+	local jar="https://github.com/async-profiler/async-profiler/releases/latest/download/jfr-converter.jar"
+	local opts="-R=-Xss2M"
+	"${TEST_DIR}/jbang" "$opts" "$jar" "${TEST_OUT_DIR}/${name}-profile.jfr" "${TEST_OUT_DIR}/${name}-profile.html"
+	"${TEST_DIR}/jbang" "$opts" "$jar" --output=tree "${TEST_OUT_DIR}/${name}-profile.jfr" "${TEST_OUT_DIR}/${name}-profile-tree.html"
+	"${TEST_DIR}/jbang" "$opts" "$jar" "${TEST_OUT_DIR}/${name}-profile.jfr" "${TEST_OUT_DIR}/${name}-profile.otlp"	
+	"${TEST_DIR}/jbang" "$opts" "$jar" "${TEST_OUT_DIR}/${name}-profile.jfr" "${TEST_OUT_DIR}/${name}-profile.pprof"	
 }
