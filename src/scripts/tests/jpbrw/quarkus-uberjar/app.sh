@@ -15,7 +15,7 @@ source "${TEST_SUITE_DIR}/shared-vars.sh"
 TEST_APP_JAVA=${TEST_APP_JAVA:-25+}
 
 CMD=$1
-NAME=${2:-jpbrw-quarkus-normal}
+NAME=${2:-jpbrw-quarkus-uberjar}
 
 case "${CMD}" in
 	start)

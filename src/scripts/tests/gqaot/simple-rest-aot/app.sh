@@ -8,7 +8,7 @@ source "${TEST_SUITE_DIR}/shared-vars.sh"
 TEST_APP_JAVA=${TEST_APP_JAVA:-21+}
 
 CMD=$1
-NAME=${2:-sqpc-quarkus-uberjar}
+NAME=${2:-gqaot-simple-rest-aot}
 	
 case "${CMD}" in
 	start)
