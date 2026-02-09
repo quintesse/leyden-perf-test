@@ -1,0 +1,1 @@
+This is an application using Hibernate ORM, with scripts to generate profiling data for AOT builds. The applications is based on https://github.com/topicusonderwijs/tribe-krd-quarkus/, thus its name. The application is large, so building it and profiling it takes time, be patient.

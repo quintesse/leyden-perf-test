@@ -8,11 +8,11 @@ source "${TEST_SUITE_DIR}/shared-vars.sh"
 TEST_APP_JAVA=${TEST_APP_JAVA:-21+}
 
 CMD=$1
-NAME=${2:-gqaot-simple-rest-aot}
+NAME=${2:-sqpc-quarkus-uberjar}
 	
 case "${CMD}" in
 	start)
-		start_app "${NAME}" "${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus-simple-rest-aot/simple-rest-aot/quarkus-run.jar"
+		start_app "${NAME}" "${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-spacefox/hibernate-orm-spacefox/quarkus-run.jar"
 		;;
 	stop)
 		stop_app "${NAME}"
