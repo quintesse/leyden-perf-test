@@ -1,0 +1,1 @@
+This is an application using Hibernate ORM, with scripts to generate profiling data for AOT builds. The application is extremely simple with only one entity. The goal is to measure the Hibernate ORM overhead with a very small model.
