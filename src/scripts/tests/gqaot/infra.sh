@@ -14,14 +14,14 @@ case "$1" in
 		;;
 	start)
 	        # Only start a database if needed
-	        if [ -d "$PG_INITDB_PATH" ]; then
-		        start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_CONTAINER_OPTS}"
-                fi
+		if [ -d "$PG_INITDB_PATH" ]; then
+			start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_CONTAINER_OPTS}"
+		fi
 		;;
 	stop)
-	        if [ -d "$PG_INITDB_PATH" ]; then
-		        stop_postgres "${PG_CONTAINER_NAME}" 
-                fi
+		if [ -d "$PG_INITDB_PATH" ]; then
+			stop_postgres "${PG_CONTAINER_NAME}" 
+		fi
 		;;
 	last)
 		# Not used
