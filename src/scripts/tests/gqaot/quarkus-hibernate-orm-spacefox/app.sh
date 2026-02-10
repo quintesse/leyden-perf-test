@@ -12,7 +12,7 @@ NAME=${2:-quarkus-qgaot-hibernate-orm-spacefox}
 	
 case "${CMD}" in
 	start)
-	        cp "${TEST_SRC_DIR}"/scripts/tests/gqaot/quarkus-hibernate-orm-spacefox.url.txt "${TEST_SRC_DIR}"/scripts/tests/gqaot/urls.txt
+		cp "${TEST_SRC_DIR}"/scripts/tests/gqaot/quarkus-hibernate-orm-spacefox.url.txt "${TEST_SRC_DIR}"/scripts/tests/gqaot/urls.txt
 		start_app "${NAME}" "${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-spacefox/quarkus-hibernate-orm-spacefox/quarkus-run.jar"
 		;;
 	stop)
