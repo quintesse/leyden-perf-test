@@ -4,19 +4,24 @@ set -euo pipefail
 
 source "${TEST_SRC_DIR}"/scripts/infrafuncs.sh
 
-export PG_INITDB_PATH="${TEST_SRC_DIR}/scripts/tests/gqaot/db/"
-export PG_CONTAINER_NAME="db-trike-krd"
-export POSTGRES_CONTAINER_OPTS="-v ${PG_INITDB_PATH}:/docker-entrypoint-initdb.d/:z  -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=example -e POSTGRES_DB=quarkus-tribe-krd"
+export PG_INITDB_PATH="${TEST_BUILDS_DIR}/${REPO_NAME}/${TEST_TEST_NAME}/${TEST_TEST_NAME}/db"
+export PG_CONTAINER_NAME="gqaot-db"
+export POSTGRES_CONTAINER_OPTS="-v ${PG_INITDB_PATH}:/docker-entrypoint-initdb.d/:z  -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=example -e POSTGRES_DB=gqaot"
 
 case "$1" in
 	first)
 		# Not doing anything here, we want a clean infra state before each test
 		;;
 	start)
-		start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_CONTAINER_OPTS}"
+	        # Only start a database if needed
+	        if [ -d "$PG_INITDB_PATH" ]; then
+		        start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_CONTAINER_OPTS}"
+                fi
 		;;
 	stop)
-		stop_postgres "${PG_CONTAINER_NAME}"
+	        if [ -d "$PG_INITDB_PATH" ]; then
+		        stop_postgres "${PG_CONTAINER_NAME}" 
+                fi
 		;;
 	last)
 		# Not used
