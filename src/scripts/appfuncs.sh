@@ -167,13 +167,13 @@ function wait_for_8080() {
     echo "   - Waiting for port 8080..."
     for ((i=0; i<360; i++)); do
 		if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
-			echo "   - Application process has exited unexpectedly"
+			echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
+			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
 			sleep 2 # give time for output to be flushed
-			echo "${results_name} test application not running"
-			echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
 			local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
 			cat "$outfile" 2>/dev/null || true
-			echo "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
 			return 2
         fi
         # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
