@@ -31,6 +31,6 @@ URL="http://localhost:8080"
 DURATION=$((TOTAL_REQ/RATE))
 
  while IFS= read -r p || [ -n "$p" ]; do
-    echo "${preamble[@]}" "jbang src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -t 1 -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv ${URL}${p}"
-    "${preamble[@]}" jbang src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -t 1 -d "${DURATION}"s -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv "${URL}""${p}"
+    echo "${preamble[@]}" "jbang src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv ${URL}${p}"
+    "${preamble[@]}" jbang src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv "${URL}""${p}"
 done < "${TEST_SUITE_DIR}/urls.txt"
