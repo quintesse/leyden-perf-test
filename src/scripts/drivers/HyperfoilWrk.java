@@ -21,6 +21,8 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
@@ -30,6 +32,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.LockSupport;
+import java.util.List;
+import java.util.ArrayList;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 
 @Command(name = "hyperfoil-wrk", mixinStandardHelpOptions = true, version = "1.0",
         description = "wrk/wrk2-like benchmark using Hyperfoil with sample recording")
@@ -38,8 +46,10 @@ public class HyperfoilWrk implements Callable<Integer> {
     private static final int CHUNK_SIZE = 4096;
     private static final int SAMPLES_PER_CHUNK = CHUNK_SIZE * 2;
 
-    @Parameters(index = "0", description = "Target URL")
-    private String url;
+    private List<URI> uris = new ArrayList<>();
+
+    @Option(names = {"-f", "--file"}, description = "File that contains the urls", defaultValue = "urls.txt")
+    private File urlFile;
 
     @Option(names = {"-c", "--connections"}, description = "Number of connections", defaultValue = "10")
     private int connections;
@@ -62,8 +72,7 @@ public class HyperfoilWrk implements Callable<Integer> {
     @Option(names = {"--timeout"}, description = "Request timeout", defaultValue = "60s")
     private String timeout;
 
-    private static final SampleRecorder RECORDER = new SampleRecorder();
-    private static volatile Throwable benchmarkError = null;
+    private static final List<SampleRecorder> recorders = new ArrayList<SampleRecorder>();
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new HyperfoilWrk()).execute(args);
@@ -72,7 +81,9 @@ public class HyperfoilWrk implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        System.out.printf("Running benchmark against %s%n", url);
+        loadUris();
+
+        System.out.printf("Running benchmark against %s%n", uris.getFirst().toString());
         System.out.printf("  %d threads, %d connections, %s duration%n", threads, connections, duration);
         if (rate > 0) {
             System.out.printf("  Target rate: %d req/s (open-loop)%n", rate);
@@ -95,7 +106,7 @@ public class HyperfoilWrk implements Callable<Integer> {
 
         long endTime = System.currentTimeMillis();
 
-        long totalSamples = RECORDER.getTotalSamples();
+        long totalSamples = recorders.stream().map(r -> r.getTotalSamples()).reduce(0l, (a, b) -> a + b);
         System.out.printf("%nBenchmark completed in %d ms%n", endTime - startTime);
         System.out.printf("Total samples recorded: %d%n", totalSamples);
 
@@ -105,27 +116,33 @@ public class HyperfoilWrk implements Callable<Integer> {
         return 0;
     }
 
+    private void loadUris() throws URISyntaxException {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(urlFile)))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                uris.add(new URI(line));
+                recorders.add(new SampleRecorder(line));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private Benchmark buildBenchmark() throws URISyntaxException {
-        URI uri = new URI(url);
+        BenchmarkBuilder builder = BenchmarkBuilder.builder();
+        builder.name("hyperfoil-wrk");
+        builder.threads(threads);
+
+        URI uri = uris.getFirst();
         String host = uri.getHost();
         int port = uri.getPort();
-        String path = uri.getPath();
-        if (path == null || path.isEmpty()) {
-            path = "/";
-        }
-        if (uri.getQuery() != null) {
-            path = path + "?" + uri.getQuery();
-        }
 
         boolean isHttps = "https".equalsIgnoreCase(uri.getScheme());
         if (port < 0) {
             port = isHttps ? 443 : 80;
         }
-
-        BenchmarkBuilder builder = BenchmarkBuilder.builder();
-        builder.name("hyperfoil-wrk");
-        builder.threads(threads);
-
         HttpPluginBuilder httpPlugin = builder.addPlugin(HttpPluginBuilder::new);
         httpPlugin.http()
                 .host(host)
@@ -139,8 +156,6 @@ public class HyperfoilWrk implements Callable<Integer> {
         long durationMs = parseDuration(duration);
         int sessionsPerThread = Math.max(1, connections / threads);
 
-        final String requestPath = path;
-
         PhaseBuilder<?> phaseBuilder;
         if (rate > 0) {
             int ratePerThread = Math.max(1, rate / threads);
@@ -150,19 +165,26 @@ public class HyperfoilWrk implements Callable<Integer> {
             phaseBuilder = builder.addPhase("test").always(sessionsPerThread);
         }
 
-        SampleRecordingHandler sampleHandler = new SampleRecordingHandler(RECORDER);
+        var scenario = phaseBuilder.duration(durationMs).scenario();
 
-        phaseBuilder.duration(durationMs)
-                .scenario()
-                .initialSequence("request")
-                .step(HttpStepCatalog.class).httpRequest(HttpMethod.valueOf(method.toUpperCase()))
-                .path(requestPath)
-                .timeout(timeout)
-                .handler()
-                .rawBytes(sampleHandler)
-                .endHandler()
-                .endStep()
+        // One concurrent initialSequence per path
+        for (int i = 0; i < uris.size(); i++) {
+            String path = uris.get(i).getPath();
+            if (path == null || path.isEmpty()) path = "/";
+            if (uris.get(i).getQuery() != null) path = path + "?" + uris.get(i).getQuery();
+
+            SampleRecordingHandler handler = new SampleRecordingHandler(recorders.get(i));
+
+            scenario.initialSequence("request-" + i)
+                    .step(HttpStepCatalog.class).httpRequest(HttpMethod.valueOf(method.toUpperCase()))
+                        .path(path)
+                        .timeout(timeout)
+                        .handler()
+                            .rawBytes(handler)
+                        .endHandler()
+                    .endStep()
                 .endSequence();
+        }
 
         return builder.build();
     }
@@ -190,26 +212,33 @@ public class HyperfoilWrk implements Callable<Integer> {
     }
 
     private void writeCsv() throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
-            writer.write("url,startTimeNanos,start_latency_correction,endTimeNanos,duration");
-            writer.newLine();
+        File f = new File(outputFile);
+        var writeHeaders =  !f.exists();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, true))) {
+            if (writeHeaders) {
+                writer.write("url,startTimeNanos,start_latency_correction,endTimeNanos,duration");
+                writer.newLine();
+            }
 
             //imitating OHA rows
             // url	start	start_latency_correction	end	duration
-            RECORDER.forEach((startTime, endTime) -> {
-                try {
-                    writer.write(url);
-                    writer.write(',');
-                    writer.write(String.valueOf(startTime));
-                    writer.write(',');
-                    writer.write(',');
-                    writer.write(String.valueOf(endTime));
-                    writer.write(',');
-                    writer.write(String.valueOf(endTime - startTime));
-                    writer.newLine();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+            recorders.forEach(r ->
+            {
+                r.forEach((startTime, endTime) -> {
+                    try {
+                        writer.write(r.getPath());
+                        writer.write(',');
+                        writer.write(String.valueOf(startTime));
+                        writer.write(',');
+                        writer.write(',');
+                        writer.write(String.valueOf(endTime));
+                        writer.write(',');
+                        writer.write(String.valueOf(endTime - startTime));
+                        writer.newLine();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             });
         }
     }
@@ -232,9 +261,7 @@ public class HyperfoilWrk implements Callable<Integer> {
         @Override
         public void onResponse(Request request, ByteBuf buf, int offset, int length, boolean isLastPart) {
             if (isLastPart) {
-                long startTimeNanos = request.startTimestampNanos();
-                long endTimeNanos = System.nanoTime();
-                recorder.record(startTimeNanos, endTimeNanos);
+                recorder.record(request.startTimestampNanos(), System.nanoTime());
             }
         }
     }
@@ -246,37 +273,29 @@ public class HyperfoilWrk implements Callable<Integer> {
         private final AtomicLong index = new AtomicLong(0);
         private final AtomicReferenceArray<long[]> chunks;
         private final AtomicLong allocatingMask = new AtomicLong(0);
-
         private static final int MAX_CHUNKS = 1024;
+        private final String path;
 
-        public SampleRecorder() {
+        public SampleRecorder(String path) {
             this.chunks = new AtomicReferenceArray<>(MAX_CHUNKS);
             this.chunks.set(0, new long[SAMPLES_PER_CHUNK]);
+            this.path = path;
         }
 
-        public long recordStart() {
-            long startTime = System.nanoTime();
-            long idx = index.getAndAdd(2);
+        public String getPath() {
+            return path;
+        }
 
+        public void record(long start, long end) {
+            long idx = index.getAndAdd(2);
             int chunkIndex = (int) (idx / SAMPLES_PER_CHUNK);
             int positionInChunk = (int) (idx % SAMPLES_PER_CHUNK);
 
             long[] chunk = getOrCreateChunk(chunkIndex);
-            chunk[positionInChunk] = startTime;
-
-            return idx;
+            chunk[positionInChunk++] = start;
+            chunk[positionInChunk] = end;
         }
 
-        public void recordEnd(long position) {
-            long endTime = System.nanoTime();
-            int chunkIndex = (int) (position / SAMPLES_PER_CHUNK);
-            int positionInChunk = (int) (position % SAMPLES_PER_CHUNK);
-
-            long[] chunk = chunks.get(chunkIndex);
-            if (chunk != null) {
-                chunk[positionInChunk + 1] = endTime;
-            }
-        }
 
         private long[] getOrCreateChunk(int chunkIndex) {
             if (chunkIndex >= MAX_CHUNKS) {
