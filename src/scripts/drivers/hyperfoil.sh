@@ -21,42 +21,16 @@ else
 fi
 
 if [[ -v TEST_DRIVER_RATE_LIMIT && -n "$TEST_DRIVER_RATE_LIMIT"	]] ; then
-  TOTAL_USERS="$TEST_DRIVER_RATE_LIMIT"
+  RATE="$TEST_DRIVER_RATE_LIMIT"
 else
-  TOTAL_USERS=1000
+  RATE=1000
 fi
 
 # Prepare configuration
 URL="http://localhost:8080"
-DURATION=$((TOTAL_REQ/TOTAL_USERS))
+DURATION=$((TOTAL_REQ/RATE))
 
-echo "Generating folder to store results: ""${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}"
-mkdir "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}"
-
-BENCHMARK_YAML="${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}/${TEST_TEST_RUNID}-benchmark.hf.yaml"
-rm -f "$BENCHMARK_YAML" > /dev/null 2>&1 || true
-{
-  echo "name: ${TEST_TEST_RUNID}"
-  echo "http:"
-  echo "  host: $URL"
-  echo "  sharedConnections: 10"
-  echo "duration: ${DURATION}s"
-  echo "usersPerSec: ${TOTAL_USERS}"
-  echo "scenario:"
-} >> "$BENCHMARK_YAML"
-
-INDEX=1
  while IFS= read -r p || [ -n "$p" ]; do
-  {
-    echo "- scenario-${INDEX}:"
-    echo "  - httpRequest:"
-    echo "      GET: ${p}"
-  } >> "$BENCHMARK_YAML"
-  INDEX=$((INDEX+1))
+    echo "${preamble[@]}" "jbang src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -t 1 -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv ${URL}${p}"
+    "${preamble[@]}" jbang src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -t 1 -d "${DURATION}"s -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv "${URL}""${p}"
 done < "${TEST_SUITE_DIR}/urls.txt"
-
-cmd="${TEST_ENGINE} run -it --rm -v ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}:/benchmarks:rw,Z,U --network=host quay.io/hyperfoil/hyperfoil run -o /benchmarks /benchmarks/${TEST_TEST_RUNID}-benchmark.hf.yaml"
-echo "   - Driver command: ${cmd}"
-
-"${preamble[@]}" "${TEST_ENGINE}" run -it --rm -v "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}":/benchmarks:rw,Z,U --network=host quay.io/hyperfoil/hyperfoil run -o /benchmarks /benchmarks/"${TEST_TEST_RUNID}"-benchmark.hf.yaml
-
