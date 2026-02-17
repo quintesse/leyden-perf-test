@@ -219,26 +219,22 @@ public class HyperfoilWrk implements Callable<Integer> {
      */
     public static class SampleRecordingHandler implements RawBytesHandler {
         private final SampleRecorder recorder;
-        // Map request identity to sample position - uses identity hash
-        private final ConcurrentHashMap<Integer, Long> requestToPosition = new ConcurrentHashMap<>();
 
         public SampleRecordingHandler(SampleRecorder recorder) {
             this.recorder = recorder;
         }
 
         @Override
-        public void onRequest(Request request, ByteBuf connection, int offset, int length) {
-            long position = recorder.recordStart();
-            requestToPosition.put(System.identityHashCode(request), position);
+        public void onRequest(Request request, ByteBuf buf, int offset, int length) {
+            // No-op - start time is already tracked by Hyperfoil
         }
 
         @Override
-        public void onResponse(Request request, ByteBuf byteBuf, int offset, int length, boolean isLastPart) {
+        public void onResponse(Request request, ByteBuf buf, int offset, int length, boolean isLastPart) {
             if (isLastPart) {
-                Long position = requestToPosition.remove(System.identityHashCode(request));
-                if (position != null) {
-                    recorder.recordEnd(position);
-                }
+                long startTimeNanos = request.startTimestampNanos();
+                long endTimeNanos = System.nanoTime();
+                recorder.record(startTimeNanos, endTimeNanos);
             }
         }
     }
