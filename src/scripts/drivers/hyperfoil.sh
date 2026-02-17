@@ -26,11 +26,14 @@ else
   RATE=1000
 fi
 
-# Prepare configuration
-URL="http://localhost:8080"
+# Prepare list of urls to use
+URL_FILE="${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-urls.txt"
+# Remove url file, in case it exists
+rm -f "$URL_FILE" > /dev/null 2>&1 || true
+URL="http:\/\/localhost:8080"
+sed -e "s/^/$URL/" "${TEST_SUITE_DIR}/urls.txt" > $URL_FILE
 DURATION=$((TOTAL_REQ/RATE))
 
- while IFS= read -r p || [ -n "$p" ]; do
-    echo "${preamble[@]}" "jbang src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv ${URL}${p}"
-    "${preamble[@]}" jbang src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv "${URL}""${p}"
-done < "${TEST_SUITE_DIR}/urls.txt"
+echo "${preamble[@]}" "jbang src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URL_FILE}"
+"${preamble[@]}" jbang src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv -f "${URL_FILE}"
+
