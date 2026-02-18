@@ -33,5 +33,5 @@ sed -e "s/^/$URL/" "${TEST_SUITE_DIR}/urls.txt" > $URL_FILE
 DURATION=$((TOTAL_REQ/RATE))
 
 echo "${preamble[@]}" "jbang src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URL_FILE}"
-"${preamble[@]}" jbang src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv -f "${URL_FILE}"
+"${preamble[@]}" jbang src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv -f "${URL_FILE}" > "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}"-hyperfoil.log
 
