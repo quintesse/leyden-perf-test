@@ -32,14 +32,6 @@ URL="http:\/\/localhost:8080"
 sed -e "s/^/$URL/" "${TEST_SUITE_DIR}/urls.txt" > $URL_FILE
 DURATION=$((TOTAL_REQ/RATE))
 
-URLS=""
-while IFS= read -r p || [ -n "$p" ]; do
-    URLS="${URLS}${p} "
-done < $URL_FILE
-URLS="${URLS}"
-
-echo "${URLS}"
-
 echo "${preamble[@]}" "jbang src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URL_FILE}"
 "${preamble[@]}" jbang src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv -f "${URL_FILE}"
 
