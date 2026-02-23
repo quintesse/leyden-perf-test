@@ -2,6 +2,7 @@
 //DEPS io.hyperfoil:hyperfoil-core:0.27.1
 //DEPS io.hyperfoil:hyperfoil-http:0.27.1
 //DEPS org.aesh:aesh:2.8.4
+//DEPS io.netty:netty-transport-native-unix-common:4.2.1.Final
 
 import io.hyperfoil.api.config.Benchmark;
 import io.hyperfoil.api.config.BenchmarkBuilder;
