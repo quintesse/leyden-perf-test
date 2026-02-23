@@ -34,7 +34,6 @@ DURATION=$((TOTAL_REQ/RATE))
 
 sleep 2 && pidstat -t -p $(pgrep -f HyperfoilWrk) 1  > "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}"-hyperfoil-pidstat.log &
 
-JAVA_OPTS="-Xmx1G -Xms1G -XX:TieredStopAtLevel=1 -XX:+UseSerialGC"
-echo "${preamble[@]}" "jbang --java-options="${JAVA_OPTS}" src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -t 1 -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URL_FILE}"
-"${preamble[@]}" jbang --java-options="-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0" --java-options="-Xmx1G" --java-options="-Xms1G" --java-options="-XX:+UseSerialGC" --java-options="-XX:TieredStopAtLevel=1" src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -t 1 -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv -f "${URL_FILE}" > "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}"-hyperfoil.log
+echo "${preamble[@]}" "jbang --java-options=\"-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0\" --java-options=\"-Xmx1G\" --java-options=\"-Xms1G\" --java-options=\"-XX:+UseParallelGC\" --java-options=\"-XX:+AlwaysPreTouch\" src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -c 50 -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URL_FILE}"
+"${preamble[@]}" jbang --java-options="-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0" --java-options="-Xmx1G" --java-options="-Xms1G" --java-options="-XX:+UseParallelGC" --java-options="-XX:+AlwaysPreTouch" src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -t 1 -o "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}".csv -f "${URL_FILE}" > "${TEST_OUT_DIR:-.}"/"${TEST_TEST_RUNID}"-hyperfoil.log
 
