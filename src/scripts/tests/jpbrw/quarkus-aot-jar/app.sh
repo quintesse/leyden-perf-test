@@ -15,11 +15,11 @@ source "${TEST_SUITE_DIR}/shared-vars.sh"
 TEST_APP_JAVA=${TEST_APP_JAVA:-25+}
 
 CMD=$1
-NAME=${2:-jpbrw-quarkus-uberjar}
+NAME=${2:-jpbrw-quarkus-aot-jar}
 
 case "${CMD}" in
 	start)
-		start_app "${NAME}" "${TEST_BUILDS_DIR}/${REPO_NAME}-wrapper/quarkus-uberjar/jvm-performance-benchmarks-rest-wrapper-1.0.0-SNAPSHOT-runner.jar"
+		start_app "${NAME}" "${TEST_BUILDS_DIR}/${REPO_NAME}-wrapper/quarkus-aot-jar/quarkus-app/quarkus-run.jar"
 		;;
 	stop)
 		stop_app "${NAME}"
