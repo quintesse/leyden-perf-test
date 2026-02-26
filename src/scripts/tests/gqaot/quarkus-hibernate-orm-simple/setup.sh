@@ -9,6 +9,9 @@ sed 's/localhost:5434/localhost:5432/g' "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-h
 sed 's/quarkus-simple/gqaot/g' "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/src/main/resources/application.properties.new" > "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/src/main/resources/application.properties.new2"
 mv "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/src/main/resources/application.properties.new2" "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/src/main/resources/application.properties"
 
+sed 's/999-SNAPSHOT/3.32.0/g' "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/pom.xml" > "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/pom.xml.2"
+mv "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/pom.xml.2" "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/pom.xml"
+
 require_java "25+"
 compile_maven "${REPO_NAME}/quarkus-hibernate-orm-simple" "-Dquarkus.package.jar.type=aot-jar -Dquarkus.package.jar.appcds.use-aot=true"
 copy_build_artifacts "${REPO_NAME}/quarkus-hibernate-orm-simple" "quarkus-hibernate-orm-simple" "target/quarkus-app/app" "target/quarkus-app/lib" "target/quarkus-app/quarkus" "target/quarkus-app/quarkus-app-dependencies.txt" "target/quarkus-app/quarkus-run.jar"
