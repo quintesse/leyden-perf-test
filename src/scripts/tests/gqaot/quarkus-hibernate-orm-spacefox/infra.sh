@@ -10,22 +10,14 @@ export PG_CONTAINER_NAME="gqaot-spacefox-db"
 export POSTGRES_CONTAINER_OPTS="-v ${PG_INITDB_PATH}:/docker-entrypoint-initdb.d/:z  -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=example -e POSTGRES_DB=gqaot"
 
 case "$1" in
-	first)
-		# Not doing anything here, we want a clean infra state before each test
-		;;
 	start)
-	  start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_CONTAINER_OPTS}"
+		start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_CONTAINER_OPTS}"
 		;;
 	stop)
-		if [ -d "$PG_INITDB_PATH" ]; then
-			stop_postgres "${PG_CONTAINER_NAME}" 
-		fi
-		;;
-	last)
-		# Not used
+		stop_postgres "${PG_CONTAINER_NAME}" 
 		;;
 	*)
-		echo "Usage: $0 {first|start|stop|last}"
+		echo "Usage: $0 {start|stop}"
 		exit 1
 		;;
 esac
