@@ -28,12 +28,22 @@ else
   RATE=1000
 fi
 
-# Prepare list of urls to use
-URL_FILE="${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-urls.txt"
-rm -f "$URL_FILE" > /dev/null 2>&1 || true
-URL="http:\/\/localhost:8080"
-sed -e "s/^/$URL/" "${TEST_SUITE_DIR}/urls.txt" > $URL_FILE
 DURATION=$((TOTAL_REQ/RATE))
+
+URLS_FILE="${TEST_TEST_DIR}/urls.txt"
+if [[ ! -f "$URLS_FILE" ]]; then
+	URLS_FILE="${TEST_SUITE_DIR}/urls.txt"
+	if [[ ! -f "$URLS_FILE" ]]; then
+		echo "ERROR: URLs file not found: $URLS_FILE"
+		exit 1
+	fi
+fi
+
+# Prepare list of urls to use
+URLS_FIXED_FILE="${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-urls.txt"
+rm -f "$URLS_FIXED_FILE" > /dev/null 2>&1 || true
+URL="http:\/\/host.docker.internal:8080"
+sed -e "s/^/$URL/" "$URLS_FILE" > "$URLS_FIXED_FILE"
 
 # Prepare command prefix if CPU affinity is to be set
 declare -a preamble=()
@@ -41,7 +51,7 @@ if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true && -v TEST_DRIVER
 	preamble=("taskset" "-c" "$TEST_DRIVER_CPUS")
 fi
 
-cmd="oha -q ${RATE} -z ${DURATION}s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json --db-url ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db --urls-from-file $URL_FILE"
+cmd="oha -q ${RATE} -z ${DURATION}s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json --db-url ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db --urls-from-file $URLS_FIXED_FILE"
 echo "   - Driver command: ${cmd}"
 
-"${preamble[@]}" oha -q "${RATE}" -z "${DURATION}"s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json" --db-url "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db" --urls-from-file "${URL_FILE}"
+"${preamble[@]}" oha -q "${RATE}" -z "${DURATION}"s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json" --db-url "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db" --urls-from-file "${URLS_FIXED_FILE}"
