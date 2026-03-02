@@ -3,3 +3,4 @@ builds/
 test-results/
 .vscode/
 .idea/
+src/scripts/tests/gqaot/urls.txt
