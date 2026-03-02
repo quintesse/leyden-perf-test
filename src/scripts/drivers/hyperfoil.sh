@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DESCRIPTION=Run performance/load tests using Hyperfoil driver. Accepts TEST_DRIVER_RATE_LIMIT env var to set rate limit (requests per second). Accepts TEST_PERF_CNT env var to set number of requests.
+# DESCRIPTION=Run performance/load tests using Hyperfoil driver.
 
 set -euo pipefail
 
