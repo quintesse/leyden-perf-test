@@ -17,6 +17,10 @@ fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
+echo "All drivers accept the following variables:"
+echo " - TEST_DRIVER_RATE_LIMIT env var to set rate limit (requests per second)."
+echo " - TEST_PERF_CNT env var to set number of requests."
+
 echo "Available test drivers:"
 drivers_dir="${TEST_SRC_DIR}/scripts/drivers"
 for driver_script in "$drivers_dir"/*.sh; do
