@@ -35,22 +35,33 @@ function _run_test() {
 	fi
 
 	local result=0
+	_run_command_for_test "infra" "Starting test infrastructure for" "start" "${name}" || result=$?
+	if [[ $result -ne 0 ]]; then
+		return $result
+	fi
 	_run_command_for_test "app" "Starting test application for" "start" "${name}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
 
 	# Run the performance tests
-	_run_perf_tests || result=$?
+	local result1=0
+	_run_perf_tests || result1=$?
 	# don't exit on error yet!
 
-	_run_command_for_test "app" "Stopping test application for" "stop" "${name}" || result=$?
+	local result2=0
+	_run_command_for_test "app" "Stopping test application for" "stop" "${name}" || result2=$?
+	
+	# don't exit on error yet!
+	local result3=0
+	_run_command_for_test "infra" "Stopping test infrastructure for" "stop" "${name}" || result3=$?
 
 	if [[ -f "${TEST_OUT_DIR}/${name}-profile.jfr" ]]; then
 		# If we have JFR files, process them
 		generate_profiling_results "${name}"
 	fi
 	
+	result=$((result1 + result2 + result3))
 	return $result
 }
 
@@ -84,11 +95,14 @@ function _run_test_suite_after() {
 	local name="${TEST_SUITE_NAME}-${TEST_TEST_NAME}${name_tag:+-$name_tag}"
 	export TEST_TEST_RUNID="${name}"
 
-	local result=0
-	_run_command_for_suite "app" "Stopping test application for" "stop" || result=$?
+	local result1=0
+	_run_command_for_suite "app" "Stopping test application for" "stop" || result1=$?
 	
 	# don't exit on error yet!
-	_run_command_for_suite "infra" "Stopping infrastructure for" "stop" || result=$?
+	local result2=0
+	_run_command_for_suite "infra" "Stopping infrastructure for" "stop" || result2=$?
+
+	local result=$((result1 + result2))
 	return $result
 }
 
@@ -105,10 +119,14 @@ function _run_test_suite_first() {
 }
 
 function _run_test_suite_last() {
-	local result=0
-	_run_command_for_suite "app" "Stopping initial test application for" "last" || result=$?
+	source "${TEST_SUITE_DIR}/shared-vars.sh"
+
+	local result1=0
+	_run_command_for_suite "app" "Stopping initial test application for" "last" || result1=$?
 	# don't exit on error yet!
-	_run_command_for_suite "infra" "Stopping initial infrastructure for" "last" || result=$?
+	local result2=0
+	_run_command_for_suite "infra" "Stopping initial infrastructure for" "last" || result2=$?
+	local result=$((result1 + result2))
 	return $result
 }
 
