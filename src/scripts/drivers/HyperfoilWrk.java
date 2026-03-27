@@ -30,6 +30,7 @@ import org.aesh.AeshRuntimeRunner;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -69,6 +70,12 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
     @Option(shortName = 'o', name = "output", description = "Output CSV file", defaultValue = {"results.csv"})
     private String outputFile;
 
+    @Option(shortName = 'p', name = "outputTimeToPortOpen", description = "Output CSV file for Time to Port Open", defaultValue = {"time-to-8080.csv"})
+    private String outputFileTimeToPortOpen;
+
+    @Option(shortName = 'i', name = "identifier", description = "Test identifier", defaultValue = {"unknown"})
+    private String identifier;
+
     @Option(shortName = 'm', name = "method", description = "HTTP method", defaultValue = {"GET"})
     private String method;
 
@@ -78,6 +85,7 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
     private static final long NIL_VALUE = System.nanoTime();
     private static final AtomicLong BASELINE_NANOS = new AtomicLong(NIL_VALUE);
     private SampleRecorder recorder;
+    private long startTime;
 
     public static void main(String[] args) {
         AeshRuntimeRunner.builder()
@@ -88,6 +96,8 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
 
     @Override
     public CommandResult execute(CommandInvocation invocation) throws InterruptedException {
+
+        startTime = System.nanoTime();
         try {
             loadUris();
             URI firstUri = new URI(urls.get(0));
@@ -121,16 +131,14 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
                 return CommandResult.FAILURE;
             }
 
-            long startTime = System.currentTimeMillis();
-
             LocalSimulationRunner runner = new LocalSimulationRunner(benchmark);
             runner.run();
 
-            long endTime = System.currentTimeMillis();
+            long endTime = System.nanoTime();
 
             long totalSamples = recorder.getTotalSamples();
             invocation.println("");
-            invocation.println("Benchmark completed in " + (endTime - startTime) + " ms");
+            invocation.println("Benchmark completed in " + (endTime - startTime) + " ns");
             invocation.println("Total samples recorded: " + totalSamples);
 
             writeCsv();
@@ -164,6 +172,20 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
         int port = firstUri.getPort();
         if (port < 0) {
             port = isHttps ? 443 : 80;
+        }
+
+        //Measure time to port open
+        int attempts = 0;
+        while (attempts < 1000000) {
+            attempts++;
+            try (Socket _ = new Socket(host, port)) {
+                var endTime = System.nanoTime();
+                writeTimeToPortCsv(endTime - startTime);
+                startTime = endTime;
+                break;
+            } catch (IOException e) {
+                // Connection failed, retry immediately               
+            }
         }
 
         List<String> paths = new ArrayList<>();
@@ -269,6 +291,16 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
         }
 
         return Long.parseLong(numPart.trim()) * multiplier;
+    }
+
+
+    private void writeTimeToPortCsv(Long time) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileTimeToPortOpen, true))) {
+            writer.write(identifier);
+            writer.write(',');
+            writer.write(time.toString());
+            writer.newLine();
+        } 
     }
 
     private void writeCsv() throws IOException {
