@@ -149,6 +149,29 @@ function stop_process() {
 	fi
 }
 
+function loop_wait_for_8080() {
+    local time=$(date +%s%N)
+    local results_name=$1
+	local app_pid=$2
+    while true;	do
+		if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
+			echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
+			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
+			sleep 2 # give time for output to be flushed
+			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+			local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
+			cat "$outfile" 2>/dev/null || true
+			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+			return 2
+		fi
+		# Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
+		if (echo -n < /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
+			echo "${results_name},$(($(date +%s%N) - time))" >> "${TEST_OUT_DIR}/time-to-8080.csv"
+			return 0
+		fi
+    done
+}
+
 # Waits for the application to start listening on port 8080.
 # Arguments:
 #   results_name - Base name to use for output files
@@ -163,28 +186,20 @@ function wait_for_8080() {
 	if [[ "${app_pid}" == "" ]]; then
 		return 2
 	fi
-    local time=$(date +%s%N)
     echo "   - Waiting for port 8080..."
-    for ((i=0; i<360; i++)); do
-		if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
-			echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
-			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
-			sleep 2 # give time for output to be flushed
-			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
-			local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
-			cat "$outfile" 2>/dev/null || true
-			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
-			return 2
-        fi
-        # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
-        if (echo -n < /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
-            echo "${results_name},$(($(date +%s%N) - time))" >> "${TEST_OUT_DIR}/time-to-8080.csv"
-            return 0
-        fi
-		sleep 0.05
-    done
-    echo "   - Timeout waiting for port 8080"
-    return 1
+	export -f loop_wait_for_8080 
+
+	local preamble=()
+	if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true ]]; then
+		preamble=("taskset" "-c" "$TEST_DRIVER_CPUS")
+	fi
+
+	"${preamble[@]}" timeout --preserve-status 10s bash -c "loop_wait_for_8080 $results_name $app_pid" || echo "   - Timeout waiting for port 8080"
+	exit_code=$?
+	if [ $exit_code -eq 124 ]; then
+	 return 1
+	fi
+    return $exit_code
 }
 
 # Ensures that the specified JDK is available and set as active.
