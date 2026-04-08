@@ -45,6 +45,9 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 @CommandDefinition(name = "hyperfoil-wrk", description = "wrk/wrk2-like benchmark using Hyperfoil with sample recording")
 public class HyperfoilWrk implements Command<CommandInvocation> {
 
@@ -78,6 +81,8 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
     private static final long NIL_VALUE = System.nanoTime();
     private static final AtomicLong BASELINE_NANOS = new AtomicLong(NIL_VALUE);
     private SampleRecorder recorder;
+
+    private Boolean youCanRestNow = false;
 
     public static void main(String[] args) {
         AeshRuntimeRunner.builder()
@@ -121,26 +126,45 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
                 return CommandResult.FAILURE;
             }
 
-            long startTime = System.currentTimeMillis();
+            
+            SignalHandler handler = new SignalHandler() {
+                public void handle(Signal signal) {
+                    try {
+                        runBenchmark(invocation, benchmark);
+                    } catch (Exception e) {
+                        invocation.println("Error: " + e.getMessage());
+                    } finally {
+                        youCanRestNow = true;
+                    }
+                }
+            };
+            Signal.handle(new Signal("CONT"), handler);
 
-            LocalSimulationRunner runner = new LocalSimulationRunner(benchmark);
-            runner.run();
-
-            long endTime = System.currentTimeMillis();
-
-            long totalSamples = recorder.getTotalSamples();
-            invocation.println("");
-            invocation.println("Benchmark completed in " + (endTime - startTime) + " ms");
-            invocation.println("Total samples recorded: " + totalSamples);
-
-            writeCsv();
-            invocation.println("Results written to " + outputFile);
+            while (!youCanRestNow) {
+                Thread.sleep(100);
+            }
 
             return CommandResult.SUCCESS;
         } catch (Exception e) {
             invocation.println("Error: " + e.getMessage());
             return CommandResult.FAILURE;
         }
+    }
+
+    private void runBenchmark(CommandInvocation invocation, Benchmark benchmark) throws IOException {
+        long startTime = System.currentTimeMillis();
+        LocalSimulationRunner runner = new LocalSimulationRunner(benchmark);
+        runner.run();
+
+        long endTime = System.currentTimeMillis();
+
+        long totalSamples = recorder.getTotalSamples();
+        invocation.println("");
+        invocation.println("Benchmark completed in " + (endTime - startTime) + " ms");
+        invocation.println("Total samples recorded: " + totalSamples);
+
+        writeCsv();
+        invocation.println("Results written to " + outputFile);
     }
 
     private void loadUris() throws URISyntaxException {
