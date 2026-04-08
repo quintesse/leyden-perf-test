@@ -30,6 +30,7 @@ import org.aesh.AeshRuntimeRunner;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -77,6 +78,12 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
 
     @Option(name = "timeout", description = "Request timeout", defaultValue = {"60s"})
     private String timeout;
+
+    @Option(shortName = 'p', name = "outputTimeToPortOpen", description = "Output CSV file for Time to Port Open", defaultValue = {"time-to-8080.csv"})
+    private String outputFileTimeToPortOpen;
+
+    @Option(shortName = 'i', name = "identifier", description = "Test identifier", defaultValue = {"unknown"})
+    private String identifier;
 
     private static final long NIL_VALUE = System.nanoTime();
     private static final AtomicLong BASELINE_NANOS = new AtomicLong(NIL_VALUE);
@@ -130,7 +137,7 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
             SignalHandler handler = new SignalHandler() {
                 public void handle(Signal signal) {
                     try {
-                        runBenchmark(invocation, benchmark);
+                        runBenchmark(invocation, benchmark, firstUri.getHost(), firstUri.getPort());
                     } catch (Exception e) {
                         invocation.println("Error: " + e.getMessage());
                     } finally {
@@ -151,8 +158,23 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
         }
     }
 
-    private void runBenchmark(CommandInvocation invocation, Benchmark benchmark) throws IOException {
+    private void runBenchmark(CommandInvocation invocation, Benchmark benchmark, String host, Integer port) throws IOException {
         long startTime = System.currentTimeMillis();
+
+        //Measure time to port open
+        int attempts = 0;
+        while (attempts < 1000000) {
+            attempts++;
+            try (Socket _ = new Socket(host, port)) {
+                var endTime = System.currentTimeMillis();
+                writeTimeToPortCsv(endTime - startTime);
+                startTime = endTime;
+                break;
+            } catch (IOException e) {
+                // Connection failed, retry immediately               
+            }
+        }
+        
         LocalSimulationRunner runner = new LocalSimulationRunner(benchmark);
         runner.run();
 
@@ -518,6 +540,16 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
             }
         }
     }
+    
+    private void writeTimeToPortCsv(Long time) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileTimeToPortOpen, true))) {
+            writer.write(identifier);
+            writer.write(',');
+            writer.write(time.toString());
+            writer.newLine();
+        } 
+    }
+
 
     @FunctionalInterface
     public interface SampleConsumer {
