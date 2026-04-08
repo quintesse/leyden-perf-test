@@ -153,6 +153,33 @@ function _run_command_for_test() {
 	fi
 }
 
+# Runs a command for a specific driver.
+# Commands are scripts named <cmd>.sh located in the drivers directory.
+# Arguments:
+#   cmd - command to run
+#   msg - message to display
+#   args - additional arguments
+# Variables used:
+#   TEST_SUITE_NAME - name of the test suite
+#   TEST_TEST_NAME  - name of the test
+#   TEST_SRC_DIR    - directory of the sources
+function _run_command_for_driver() {
+	local cmd=$1
+	local msg=$2
+	local args=("${@:3}")
+	local cmd_path="${TEST_SRC_DIR}/scripts/drivers/${cmd}.sh"
+	if [[ -f "${cmd_path}" ]]; then
+		echo "   - ${msg} test: ${TEST_SUITE_NAME}/${TEST_TEST_NAME} ..."
+		local result=0
+		"${cmd_path}" "${args[@]}" || result=$?
+		if [[ $result -ne 0 ]]; then
+			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Failed.${NORMAL}"
+			return $result
+		fi
+		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Done.${NORMAL}"
+	fi
+}
+
 # Runs a command for a specific test suite.
 # Commands are scripts named <cmd>.sh located in the TEST_SUITE_DIR directory.
 # Arguments:

@@ -39,6 +39,10 @@ function _run_test() {
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
+	_run_command_for_driver "${TEST_DRIVER}" "Preparing test driver for" "prepare" "${name}" || result=$?
+	if [[ $result -ne 0 ]]; then
+		return $result
+	fi
 	_run_command_for_test "app" "Starting test application for" "start" "${name}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
@@ -66,8 +70,10 @@ function _run_test() {
 }
 
 function _run_perf_tests() {
-	echo "   - [TEST] Running tests for ${TEST_TEST_NAME} using ${TEST_DRIVER} driver..."
-	"${TEST_SRC_DIR}/scripts/drivers/${TEST_DRIVER}.sh"
+	_run_command_for_driver "${TEST_DRIVER}" "[TEST] Running tests for ${TEST_TEST_NAME} using ${TEST_DRIVER} driver..." "run" "${name}" || result=$?
+	if [[ $result -ne 0 ]]; then
+		return $result
+	fi
 }
 
 function _run_test_suite_before() {
