@@ -70,17 +70,14 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
     @Option(shortName = 'R', name = "rate", description = "Target requests per second (0 = unlimited/closed-loop)", defaultValue = {"0"})
     private int rate;
 
-    @Option(shortName = 'o', name = "output", description = "Output CSV file", defaultValue = {"results.csv"})
-    private String outputFile;
+    @Option(shortName = 'o', name = "output", description = "Test out dir", defaultValue = {"."})
+    private String outputDirectory;
 
     @Option(shortName = 'm', name = "method", description = "HTTP method", defaultValue = {"GET"})
     private String method;
 
     @Option(name = "timeout", description = "Request timeout", defaultValue = {"60s"})
     private String timeout;
-
-    @Option(shortName = 'p', name = "outputTimeToPortOpen", description = "Output CSV file for Time to Port Open", defaultValue = {"time-to-8080.csv"})
-    private String outputFileTimeToPortOpen;
 
     @Option(shortName = 'i', name = "identifier", description = "Test identifier", defaultValue = {"unknown"})
     private String identifier;
@@ -133,6 +130,9 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
                 return CommandResult.FAILURE;
             }
 
+            File f = new File(outputDirectory + File.separator + identifier + ".hyperfoil-ready");
+            f.createNewFile();
+            f.deleteOnExit();
             
             SignalHandler handler = new SignalHandler() {
                 public void handle(Signal signal) {
@@ -147,8 +147,13 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
             };
             Signal.handle(new Signal("CONT"), handler);
 
+            int attempts = 200;
+            int i = 0;
             while (!youCanRestNow) {
                 Thread.sleep(100);
+                if (i++ > attempts) {
+                    youCanRestNow = true;
+                }
             }
 
             return CommandResult.SUCCESS;
@@ -186,7 +191,7 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
         invocation.println("Total samples recorded: " + totalSamples);
 
         writeCsv();
-        invocation.println("Results written to " + outputFile);
+        invocation.println("Results written to " + outputDirectory);
     }
 
     private void loadUris() throws URISyntaxException {
@@ -318,7 +323,7 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
     }
 
     private void writeCsv() throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputDirectory + File.separator + identifier + ".csv"))) {
             //imitating OHA rows
             // url	start	start_latency_correction	end	duration
             writer.write("url,startTimeNanos,start_latency_correction,endTimeNanos,duration");
@@ -542,7 +547,8 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
     }
     
     private void writeTimeToPortCsv(Long time) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileTimeToPortOpen, true))) {
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputDirectory + File.separator + "time-to-8080.csv", true))) {
             writer.write(identifier);
             writer.write(',');
             writer.write(time.toString());
