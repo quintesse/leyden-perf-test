@@ -165,7 +165,7 @@ function wait_for_8080() {
 	fi
     local time=$(date +%s%N)
     echo "   - Waiting for port 8080..."
-    for ((i=0; i<360; i++)); do
+    for ((i=0; i<10000000; i++)); do
 		if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
 			echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
 			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
@@ -179,9 +179,9 @@ function wait_for_8080() {
         # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
         if (echo -n < /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
             echo "${results_name},$(($(date +%s%N) - time))" >> "${TEST_OUT_DIR}/time-to-8080.csv"
+			echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Port open for ${results_name} (${i} attempts in bash starting on ${time}).${NORMAL}${CLREOL}"
             return 0
         fi
-		sleep 0.05
     done
     echo "   - Timeout waiting for port 8080"
     return 1
