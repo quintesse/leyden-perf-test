@@ -30,6 +30,8 @@ import org.aesh.AeshRuntimeRunner;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -164,30 +166,33 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
     }
 
     private void runBenchmark(CommandInvocation invocation, Benchmark benchmark, String host, Integer port) throws IOException {
-        long startTime = System.currentTimeMillis();
+        long startTime = System.nanoTime();
 
         //Measure time to port open
         int attempts = 0;
+
         while (attempts < 1000000) {
-            attempts++;
             try (Socket _ = new Socket(host, port)) {
-                var endTime = System.currentTimeMillis();
+                var endTime = System.nanoTime();
                 writeTimeToPortCsv(endTime - startTime);
+                invocation.println(identifier + " => Startime: " + startTime + " Attempts: " + attempts);
                 startTime = endTime;
                 break;
             } catch (IOException e) {
-                // Connection failed, retry immediately               
+                // Connection failed, retry immediately      
+            } finally {
+                attempts++;
             }
         }
         
         LocalSimulationRunner runner = new LocalSimulationRunner(benchmark);
         runner.run();
 
-        long endTime = System.currentTimeMillis();
+        long endTime = System.nanoTime();
 
         long totalSamples = recorder.getTotalSamples();
         invocation.println("");
-        invocation.println("Benchmark completed in " + (endTime - startTime) + " ms");
+        invocation.println("Benchmark completed in " + (endTime - startTime) + " ns");
         invocation.println("Total samples recorded: " + totalSamples);
 
         writeCsv();
