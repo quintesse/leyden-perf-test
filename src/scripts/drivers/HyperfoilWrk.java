@@ -171,7 +171,7 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
         //Measure time to port open
         int attempts = 0;
 
-        while (attempts < 1000000) {
+        while (attempts < 100000000) {
             try (Socket _ = new Socket(host, port)) {
                 var endTime = System.nanoTime();
                 writeTimeToPortCsv(endTime - startTime);
