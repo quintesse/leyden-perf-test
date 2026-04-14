@@ -149,13 +149,8 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
             };
             Signal.handle(new Signal("CONT"), handler);
 
-            int attempts = 200;
-            int i = 0;
             while (!youCanRestNow) {
                 Thread.sleep(100);
-                if (i++ > attempts) {
-                    youCanRestNow = true;
-                }
             }
 
             return CommandResult.SUCCESS;
@@ -167,11 +162,16 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
 
     private void runBenchmark(CommandInvocation invocation, Benchmark benchmark, String host, Integer port) throws IOException {
         long startTime = System.nanoTime();
+        invocation.println("Waiting for port to open.");
 
         //Measure time to port open
         int attempts = 0;
 
-        while (attempts < 100000000) {
+        while (true) {
+            if (attempts % 1000000 == 0 && System.nanoTime() - startTime > 60000000000l) {
+                invocation.println("Timeout waiting for Time to port open after " + attempts + " attempts.");
+                break;
+            }
             try (Socket _ = new Socket(host, port)) {
                 var endTime = System.nanoTime();
                 writeTimeToPortCsv(endTime - startTime);

@@ -336,6 +336,8 @@ function ctrl_c() {
 	stop_all_apps
 	echo "Stopping all running infrastructure containers..."
 	stop_all_containers
+	echo "Stopping all running drivers..."
+	stop_all_drivers
 	echo "Cleaning up test output directories..."
     cleanup
     exit 2
