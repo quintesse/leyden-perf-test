@@ -49,6 +49,8 @@ case "${CMD}" in
 		echo "${preamble[*]} jbang --java-options=\"-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0\" --java-options=\"-XX:+DisableExplicitGC\" --java-options=\"-Xmx1G\" --java-options=\"-Xms1G\" --java-options=\"-XX:+UseEpsilonGC\" --java-options=\"-XX:+UnlockExperimentalVMOptions\" --java-options=\"-XX:+AlwaysPreTouch\" src/scripts/drivers/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -c 50 -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URLS_FIXED_FILE}" -i "${TEST_TEST_RUNID}" 
 		"${preamble[@]}" jbang --java-options="-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0" --java-options="-XX:+DisableExplicitGC" --java-options="-Xmx1G" --java-options="-Xms1G" --java-options="-XX:+UnlockExperimentalVMOptions" --java-options="-XX:+UseEpsilonGC" --java-options="-XX:+AlwaysPreTouch" src/scripts/drivers/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -t 1 -o "${TEST_OUT_DIR:-.}" -f "${URLS_FIXED_FILE}" -i "${TEST_TEST_RUNID}" > "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}"-hyperfoil.log &
 		pidstat -t -p $(pgrep -f HyperfoilWrk) 1  > "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-hyperfoil-pidstat.log" &
+		rm -f "${TEST_OUT_DIR:-.}"/hyperfoil.did
+		pgrep -f HyperfoilWrk > "${TEST_OUT_DIR:-.}"/hyperfoil.did
 		while [ ! -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready" ]; do
 			:
 		done

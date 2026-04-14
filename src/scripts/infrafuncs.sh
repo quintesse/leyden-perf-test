@@ -117,3 +117,18 @@ function stop_all_containers() {
 		fi
 	done
 }
+
+# Stops all running drivers started during the test run.
+# Variables used:
+#   TEST_OUT_DIR   - output directory for storing container IDs
+function stop_all_drivers() {
+	for didfile in "${TEST_OUT_DIR}"/*.did; do
+		if [[ -f "${didfile}" ]]; then
+			local driver_pid
+			read -r driver_pid < "${didfile}"
+			echo "Stopping driver..."
+			kill -9 "${driver_pid}" || true
+			rm -f "${didfile}" > /dev/null 2>&1 || true
+		fi
+	done
+}
