@@ -165,7 +165,7 @@ function wait_for_8080() {
 	fi
     local time=$(date +%s%N)
     echo "   - Waiting for port 8080..."
-    for ((i=0; i<10000000; i++)); do
+    for ((i=0; i<100000000; i++)); do
 		if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
 			echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
 			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
