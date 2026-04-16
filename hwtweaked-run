@@ -1,5 +1,21 @@
 #!/bin/bash
 
+if [ -t 1 ] ; then
+	export BOLD="\033[1m"
+	export NORMAL="\033[0m"
+	export RED="\033[31m"
+	export GREEN="\033[32m"
+	export CURUP="\033M"
+	export CLREOL="\033[0J"
+else
+	export BOLD=""
+	export NORMAL=""
+	export RED=""
+	export GREEN=""
+	export CURUP=""
+	export CLREOL=""
+fi
+
 echo -e "\033[0;91m\033[47m                                               \033[0m"
 echo -e "\033[0;91m\033[47m   ****************************************    \033[0m"
 echo -e "\033[0;91m\033[47m   **** YOU SHOULD NOT USE THIS SCRIPT ****    \033[0m"
@@ -76,38 +92,62 @@ else
 	echo -e "   - \033[0;32m✓ configuration\033[0m"
 fi
 
-echo "This command will ask you for your sudo password to tweak the hardware."
-echo "It will restore back all the hardware configuration, but it may fail. Be careful using this command."
+echo -e "${BOLD}This command will ask you for your sudo password to tweak the hardware.${NORMAL}"
+echo -e "${BOLD}It will restore back all the hardware configuration, but it may fail.${NORMAL}"
+echo -e "${BOLD}Be careful using this command.${NORMAL}"
 
 echo "Disabling turbo boost"
 if [ $IS_INTEL == true ]; then
 	echo "1" | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
 else
 	sudo cpupower set --turbo-boost 0
+	echo ""
 fi
+echo -e "${CURUP}${CURUP}   - ${NORMAL}${GREEN}✓ Turbo boost disabled.${NORMAL}${CLREOL}${CLREOL}"
 
 echo "Setting a constant CPU frequency"
-sudo cpupower frequency-set --min $TEST_FREQ
-sudo cpupower frequency-set --max $TEST_FREQ
+sudo cpupower frequency-set --min $TEST_FREQ > /dev/null
+sudo cpupower frequency-set --max $TEST_FREQ > /dev/null
+retVal=$?
+if [ $retVal -ne 0 ]; then
+	echo -e "${CURUP}   - ${BOLD}${RED}✗ CPU Frequency couldn't be tweaked. ${NORMAL}${CLREOL}"
+else
+	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ CPU Frequency setup.${NORMAL}${CLREOL}"
+fi
 
 echo "Clearing IO Operations"
 sudo sync
+echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ IO Operations cleared.${NORMAL}${CLREOL}"
 
 echo "Clearing Swap"
 echo 3 | sudo tee /proc/sys/vm/drop_caches
 sudo swapoff -a && sudo swapon -a
+echo -e "${CURUP}${CURUP}   - ${NORMAL}${GREEN}✓ Swap cleared.${NORMAL}${CLREOL}${CLREOL}"
+
+echo "Self-assigning CPU"
+taskset -cp ${TEST_FRAMEWORK_CPUS} $$
+echo -e "   - ${NORMAL}${GREEN}✓ Self-assigned CPU.${NORMAL}"
 
 # Launch run with all the configuration options
 ./run "$@"
 
-echo "Trying to restore the hardware configuration"
-echo "Free CPU frequency"
-sudo cpupower frequency-set --min $MIN_FREQ 
-sudo cpupower frequency-set --max $MAX_FREQ
+echo -e "${BOLD}Trying to restore the hardware configuration${NORMAL}"
+echo "Restore CPU frequency"
+sudo cpupower frequency-set --min $MIN_FREQ > /dev/null
+sudo cpupower frequency-set --max $MAX_FREQ > /dev/null
+retVal=$?
+if [ $retVal -ne 0 ]; then
+	echo -e "${CURUP}   - ${BOLD}${RED}✗ CPU Frequency couldn't be restored. ${NORMAL}${CLREOL}"
+else
+	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ CPU Frequency restored.${NORMAL}${CLREOL}"
+fi
+
 
 echo "Re-enabling turbo boost"
 if [ $IS_INTEL == true ]; then
 	echo "1" | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
 else
 	sudo cpupower set --turbo-boost 1
+	echo ""
 fi
+echo -e "${CURUP}${CURUP}   - ${NORMAL}${GREEN}✓ Turbo boost restored.${NORMAL}${CLREOL}${CLREOL}"
