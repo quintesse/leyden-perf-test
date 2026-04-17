@@ -107,10 +107,14 @@ echo -e "${CURUP}${CURUP}   - ${NORMAL}${GREEN}✓ Turbo boost disabled.${NORMAL
 
 echo "Setting a constant CPU frequency"
 sudo cpupower frequency-set --min $TEST_FREQ > /dev/null
+retVal=$?
+if [ $retVal -ne 0 ]; then
+	echo -e "   - ${BOLD}${RED}✗ CPU Frequency couldn't be tweaked. ${NORMAL}"
+fi
 sudo cpupower frequency-set --max $TEST_FREQ > /dev/null
 retVal=$?
 if [ $retVal -ne 0 ]; then
-	echo -e "${CURUP}   - ${BOLD}${RED}✗ CPU Frequency couldn't be tweaked. ${NORMAL}${CLREOL}"
+	echo -e "   - ${BOLD}${RED}✗ CPU Frequency couldn't be tweaked. ${NORMAL}"
 else
 	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ CPU Frequency setup.${NORMAL}${CLREOL}"
 fi
@@ -134,10 +138,14 @@ echo -e "   - ${NORMAL}${GREEN}✓ Self-assigned CPU.${NORMAL}"
 echo -e "${BOLD}Trying to restore the hardware configuration${NORMAL}"
 echo "Restore CPU frequency"
 sudo cpupower frequency-set --min $MIN_FREQ > /dev/null
+retVal=$?
+if [ $retVal -ne 0 ]; then
+	echo -e "   - ${BOLD}${RED}✗ CPU Frequency couldn't be restored. ${NORMAL}"
+fi
 sudo cpupower frequency-set --max $MAX_FREQ > /dev/null
 retVal=$?
 if [ $retVal -ne 0 ]; then
-	echo -e "${CURUP}   - ${BOLD}${RED}✗ CPU Frequency couldn't be restored. ${NORMAL}${CLREOL}"
+	echo -e "   - ${BOLD}${RED}✗ CPU Frequency couldn't be restored. ${NORMAL}"
 else
 	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ CPU Frequency restored.${NORMAL}${CLREOL}"
 fi
