@@ -178,8 +178,9 @@ function wait_for_8080() {
         fi
         # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
         if (echo -n < /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
-            echo "${results_name},$(($(date +%s%N) - time))" >> "${TEST_OUT_DIR}/time-to-8080.csv"
-			echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Port open for ${results_name} (${i} attempts in bash starting on ${time}).${NORMAL}${CLREOL}"
+			local final_time=$(($(date +%s%N) - time))
+            echo "${results_name},${final_time}" >> "${TEST_OUT_DIR}/time-to-8080.csv"
+			echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Port open for ${results_name} (${i} attempts, ${final_time} ns).${NORMAL}${CLREOL}"
             return 0
         fi
     done
