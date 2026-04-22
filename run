@@ -46,7 +46,7 @@ fi
 function list_commands() {
 	for filename in "${TEST_SRC_DIR}"/scripts/bin/*.sh; do
 		name=$(basename "$filename" ".sh")
-		description=$(grep -m 1 '^# DESCRIPTION=' "$filename" || true | cut -d'=' -f2-)
+		description=$( (grep -m 1 '^# DESCRIPTION=' "$filename" || true) | cut -d'=' -f2-)
 		if [[ -z "${description}" ]]; then
 			echo -e "  ${BOLD}$name${NORMAL}"
 		else
