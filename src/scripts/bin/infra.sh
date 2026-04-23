@@ -9,7 +9,7 @@ if [[ ! -v TEST_SRC_DIR ]]; then
 	exit 3
 fi
 
-if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -ne 2 ]]; then
+if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -lt 2 ]]; then
 	echo "This command starts/stops the required infrastructure for the tests."
 	echo "Usage: ./run infra [<options>] <test-suite>/<test-name> start|stop"
 	echo ""
