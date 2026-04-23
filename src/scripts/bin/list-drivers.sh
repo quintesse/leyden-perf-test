@@ -23,12 +23,12 @@ echo " - TEST_PERF_CNT env var to set number of requests."
 
 echo "Available test drivers:"
 drivers_dir="${TEST_SRC_DIR}/scripts/drivers"
-for driver_script in "$drivers_dir"/*.sh; do
-	name=$(basename "$driver_script" .sh)
-	if [[ "$name" == _* || ! -f "$driver_script" ]]; then
+for driver_dir in "$drivers_dir"/*/; do
+	name=$(basename "$driver_dir")
+	if [[ "$name" == _* || ! -d "$driver_dir" ]]; then
 		continue
 	fi
-	description=$( (grep -m 1 '^# DESCRIPTION=' "$driver_script" || true) | cut -d'=' -f2-)
+	description=$(read_description "${driver_dir}/DESCRIPTION")
 	if [[ -z "${description}" ]]; then
 		echo -e "  ${BOLD}$name${NORMAL}"
 	else

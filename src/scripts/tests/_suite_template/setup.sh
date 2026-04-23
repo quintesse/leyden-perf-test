@@ -12,3 +12,5 @@ source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 # Put your setup code here
 echo "Cloning and compiling code for example test suite..."
+
+# This file is optional and can be deleted if not needed

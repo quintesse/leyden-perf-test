@@ -19,12 +19,12 @@ source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
 echo "Available test strategies:"
 strategies_dir="${TEST_SRC_DIR}/scripts/strategies"
-for strategy_script in "$strategies_dir"/*.sh; do
-	name=$(basename "$strategy_script" .sh)
-	if [[ "$name" == _* || ! -f "$strategy_script" ]]; then
+for strategy_dir in "$strategies_dir"/*/; do
+	name=$(basename "$strategy_dir")
+	if [[ "$name" == _* || ! -d "$strategy_dir" ]]; then
 		continue
 	fi
-	description=$( (grep -m 1 '^# DESCRIPTION=' "$strategy_script" || true) | cut -d'=' -f2-)
+	description=$(read_description "${strategy_dir}/DESCRIPTION")
 	if [[ -z "${description}" ]]; then
 		echo -e "  ${BOLD}$name${NORMAL}"
 	else

@@ -42,18 +42,18 @@ function run_infra() {
 	local msg
 	if [[ "${action}" == "start" ]]; then
 		msg="Starting infrastructure for"
-		testfunccall=("_run_command_for_test" "infra" "${msg}" "start")
-		beforesuitefunccall=("_run_command_for_suite" "infra" "${msg}" "start")
+		testfunccall=("_run_command_for_test" "infra_start" "${msg}")
+		beforesuitefunccall=("_run_command_for_suite" "infra_start" "${msg}")
 		aftersuitefunccall=("_noop")
-		firstsuitefunccall=("_run_command_for_suite" "infra" "${msg}" "first")
+		firstsuitefunccall=("_run_command_for_suite" "infra_first" "${msg}")
 		lastsuitefunccall=("_noop")
 	else
 		msg="Stopping infrastructure for"
-		testfunccall=("_run_command_for_test" "infra" "${msg}" "stop")
+		testfunccall=("_run_command_for_test" "infra_stop" "${msg}")
 		beforesuitefunccall=("_noop")
-		aftersuitefunccall=("_run_command_for_suite" "infra" "${msg}" "stop")
+		aftersuitefunccall=("_run_command_for_suite" "infra_stop" "${msg}")
 		firstsuitefunccall=("_noop")
-		lastsuitefunccall=("_run_command_for_suite" "infra" "${msg}" "last")
+		lastsuitefunccall=("_run_command_for_suite" "infra_last" "${msg}")
 	fi
 	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall
 }

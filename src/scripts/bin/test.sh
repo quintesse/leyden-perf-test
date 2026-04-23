@@ -107,7 +107,7 @@ while [[ $# -gt 0 ]]; do
 			fi
 			IFS=',' read -r -a strats <<< "$1"
 			for strat in "${strats[@]}"; do
-				if [[ -f "${TEST_SRC_DIR}/scripts/strategies/$strat.sh" ]]; then
+				if [[ -f "${TEST_SRC_DIR}/scripts/strategies/$strat/strategy.sh" ]]; then
 					strategies+=("$strat")
 				else
 					echo "Error: Strategy '$strat' does not exist."
@@ -181,6 +181,6 @@ for javaVersion in "${javaVersions[@]}"; do
 		TEST_OUT_DIR=${TEST_OUT_BASE}/j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}
 		mkdir -p "${TEST_OUT_DIR}"
 		echo "   - Created test output folder ${TEST_OUT_DIR}"
-		source "${TEST_SRC_DIR}/scripts/strategies/${strategy}.sh"
+		source "${TEST_SRC_DIR}/scripts/strategies/${strategy}/strategy.sh"
 	done
 done

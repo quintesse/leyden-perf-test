@@ -48,18 +48,18 @@ function run_app() {
 	local msg
 	if [[ "${action}" == "start" ]]; then
 		msg="Starting application for"
-		testfunccall=("_run_command_for_test" "app" "${msg}" "start")
-		beforesuitefunccall=("_run_command_for_suite" "app" "${msg}" "start")
+		testfunccall=("_run_command_for_test" "app_start" "${msg}")
+		beforesuitefunccall=("_run_command_for_suite" "app_start" "${msg}")
 		aftersuitefunccall=("_noop")
-		firstsuitefunccall=("_run_command_for_suite" "app" "${msg}" "first")
+		firstsuitefunccall=("_run_command_for_suite" "app_first" "${msg}")
 		lastsuitefunccall=("_noop")
 	else
 		msg="Stopping application for"
-		testfunccall=("_run_command_for_test" "app" "${msg}" "stop")
+		testfunccall=("_run_command_for_test" "app_stop" "${msg}")
 		beforesuitefunccall=("_noop")
-		aftersuitefunccall=("_run_command_for_suite" "app" "${msg}" "stop")
+		aftersuitefunccall=("_run_command_for_suite" "app_stop" "${msg}")
 		firstsuitefunccall=("_noop")
-		lastsuitefunccall=("_run_command_for_suite" "app" "${msg}" "last")
+		lastsuitefunccall=("_run_command_for_suite" "app_last" "${msg}")
 	fi
 	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall
 }
