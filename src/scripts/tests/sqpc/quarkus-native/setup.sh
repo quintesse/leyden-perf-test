@@ -1,9 +1,3 @@
-#!/bin/bash
-
-set -euo pipefail
-
-source "${TEST_SRC_DIR}"/scripts/buildfuncs.sh
-source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 # Compile Quarkus app natively
 require_java "21+"

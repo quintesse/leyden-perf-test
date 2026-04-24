@@ -1,9 +1,3 @@
-#!/bin/bash
-
-set -euo pipefail
-
-source "${TEST_SRC_DIR}"/scripts/buildfuncs.sh
-source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 # Compile Spring Boot app as Spring Boot Buildpack Executable
 # Which means preparing for AOT cache and production environment

@@ -1,10 +1,9 @@
 
-# The setup script manages any work that needs to be done to prepare the
-# application being tested for execution, such as compiling the code.
+# The app_start script starts the application to be tested.
+# The script can write any debug output it wants to the TEST_OUT_DIR directory.
 # Variables defined in shared-vars.sh are available to this script, as well as
 # TEST_SUITE_NAME, TEST_SUITE_DIR, TEST_TEST_NAME, TEST_TEST_DIR and TEST_TEST_RUNID.
 
-# Put your setup code here
-echo "Compiling example_test..."
-
+# Start the application to be tested
 # This file is optional and can be deleted if not needed
+TESTID=$1

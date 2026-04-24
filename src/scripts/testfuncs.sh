@@ -85,11 +85,11 @@ function _run_test_suite_before() {
 	export TEST_TEST_RUNID="${name}"
 
 	local result=0
-	_run_command_for_suite "infra_start" "Starting infrastructure for" || result=$?
+	_run_command_for_suite "infra_start" "Starting infrastructure for" "${name}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
-	_run_command_for_suite "app_start" "Starting test application for" || result=$?
+	_run_command_for_suite "app_start" "Starting test application for" "${name}" || result=$?
 	return $result
 }
 
@@ -102,11 +102,11 @@ function _run_test_suite_after() {
 	export TEST_TEST_RUNID="${name}"
 
 	local result1=0
-	_run_command_for_suite "app_stop" "Stopping test application for" || result1=$?
+	_run_command_for_suite "app_stop" "Stopping test application for" "${name}" || result1=$?
 	
 	# don't exit on error yet!
 	local result2=0
-	_run_command_for_suite "infra_stop" "Stopping infrastructure for" || result2=$?
+	_run_command_for_suite "infra_stop" "Stopping infrastructure for" "${name}" || result2=$?
 
 	local result=$((result1 + result2))
 	return $result

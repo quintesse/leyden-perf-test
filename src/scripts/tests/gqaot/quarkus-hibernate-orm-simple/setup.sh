@@ -1,9 +1,3 @@
-#!/bin/bash
-
-set -euo pipefail
-
-source "${TEST_SRC_DIR}"/scripts/buildfuncs.sh
-source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 test_repo_path=${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple
 test_build_path="${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-simple/quarkus-hibernate-orm-simple"

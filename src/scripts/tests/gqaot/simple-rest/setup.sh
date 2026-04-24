@@ -1,9 +1,3 @@
-#!/bin/bash
-
-set -euo pipefail
-
-source "${TEST_SRC_DIR}"/scripts/buildfuncs.sh
-source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 sed 's/999-SNAPSHOT/3.32.0/g' "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-simple-rest-aot/pom.xml" > "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-simple-rest-aot/pom.xml.2"
 mv "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-simple-rest-aot/pom.xml.2" "${TEST_APPS_DIR}/${REPO_NAME}/quarkus-simple-rest-aot/pom.xml"

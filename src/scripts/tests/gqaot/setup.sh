@@ -1,8 +1,4 @@
-#!/bin/bash
 
-set -euo pipefail
-
-source "${TEST_SRC_DIR}"/scripts/buildfuncs.sh
-source "${TEST_SUITE_DIR}/shared-vars.sh"
+REPO_URL="https://github.com/gsmet/quarkus-aot.git"
 
 clone "${REPO_NAME}" "${REPO_URL}"

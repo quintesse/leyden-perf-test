@@ -1,4 +1,3 @@
-#!/bin/bash
 
 # The infra_start script is run to start the infrastructure for each test.
 # The script can write any debug output it wants to the TEST_OUT_DIR directory.
@@ -8,10 +7,6 @@
 # IMPORTANT: This script should wait and return only when the infrastructure
 # is fully started and ready to use!
 
-set -euo pipefail
-
-source "${TEST_SRC_DIR}"/scripts/infrafuncs.sh
-source "${TEST_SUITE_DIR}/shared-vars.sh"
-
 # Perform any work required to start the infrastructure for each test
 # This file is optional and can be deleted if not needed
+TESTID=$1

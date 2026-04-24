@@ -1,10 +1,3 @@
-#!/bin/bash
-
-set -euo pipefail
-
-source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
-source "${TEST_SUITE_DIR}/shared-vars.sh"
-
 
 # Starts a native test application in background.
 # The PID of the application is written to a file in the TEST_OUT_DIR.
@@ -41,7 +34,6 @@ function start_app_native() {
         echo "$app_pid" > "$pidfile"
 }
 
-
-NAME=${1:-sqpc-quarkus-native}
+NAME=$1
 
 start_app_native "${NAME}" "${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus3/quarkus3-native/quarkus3-runner"
