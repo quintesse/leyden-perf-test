@@ -172,7 +172,7 @@ public class HyperfoilWrk implements Command<CommandInvocation> {
                 invocation.println("Timeout waiting for Time to port open after " + attempts + " attempts.");
                 break;
             }
-            try (Socket _ = new Socket(host, port)) {
+            try (Socket s = new Socket(host, port)) {
                 var endTime = System.nanoTime();
                 writeTimeToPortCsv(endTime - startTime);
                 invocation.println(identifier + " => Startime: " + startTime + " Attempts: " + attempts);
