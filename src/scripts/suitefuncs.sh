@@ -127,9 +127,9 @@ function run_command() {
 }
 
 # Runs a command for a specific test.
-# Commands are scripts named <cmd>.sh located in the TEST_TEST_DIR directory.
+# Commands are actions handled by test.sh located in the TEST_TEST_DIR directory.
 # Arguments:
-#   cmd - command to run
+#   cmd - command/action to run
 #   msg - message to display
 #   args - additional arguments
 # Variables used:
@@ -140,12 +140,12 @@ function _run_command_for_test() {
 	local cmd=$1
 	local msg=$2
 	local args=("${@:3}")
-	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/test/${cmd}.sh"
-	local cmd_path="${TEST_TEST_DIR}/${cmd}.sh"
+	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/test/test.sh"
+	local cmd_path="${TEST_TEST_DIR}/test.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test: ${TEST_SUITE_NAME}/${TEST_TEST_NAME} ..."
 		local result=0
-		"${launcher_path}" "${cmd_path}" "${args[@]}" || result=$?
+		"${launcher_path}" "${cmd_path}" "${cmd}" "${args[@]}" || result=$?
 		if [[ $result -ne 0 ]]; then
 			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Failed.${NORMAL}"
 			return $result
@@ -155,9 +155,9 @@ function _run_command_for_test() {
 }
 
 # Runs a command for a specific test suite.
-# Commands are scripts named <cmd>.sh located in the TEST_SUITE_DIR directory.
+# Commands are actions handled by test.sh located in the TEST_SUITE_DIR directory.
 # Arguments:
-#   cmd - command to run
+#   cmd - command/action to run
 #   msg - message to display
 #   args - additional arguments
 # Variables used:
@@ -167,12 +167,12 @@ function _run_command_for_suite() {
 	local cmd=$1
 	local msg=$2
 	local args=("${@:3}")
-	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/${cmd}.sh"
-	local cmd_path="${TEST_SUITE_DIR}/${cmd}.sh"
+	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/test.sh"
+	local cmd_path="${TEST_SUITE_DIR}/test.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test suite: ${TEST_SUITE_NAME} ..."
 		local result=0
-		"${launcher_path}" "${cmd_path}" "${args[@]}" || result=$?
+		"${launcher_path}" "${cmd_path}" "${cmd}" "${args[@]}" || result=$?
 		if [[ $result -ne 0 ]]; then
 			echo -e "   - ${NORMAL}${RED}✗ ${msg} test suite ${TEST_SUITE_NAME}   : Failed.${NORMAL}"
 			return $result
@@ -182,7 +182,7 @@ function _run_command_for_suite() {
 }
 
 # Runs a command for a specific driver.
-# Commands are scripts named driver_<action>.sh located in the drivers/<driver> directory.
+# Commands are actions handled by driver.sh located in the drivers/<driver> directory.
 # Arguments:
 #   driver - driver name
 #   action - action to run (prepare, run)
@@ -197,11 +197,11 @@ function _run_command_for_driver() {
 	local action=$2
 	local msg=$3
 	local args=("${@:4}")
-	local cmd_path="${TEST_SRC_DIR}/scripts/drivers/${driver}/driver_${action}.sh"
+	local cmd_path="${TEST_SRC_DIR}/scripts/drivers/${driver}/driver.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test: ${TEST_SUITE_NAME}/${TEST_TEST_NAME} ..."
 		local result=0
-		"${cmd_path}" "${args[@]}" || result=$?
+		"${cmd_path}" "${action}" "${args[@]}" || result=$?
 		if [[ $result -ne 0 ]]; then
 			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Failed.${NORMAL}"
 			return $result
