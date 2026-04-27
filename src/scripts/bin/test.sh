@@ -91,7 +91,7 @@ while [[ $# -gt 0 ]]; do
 				echo "Error: Driver option specified but no value provided."
 				exit 4
 			fi
-			if [[ ! -f "${TEST_SRC_DIR}/scripts/drivers/$1.sh" ]]; then
+			if [[ ! -f "${TEST_SRC_DIR}/scripts/drivers/$1/driver_run.sh" ]]; then
 				echo "Error: Test driver '$1' does not exist."
 				echo "Use './run list-drivers' to see the list of available drivers."
 				exit 4
