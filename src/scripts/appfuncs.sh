@@ -129,11 +129,7 @@ function stop_process() {
 	local display_name=$2
 
 	echo "   - Stopping ${display_name} test application (#${pid})..."
-	if [[ "$DETECTED_OS" == "windows" ]]; then
-		kill -INT "${pid}" || true
-	else
-		kill -TERM "${pid}" || true
-	fi
+	kill -TERM "${pid}" || true
 	local CNT=0
 	while kill -0 "${pid}" > /dev/null 2>&1 && [[ $CNT -lt 30 ]]; do
 		echo "   - Waiting for ${display_name} test application to exit..."

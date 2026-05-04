@@ -15,6 +15,11 @@ case "$(uname -s)" in
 	CYGWIN*|MINGW*|MSYS*) export DETECTED_OS=windows;;
 esac
 
+if [[ "$DETECTED_OS" == "windows" ]]; then
+	echo "ERROR: The test framework is no longer supported on Windows. Please run it on Linux or Mac."
+	exit 1
+fi
+
 export TEST_ENGINE=""
 if command -v podman >/dev/null 2>&1; then
   TEST_ENGINE="podman"

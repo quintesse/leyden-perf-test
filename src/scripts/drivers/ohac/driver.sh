@@ -55,11 +55,7 @@ if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true && -v TEST_DRIVER
     cpuopts=("--cpuset-cpus=$TEST_DRIVER_CPUS")
 fi
 
-if [[ "$DETECTED_OS" == "windows" ]]; then
-    HOST=$(ping -4 -n 1 "$(hostname)" | grep -E -o -m 1 '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-else
-    HOST="host-gateway"
-fi
+HOST="host-gateway"
 
 cmd="${TEST_ENGINE} run -t --rm ${cpuopts[*]} --add-host=host.docker.internal:$HOST -v ${TEST_OUT_DIR:-.}:/test-results:z ghcr.io/hatoo/oha -q ${RATE} -z ${DURATION}s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o /test-results/${TEST_TEST_RUNID}-oha.json --db-url /test-results/${TEST_TEST_RUNID}-oha.db  --urls-from-file $URLS_FIXED_FILE"
 echo "   - Driver command: ${cmd}"
