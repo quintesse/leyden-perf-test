@@ -171,6 +171,8 @@ for profile in "${profiles[@]}"; do
 	source "${TEST_DIR}/profiles/${profile}.sh"
 done
 
+_run_command_for_driver "${TEST_DRIVER}" "setup" "Setting up ${TEST_DRIVER} test driver"
+
 echo "   - Selected java versions ${javaVersions[*]}"
 for javaVersion in "${javaVersions[@]}"; do
 	echo "   - Running tests with Java version ${javaVersion}"

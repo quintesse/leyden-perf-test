@@ -9,6 +9,9 @@ set -euo pipefail
 ACTION=${1:-}
 
 case "${ACTION}" in
+    setup)
+        # ... put your code to install/setup the test driver here ...
+        ;;
     prepare)
         # ... Perform any work required before the driver is run ...
         # This action is optional and can be removed if not needed

@@ -223,15 +223,16 @@ function _run_command_for_driver() {
 	local msg=$3
 	local args=("${@:4}")
 	local cmd_path="${TEST_SRC_DIR}/scripts/drivers/${driver}/driver.sh"
+	local ctx="${TEST_SUITE_NAME:-}/${TEST_TEST_NAME:-}"
 	if [[ -f "${cmd_path}" ]]; then
-		echo "   - ${msg} test: ${TEST_SUITE_NAME}/${TEST_TEST_NAME} ..."
+		echo "   - ${msg} test: ${ctx} ..."
 		local result=0
 		"${cmd_path}" "${action}" "${args[@]}" || result=$?
 		if [[ $result -ne 0 ]]; then
-			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Failed.${NORMAL}"
+			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${ctx}   : Failed.${NORMAL}"
 			return $result
 		fi
-		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Done.${NORMAL}"
+		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${ctx}   : Done.${NORMAL}"
 	fi
 }
 
