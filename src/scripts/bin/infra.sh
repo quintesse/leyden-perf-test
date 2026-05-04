@@ -33,29 +33,50 @@ function run_infra() {
 	local testpat=$1
 	local action=$2
 
-	local -a testfunccall
-	local -a beforesuitefunccall
-	local -a aftersuitefunccall
-	local -a firstsuitefunccall
-	local -a lastsuitefunccall
+	local tests=( $(select_tests "${testpat}") )
+	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
 
-	local msg
+	local cursuite=""
+	local result=0
 	if [[ "${action}" == "start" ]]; then
-		msg="Starting infrastructure for"
-		testfunccall=("_run_command_for_test" "infra_start" "${msg}")
-		beforesuitefunccall=("_run_command_for_suite" "infra_start" "${msg}")
-		aftersuitefunccall=("_noop")
-		firstsuitefunccall=("_run_command_for_suite" "infra_first" "${msg}")
-		lastsuitefunccall=("_noop")
+		local msg="Starting infrastructure for"
+		for test in "${tests[@]}"; do
+			_set_test_context "${test%%/*}" "${test#*/}"
+			if [[ -z "${cursuite}" ]]; then
+				_run_command_for_global "infra_first" "${msg}"
+			fi
+			if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
+				cursuite="${TEST_SUITE_NAME}"
+				result=0
+				_run_command_for_suite "infra_first" "${msg}" || result=$?
+				[[ $result -ne 0 ]] && continue
+			fi
+			result=0
+			_run_command_for_suite "infra_start" "${msg}" || result=$?
+			if [[ $result -eq 0 ]]; then
+				_run_command_for_test "infra_start" "${msg}" || result=$?
+			fi
+		done
 	else
-		msg="Stopping infrastructure for"
-		testfunccall=("_run_command_for_test" "infra_stop" "${msg}")
-		beforesuitefunccall=("_noop")
-		aftersuitefunccall=("_run_command_for_suite" "infra_stop" "${msg}")
-		firstsuitefunccall=("_noop")
-		lastsuitefunccall=("_run_command_for_suite" "infra_last" "${msg}")
+		local msg="Stopping infrastructure for"
+		for test in "${tests[@]}"; do
+			local suitenm="${test%%/*}"
+			local testnm="${test#*/}"
+			if [[ "${suitenm}" != "${cursuite}" && "${cursuite}" != "" ]]; then
+				_set_test_context "${cursuite}"
+				_run_command_for_suite "infra_last" "${msg}" || result=$?
+			fi
+			cursuite="${suitenm}"
+			_set_test_context "${suitenm}" "${testnm}"
+			_run_command_for_test "infra_stop" "${msg}" || result=$?
+			_run_command_for_suite "infra_stop" "${msg}" || result=$?
+		done
+		if [[ "${cursuite}" != "" ]]; then
+			_set_test_context "${cursuite}"
+			_run_command_for_suite "infra_last" "${msg}" || result=$?
+			_run_command_for_global "infra_last" "${msg}"
+		fi
 	fi
-	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall
 }
 
 resultTag=""

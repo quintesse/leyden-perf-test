@@ -9,14 +9,18 @@ TESTID=${2:-}
 
 case "${ACTION}" in
     app_start)
-        start_app "${TESTID}" "${TEST_BUILDS_DIR}/${REPO_NAME}-wrapper/quarkus-aot-jar/quarkus-app/quarkus-run.jar"
+        start_app "${TESTID}" "${TEST_TEST_CACHE}/wrapper/target/quarkus-app/quarkus-run.jar"
         ;;
     setup)
-        # Compile Quarkus app normally
+        REPO_BENCHMARK_URL="https://github.com/ionutbalosin/jvm-performance-benchmarks.git"
+        clone "${REPO_BENCHMARK_URL}" "benchmark"
         require_java "25"
-        compile_maven "${REPO_NAME}-benchmark"
+        [[ $CLONE_CHANGED -eq 1 ]] && compile_maven "benchmark"
+
+        REPO_WRAPPER_URL="https://github.com/Delawen/jvm-performance-benchmarks-rest-wrapper.git"
+        clone "${REPO_WRAPPER_URL}" "wrapper"
         require_java "25+"
-        compile_maven "${REPO_NAME}-wrapper" "-Dquarkus.package.jar.type=aot-jar"
-        copy_build_artifacts "${REPO_NAME}-wrapper" "quarkus-aot-jar" "target/quarkus-app/"
+        [[ $CLONE_CHANGED -eq 1 ]] || return 0
+        compile_maven "wrapper" "-Dquarkus.package.jar.type=aot-jar"
         ;;
 esac

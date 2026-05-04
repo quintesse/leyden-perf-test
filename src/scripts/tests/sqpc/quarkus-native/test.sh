@@ -44,13 +44,15 @@ function start_app_native() {
 
 case "${ACTION}" in
     app_start)
-        start_app_native "${TESTID}" "${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus3/quarkus3-native/quarkus3-runner"
+        start_app_native "${TESTID}" "${TEST_TEST_CACHE}/repo/quarkus3/target/quarkus3-runner"
         ;;
     setup)
+        REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
+        clone "${REPO_URL}"
+        [[ $CLONE_CHANGED -eq 1 ]] || return 0
         # Compile Quarkus app natively
         require_java "21+"
         # It should be -O2 additional build args
-        compile_maven "${REPO_NAME}/quarkus3" "-Dnative -Dquarkus.native.debug.enabled -Dquarkus.native.additional-build-args=-O0,-H:-OmitInlinedMethodDebugLineInfo"
-        copy_build_artifacts "${REPO_NAME}/quarkus3" "quarkus3-native" "target/quarkus3-runner"
+        compile_maven "repo/quarkus3" "-Dnative -Dquarkus.native.debug.enabled -Dquarkus.native.additional-build-args=-O0,-H:-OmitInlinedMethodDebugLineInfo"
         ;;
 esac

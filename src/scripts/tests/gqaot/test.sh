@@ -11,8 +11,4 @@ case "${ACTION}" in
     app_stop)
         stop_app "${TESTID}"
         ;;
-    setup)
-        REPO_URL="https://github.com/gsmet/quarkus-aot.git"
-        clone "${REPO_NAME}" "${REPO_URL}"
-        ;;
 esac

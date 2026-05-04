@@ -7,7 +7,7 @@ source "${TEST_SRC_DIR}/scripts/appfuncs.sh"
 ACTION=${1:-}
 
 if [[ "${ACTION}" != "run" ]]; then
-    exit 1
+    exit 0
 fi
 
 wait_for_8080 "${TEST_TEST_RUNID}"

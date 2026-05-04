@@ -5,7 +5,6 @@ set -euo pipefail
 source "${TEST_SRC_DIR}/scripts/appfuncs.sh"
 
 ACTION=${1:-}
-shift 1
 
 case "${ACTION}" in
     prepare)

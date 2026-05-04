@@ -7,25 +7,57 @@ function run_all_tests() {
 	local name_tag=${2:-}
 	local preparefunccall=${3:-}
 
-	local -a testfunccall
-	local -a beforesuitefunccall
-	local -a aftersuitefunccall
-	local -a firstsuitefunccall
-	local -a lastsuitefunccall
+	local tests=( $(select_tests "${testpat}") )
+	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
 
-	testfunccall=("_run_test" "${name_tag}" "${preparefunccall}")
-	beforesuitefunccall=("_run_test_suite_before" "${name_tag}")
-	aftersuitefunccall=("_run_test_suite_after" "${name_tag}")
-	firstsuitefunccall=("_run_test_suite_first")
-	lastsuitefunccall=("_run_test_suite_last")
-	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall
+	_run_command_for_global "setup" "Setting up"
+	_run_command_for_global "infra_first" "Starting initial infrastructure"
+
+	local result=0
+	local cursuite=""
+	local curtest=""
+	local skip_suite=false
+	for test in "${tests[@]}"; do
+		local suitenm="${test%%/*}"
+		local testnm="${test#*/}"
+		if [[ "${suitenm}" != "${cursuite}" ]]; then
+			skip_suite=false
+			if [[ "${cursuite}" != "" ]]; then
+				_set_test_context "${cursuite}" "${curtest}"
+				_run_test_suite_last
+			fi
+			cursuite="${suitenm}"
+			curtest="${testnm}"
+			_set_test_context "${suitenm}" "${testnm}"
+			result=0
+			_run_test_suite_first || result=$?
+			if [[ $result -ne 0 ]]; then
+				skip_suite=true
+				continue
+			fi
+		elif [[ "${skip_suite}" == true ]]; then
+			continue
+		fi
+		_set_test_context "${suitenm}" "${testnm}"
+		result=0
+		_run_test_suite_before "${name_tag}" || result=$?
+		if [[ $result -eq 0 ]]; then
+			_run_test "${name_tag}" "${preparefunccall}" || result=$?
+			_run_test_suite_after "${name_tag}" || result=$?
+		fi
+	done
+	if [[ "${cursuite}" != "" ]]; then
+		_set_test_context "${cursuite}" "${curtest}"
+		_run_test_suite_last
+	fi
+	_run_command_for_global "infra_last" "Stopping initial infrastructure"
 }
 
 function _run_test() {
 	local name_tag=${1:-}
 	local preparefunccall=${2:-}
 
-	source "${TEST_SUITE_DIR}/shared-vars.sh"
+	[[ -f "${TEST_SUITE_DIR}/shared-vars.sh" ]] && source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 	local name="${TEST_SUITE_NAME}-${TEST_TEST_NAME}${name_tag:+-$name_tag}"
 	export TEST_TEST_RUNID="${name}"
@@ -35,11 +67,15 @@ function _run_test() {
 	fi
 
 	local result=0
+	_run_command_for_test "setup" "Setting up" || result=$?
+	if [[ $result -ne 0 ]]; then
+		return $result
+	fi
 	_run_command_for_test "infra_start" "Starting test infrastructure for" "${name}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
-	_run_command_for_driver "${TEST_DRIVER}" "prepare" "Preparing test driver for" "${name}" || result=$?
+	_run_command_for_driver "${TEST_DRIVER}" "prepare" "Preparing ${TEST_DRIVER} test driver for" "${name}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
@@ -79,7 +115,8 @@ function _run_perf_tests() {
 function _run_test_suite_before() {
 	local name_tag=${1:-}
 
-	source "${TEST_SUITE_DIR}/shared-vars.sh"
+	# first test if file existes, then source
+	[[ -f "${TEST_SUITE_DIR}/shared-vars.sh" ]] && source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 	local name="${TEST_SUITE_NAME}-${TEST_TEST_NAME}${name_tag:+-$name_tag}"
 	export TEST_TEST_RUNID="${name}"
@@ -96,7 +133,7 @@ function _run_test_suite_before() {
 function _run_test_suite_after() {
 	local name_tag=${1:-}
 
-	source "${TEST_SUITE_DIR}/shared-vars.sh"
+	[[ -f "${TEST_SUITE_DIR}/shared-vars.sh" ]] && source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 	local name="${TEST_SUITE_NAME}-${TEST_TEST_NAME}${name_tag:+-$name_tag}"
 	export TEST_TEST_RUNID="${name}"
@@ -113,26 +150,22 @@ function _run_test_suite_after() {
 }
 
 function _run_test_suite_first() {
-	source "${TEST_SUITE_DIR}/shared-vars.sh"
+	[[ -f "${TEST_SUITE_DIR}/shared-vars.sh" ]] && source "${TEST_SUITE_DIR}/shared-vars.sh"
 
 	local result=0
-	_run_command_for_suite "infra_first" "Starting initial infrastructure for" || result=$?
+	_run_command_for_suite "setup" "Setting up" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
-	_run_command_for_suite "app_first" "Starting initial test application for" || result=$?
+	_run_command_for_suite "infra_first" "Starting initial infrastructure for" || result=$?
 	return $result
 }
 
 function _run_test_suite_last() {
-	source "${TEST_SUITE_DIR}/shared-vars.sh"
+	[[ -f "${TEST_SUITE_DIR}/shared-vars.sh" ]] && source "${TEST_SUITE_DIR}/shared-vars.sh"
 
-	local result1=0
-	_run_command_for_suite "app_last" "Stopping initial test application for" || result1=$?
-	# don't exit on error yet!
-	local result2=0
-	_run_command_for_suite "infra_last" "Stopping initial infrastructure for" || result2=$?
-	local result=$((result1 + result2))
+	local result=0
+	_run_command_for_suite "infra_last" "Stopping initial infrastructure for" || result=$?
 	return $result
 }
 

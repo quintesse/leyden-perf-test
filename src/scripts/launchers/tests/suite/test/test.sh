@@ -5,6 +5,7 @@ set -euo pipefail
 source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/infrafuncs.sh
 source "${TEST_SRC_DIR}"/scripts/buildfuncs.sh
+f="${TEST_SUITE_DIR}/shared-vars.sh"; [[ -f "$f" ]] && source "$f"
 
 if [[ -z "${1:-}" ]]; then
     echo "Error: [$0] No script path provided."

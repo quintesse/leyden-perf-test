@@ -9,12 +9,14 @@ TESTID=${2:-}
 
 case "${ACTION}" in
     app_start)
-        start_app "${TESTID}" "${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus3/quarkus3-jar/quarkus-app/quarkus-run.jar"
+        start_app "${TESTID}" "${TEST_TEST_CACHE}/repo/quarkus3/target/quarkus-app/quarkus-run.jar"
         ;;
     setup)
+        REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
+        clone "${REPO_URL}"
+        [[ $CLONE_CHANGED -eq 1 ]] || return 0
         # Compile Quarkus app normally
         require_java "25+"
-        compile_maven "${REPO_NAME}/quarkus3" "-Dquarkus.package.jar.aot.enabled=true"
-        copy_build_artifacts "${REPO_NAME}/quarkus3" "quarkus3-jar" "target/quarkus-app"
+        compile_maven "repo/quarkus3" "-Dquarkus.package.jar.aot.enabled=true"
         ;;
 esac

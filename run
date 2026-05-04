@@ -5,8 +5,7 @@ script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export TEST_DIR=${script_dir}
 export TEST_SRC_DIR=${TEST_DIR}/src
-export TEST_APPS_DIR=${TEST_DIR}/apps
-export TEST_BUILDS_DIR=${TEST_DIR}/builds
+export TEST_CACHE_DIR=${TEST_DIR}/cache
 
 # Detects the operating system.
 case "$(uname -s)" in

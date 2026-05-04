@@ -39,29 +39,46 @@ function run_app() {
 	local testpat=$1
 	local action=$2
 
-	local -a testfunccall
-	local -a beforesuitefunccall
-	local -a aftersuitefunccall
-	local -a firstsuitefunccall
-	local -a lastsuitefunccall
+	local tests=( $(select_tests "${testpat}") )
+	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
 
-	local msg
+	local cursuite=""
+	local result=0
 	if [[ "${action}" == "start" ]]; then
-		msg="Starting application for"
-		testfunccall=("_run_command_for_test" "app_start" "${msg}")
-		beforesuitefunccall=("_run_command_for_suite" "app_start" "${msg}")
-		aftersuitefunccall=("_noop")
-		firstsuitefunccall=("_run_command_for_suite" "app_first" "${msg}")
-		lastsuitefunccall=("_noop")
+		local msg="Starting application for"
+		for test in "${tests[@]}"; do
+			_set_test_context "${test%%/*}" "${test#*/}"
+			if [[ -z "${cursuite}" ]]; then
+				_run_command_for_global "app_start" "${msg}"
+			fi
+			if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
+				cursuite="${TEST_SUITE_NAME}"
+				result=0
+				_run_command_for_suite "app_start" "${msg}" || result=$?
+				[[ $result -ne 0 ]] && continue
+			fi
+			result=0
+			_run_command_for_test "app_start" "${msg}" || result=$?
+		done
 	else
-		msg="Stopping application for"
-		testfunccall=("_run_command_for_test" "app_stop" "${msg}")
-		beforesuitefunccall=("_noop")
-		aftersuitefunccall=("_run_command_for_suite" "app_stop" "${msg}")
-		firstsuitefunccall=("_noop")
-		lastsuitefunccall=("_run_command_for_suite" "app_last" "${msg}")
+		local msg="Stopping application for"
+		for test in "${tests[@]}"; do
+			local suitenm="${test%%/*}"
+			local testnm="${test#*/}"
+			if [[ "${suitenm}" != "${cursuite}" && "${cursuite}" != "" ]]; then
+				_set_test_context "${cursuite}"
+				_run_command_for_suite "app_stop" "${msg}" || result=$?
+			fi
+			cursuite="${suitenm}"
+			_set_test_context "${suitenm}" "${testnm}"
+			_run_command_for_test "app_stop" "${msg}" || result=$?
+		done
+		if [[ "${cursuite}" != "" ]]; then
+			_set_test_context "${cursuite}"
+			_run_command_for_suite "app_stop" "${msg}" || result=$?
+			_run_command_for_global "app_stop" "${msg}"
+		fi
 	fi
-	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall
 }
 
 resultTag=""

@@ -17,6 +17,29 @@ fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
+function run_setup() {
+	local testpat=$1
+	local msg=$2
+
+	local tests=( $(select_tests "${testpat}") )
+	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
+
+	local cursuite=""
+	local result=0
+	for test in "${tests[@]}"; do
+		_set_test_context "${test%%/*}" "${test#*/}"
+		if [[ -z "${cursuite}" ]]; then
+			_run_command_for_global "setup" "${msg}"
+		fi
+		if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
+			cursuite="${TEST_SUITE_NAME}"
+			_run_command_for_suite "setup" "${msg}" || result=$?
+		fi
+		_run_command_for_test "setup" "${msg}" || result=$?
+	done
+	return $result
+}
+
 if ! command -v oha >/dev/null 2>&1
 then
     echo -e "   - ${NORMAL}${RED}✗ oha   : Command not found, please install it, see https://github.com/hatoo/oha${NORMAL}"
@@ -25,10 +48,9 @@ else
 fi
 
 if [[ $# -gt 0 && "$1" == "--clean" ]]; then
-	rm -rf "${TEST_APPS_DIR}" > /dev/null || true
-	rm -rf "${TEST_BUILDS_DIR}" > /dev/null || true
-	echo -e "   - ${NORMAL}${GREEN}✓ Cleaned 'apps' and 'builds' directories${NORMAL}"
+	rm -rf "${TEST_CACHE_DIR}" > /dev/null || true
+	echo -e "   - ${NORMAL}${GREEN}✓ Cleaned 'cache' directory${NORMAL}"
 	shift
 fi
 
-run_command "${1:-all}" "setup" "Setting up"
+run_setup "${1:-all}" "Setting up"

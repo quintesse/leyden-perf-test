@@ -105,25 +105,26 @@ function read_description() {
 	fi
 }
 
-# Runs a command for selected tests
-# Commands are scripts named <cmd>.sh located in the suite or test directories.
+# Sets the test context environment variables.
 # Arguments:
-#   testpat - pattern in the form suite/test, where suite or test can be 'all' or contain wildcards
-#   cmd     - command to run
-#   msg     - message to display
-function run_command() {
-	local testpat=$1
-	local cmd=$2
-	local msg=$3
-	local -a testfunccall=("_run_command_for_test" "${cmd}" "${msg}")
-	local -a beforesuitefunccall=("_noop")
-	local -a aftersuitefunccall=("_noop")
-	local -a firstsuitefunccall=("_run_command_for_suite" "${cmd}" "${msg}")
-	local -a lastsuitefunccall=("_noop")
-
-	local result=0
-	run_suite_funcs "${testpat}" testfunccall beforesuitefunccall aftersuitefunccall firstsuitefunccall lastsuitefunccall || result=$?
-	return $result
+#   suite - suite name
+#   test  - (optional) test name (empty string if not provided)
+# Variables set:
+#   TEST_SUITE_NAME, TEST_TEST_NAME, TEST_SUITE_DIR, TEST_TEST_DIR
+function _set_test_context() {
+	local suite=$1
+	local test=${2:-}
+	export TEST_SUITE_NAME="${suite}"
+	export TEST_TEST_NAME="${test}"
+	export TEST_SUITE_DIR="${TEST_ROOT_DIR}/${TEST_SUITE_NAME}"
+	export TEST_SUITE_CACHE="${TEST_CACHE_DIR}/${TEST_SUITE_NAME}"
+	if [[ -n "${test}" ]]; then
+		export TEST_TEST_DIR="${TEST_ROOT_DIR}/${TEST_SUITE_NAME}/${TEST_TEST_NAME}"
+		export TEST_TEST_CACHE="${TEST_CACHE_DIR}/${TEST_SUITE_NAME}/${TEST_TEST_NAME}"
+	else
+		export TEST_TEST_DIR=
+		export TEST_TEST_CACHE=
+	fi
 }
 
 # Runs a command for a specific test.
@@ -140,7 +141,7 @@ function _run_command_for_test() {
 	local cmd=$1
 	local msg=$2
 	local args=("${@:3}")
-	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/test/test.sh"
+	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/suite/test/test.sh"
 	local cmd_path="${TEST_TEST_DIR}/test.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test: ${TEST_SUITE_NAME}/${TEST_TEST_NAME} ..."
@@ -167,7 +168,7 @@ function _run_command_for_suite() {
 	local cmd=$1
 	local msg=$2
 	local args=("${@:3}")
-	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/test.sh"
+	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/suite/test.sh"
 	local cmd_path="${TEST_SUITE_DIR}/test.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test suite: ${TEST_SUITE_NAME} ..."
@@ -178,6 +179,30 @@ function _run_command_for_suite() {
 			return $result
 		fi
 		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test suite ${TEST_SUITE_NAME}   : Done.${NORMAL}"
+	fi
+}
+
+# Runs a global command.
+# Commands are actions handled by test.sh located in the TEST_ROOT_DIR directory.
+# Arguments:
+#   cmd - command/action to run
+#   msg - message to display
+#   args - additional arguments
+function _run_command_for_global() {
+	local cmd=$1
+	local msg=$2
+	local args=("${@:3}")
+	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/test.sh"
+	local cmd_path="${TEST_ROOT_DIR}/test.sh"
+	if [[ -f "${cmd_path}" ]]; then
+		echo "   - ${msg} global ..."
+		local result=0
+		"${launcher_path}" "${cmd_path}" "${cmd}" "${args[@]}" || result=$?
+		if [[ $result -ne 0 ]]; then
+			echo -e "   - ${NORMAL}${RED}✗ ${msg} global   : Failed.${NORMAL}"
+			return $result
+		fi
+		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} global   : Done.${NORMAL}"
 	fi
 }
 
@@ -207,90 +232,6 @@ function _run_command_for_driver() {
 			return $result
 		fi
 		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Done.${NORMAL}"
-	fi
-}
-
-# A function that does nothing
-function _noop() {
-	true
-}
-
-# Runs suite and test functions for selected tests.
-# For each test matching the pattern, it runs:
-#   - first suite function (once per suite)
-#   - before suite function
-#   - test function
-#   - after suite function
-#   - last suite function (once per suite)
-# Arguments:
-#   testpat         - pattern in the form suite/test, where suite or test can be 'all' or contain wildcards
-#   testfunc        - name of the array variable containing the test function call
-#   beforesuitefunc - name of the array variable containing the before suite function call
-#   aftersuitefunc  - name of the array variable containing the after suite function call
-#   firstsuitefunc  - name of the array variable containing the first suite function call
-#   lastsuitefunc   - name of the array variable containing the last suite function call
-# Variables used:
-#   TEST_SUITE_NAME - name of the test suite
-#   TEST_TEST_NAME  - name of the test
-#   TEST_SUITE_DIR  - directory of the test suite
-#   TEST_TEST_DIR   - directory of the test
-#   TEST_SRC_DIR    - base directory of the project's sources
-function run_suite_funcs() {
-	local testpat=$1
-	local -n testfunc=$2
-	local -n beforesuitefunc=$3
-	local -n aftersuitefunc=$4
-	local -n firstsuitefunc=$5
-	local -n lastsuitefunc=$6
-
-	local result=0
-	local cursuite=""
-	local skip_suite=false
-	local tests=( $(select_tests "${testpat}") )
-	for test in "${tests[@]}"; do
-		suitenm=${test%%/*}
-		testnm=${test#*/}
-		if [[ "${suitenm}" != "${cursuite}" ]]; then
-			skip_suite=false
-			if [[ "${cursuite}" != "" ]]; then
-				export TEST_SUITE_NAME="${cursuite}"
-				export TEST_SUITE_DIR="${TEST_SRC_DIR}/scripts/tests/${cursuite}"
-				export TEST_TEST_NAME=
-				export TEST_TEST_DIR=
-				result=0
-				"${lastsuitefunc[@]}" || result=$?
-			fi
-			export TEST_SUITE_NAME="${suitenm}"
-			export TEST_SUITE_DIR="${TEST_SRC_DIR}/scripts/tests/${suitenm}"
-			export TEST_TEST_NAME=
-			export TEST_TEST_DIR=
-			result=0
-			"${firstsuitefunc[@]}" || result=$?
-			if [[ $result -ne 0 ]]; then
-				skip_suite=true
-				continue
-			fi
-		elif [[ "${skip_suite}" == true ]]; then
-			continue
-		fi
-		export TEST_SUITE_NAME="${suitenm}"
-		export TEST_SUITE_DIR="${TEST_SRC_DIR}/scripts/tests/${suitenm}"
-		export TEST_TEST_NAME="${testnm}"
-		export TEST_TEST_DIR="${TEST_SRC_DIR}/scripts/tests/${suitenm}/${testnm}"
-		cursuite=${suitenm}
-		result=0
-		"${beforesuitefunc[@]}" || result=$?
-		if [[ $result -eq 0 ]]; then
-			"${testfunc[@]}" || result=$?
-			"${aftersuitefunc[@]}" || result=$?
-		fi
-	done
-	if [[ "${cursuite}" != "" ]]; then
-		export TEST_SUITE_NAME="${cursuite}"
-		export TEST_SUITE_DIR="${TEST_SRC_DIR}/scripts/tests/${cursuite}"
-		export TEST_TEST_NAME=
-		export TEST_TEST_DIR=
-		"${lastsuitefunc[@]}"
 	fi
 }
 

@@ -1,5 +1,5 @@
 
-# The test.sh script handles all actions for the test.
+# The test.sh script handles all global actions for the test framework.
 # The first argument is the action to perform.
 # Variables defined in shared-vars.sh are available to this script, as well as
 # TEST_SUITE_NAME, TEST_SUITE_DIR, TEST_TEST_NAME, TEST_TEST_DIR and TEST_TEST_RUNID.
@@ -11,32 +11,33 @@ case "${ACTION}" in
     app_start)
         # The app_start action starts the application to be tested.
         # This action is optional and can be removed if not needed.
-        # Typical implementation:
-        #start_app "${TESTID}" "path/to/your/app.jar"
         ;;
     app_stop)
         # The app_stop action stops the application that was tested.
         # This action is optional and can be removed if not needed.
-        # Typical implementation:
-        stop_app "${TESTID}"
+        ;;
+    infra_first)
+        # The infra_first action is run once before any of the tests in the suite are run.
+        # IMPORTANT: This action should wait and return only when the infrastructure
+        # is fully started and ready to use!
+        # This action is optional and can be removed if not needed.
+        ;;
+    infra_last)
+        # The infra_last action is run once after all tests in the suite have run.
+        # This action is optional and can be removed if not needed.
         ;;
     infra_start)
-        # The infra_start action starts any infrastructure services required by the application.
+        # The infra_start action is run to start the infrastructure for each test.
         # IMPORTANT: This action should wait and return only when the infrastructure
         # is fully started and ready to use!
         # This action is optional and can be removed if not needed.
         ;;
     infra_stop)
-        # The infra_stop action stops any infrastructure services required by the application.
+        # The infra_stop action is run to stop the infrastructure for each test.
         # This action is optional and can be removed if not needed.
         ;;
     setup)
         # The setup action manages any work that needs to be done to prepare the
-        # application being tested for execution, such as compiling the code.
-
-        # Put your setup code here
-        echo "Compiling example_test..."
-
-        # This action is optional and can be removed if not needed
+        # test framework for execution, such as installing applications.
         ;;
 esac

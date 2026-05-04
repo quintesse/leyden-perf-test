@@ -1,5 +1,6 @@
 apps/
 builds/
+cache/
 test-results/
 .vscode/
 .idea/

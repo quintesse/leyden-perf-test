@@ -11,10 +11,10 @@ PG_CONTAINER_NAME="gqaot-tribekrd-db"
 
 case "${ACTION}" in
     app_start)
-        start_app "${TESTID}" "${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-tribe-krd/quarkus-hibernate-orm-tribe-krd/quarkus-run.jar"
+        start_app "${TESTID}" "${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-tribe-krd/target/quarkus-app/quarkus-run.jar"
         ;;
     infra_start)
-        PG_INITDB_PATH="${TEST_BUILDS_DIR}/${REPO_NAME}/${TEST_TEST_NAME}/${TEST_TEST_NAME}/db"
+        PG_INITDB_PATH="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-tribe-krd/db"
         POSTGRES_CONTAINER_OPTS="-v ${PG_INITDB_PATH}:/docker-entrypoint-initdb.d/:z  -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=example -e POSTGRES_DB=gqaot"
         start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_CONTAINER_OPTS}"
         ;;
@@ -22,20 +22,22 @@ case "${ACTION}" in
         stop_postgres "${PG_CONTAINER_NAME}" 
         ;;
     setup)
-        test_repo_path=${TEST_APPS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-tribe-krd
-        test_build_path="${TEST_BUILDS_DIR}/${REPO_NAME}/quarkus-hibernate-orm-tribe-krd/quarkus-hibernate-orm-tribe-krd"
+        REPO_URL="https://github.com/gsmet/quarkus-aot.git"
+        clone "${REPO_URL}"
+        [[ $CLONE_CHANGED -eq 1 ]] || return 0
+
+        test_repo_path="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-tribe-krd"
 
         sed -i 's/localhost:5433/localhost:5432/g' "$test_repo_path/src/main/resources/application.properties"
         sed -i 's/quarkus-tribe-krd/gqaot/g' "$test_repo_path/src/main/resources/application.properties"
         sed -i 's/999-SNAPSHOT/3.32.0/g' "$test_repo_path/pom.xml"
 
         require_java "25+"
-        compile_maven "${REPO_NAME}/quarkus-hibernate-orm-tribe-krd" "-Dquarkus.package.jar.type=aot-jar -Dquarkus.package.jar.appcds.use-aot=true"
-        copy_build_artifacts "${REPO_NAME}/quarkus-hibernate-orm-tribe-krd" "quarkus-hibernate-orm-tribe-krd" "target/quarkus-app/app" "target/quarkus-app/lib" "target/quarkus-app/quarkus" "target/quarkus-app/quarkus-app-dependencies.txt" "target/quarkus-app/quarkus-run.jar"
+        compile_maven "repo/quarkus-hibernate-orm-tribe-krd" "-Dquarkus.package.jar.type=aot-jar -Dquarkus.package.jar.appcds.use-aot=true"
 
-        rm -rf "${test_build_path:?}/db"
-        mkdir -p "$test_build_path/db"
-        cp -a "${TEST_TEST_DIR}/initdb.sql" "$test_build_path/db"
+        rm -rf "${test_repo_path:?}/db"
+        mkdir -p "$test_repo_path/db"
+        cp -a "${TEST_TEST_DIR}/initdb.sql" "$test_repo_path/db"
         echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ SQL pre-seeding database script for 'quarkus-hibernate-orm-tribe-krd' copied.${NORMAL}${CLREOL}"
         ;;
 esac
