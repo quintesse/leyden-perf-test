@@ -6,6 +6,17 @@ source "${TEST_SRC_DIR}/scripts/appfuncs.sh"
 
 ACTION=${1:-}
 
+if [[ "$ACTION" == "setup" ]]; then
+    if ! command -v oha >/dev/null 2>&1
+    then
+        echo -e "   - ${NORMAL}${RED}✗ oha   : Command not found, please install it, see https://github.com/hatoo/oha ${NORMAL}"
+        exit 1
+    else
+        echo -e "   - ${NORMAL}${GREEN}✓ oha   : Command is installed.${NORMAL}"
+        exit 0
+    fi
+fi
+
 if [[ "${ACTION}" != "run" ]]; then
     exit 0
 fi

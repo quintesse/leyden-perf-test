@@ -40,13 +40,6 @@ function run_setup() {
 	return $result
 }
 
-if ! command -v oha >/dev/null 2>&1
-then
-    echo -e "   - ${NORMAL}${RED}✗ oha   : Command not found, please install it, see https://github.com/hatoo/oha${NORMAL}"
-else
-    echo -e "   - ${NORMAL}${GREEN}✓ oha   : Command is installed.${NORMAL}"
-fi
-
 if [[ $# -gt 0 && "$1" == "--clean" ]]; then
 	rm -rf "${TEST_CACHE_DIR}" > /dev/null || true
 	echo -e "   - ${NORMAL}${GREEN}✓ Cleaned 'cache' directory${NORMAL}"
