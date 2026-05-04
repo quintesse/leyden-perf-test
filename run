@@ -15,23 +15,6 @@ case "$(uname -s)" in
 	CYGWIN*|MINGW*|MSYS*) export DETECTED_OS=windows;;
 esac
 
-if [[ "$DETECTED_OS" == "windows" ]]; then
-	echo "ERROR: The test framework is no longer supported on Windows. Please run it on Linux or Mac."
-	exit 1
-fi
-
-export TEST_ENGINE=""
-if command -v podman >/dev/null 2>&1; then
-  TEST_ENGINE="podman"
-elif command -v docker >/dev/null 2>&1; then
-  TEST_ENGINE="docker"
-else
-  echo "Error: Neither podman nor docker can be found"
-  exit 3
-fi
-
-source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
-
 if [ -t 1 ] ; then
 	export BOLD="\033[1m"
 	export NORMAL="\033[0m"
@@ -47,6 +30,23 @@ else
 	export CURUP=""
 	export CLREOL=""
 fi
+
+if [[ "$DETECTED_OS" == "windows" ]]; then
+	echo -e "${RED}This script no longer supports Windows, sorry.${NORMAL}"
+	exit 1
+fi
+
+export TEST_ENGINE=""
+if command -v podman >/dev/null 2>&1; then
+  TEST_ENGINE="podman"
+elif command -v docker >/dev/null 2>&1; then
+  TEST_ENGINE="docker"
+else
+  echo "Error: Neither podman nor docker can be found"
+  exit 3
+fi
+
+source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
 function list_commands() {
 	for filename in "${TEST_SRC_DIR}"/scripts/bin/*.sh; do

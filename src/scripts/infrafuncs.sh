@@ -74,9 +74,8 @@ function start_container() {
 	local cmd="${TEST_ENGINE} run -d --rm --name ${container_name} ${cpuopts[*]} ${container_opts} ${image} ${container_args}"
 	echo "   - Container: $cmd"
 	echo "$cmd" > "$outfile"
-	# Using MSYS_NO_PATHCONV=1 to avoid Git Bash on Windows from messing up any volume mount paths
 	local result=0
-	MSYS_NO_PATHCONV=1 ${TEST_ENGINE} run -d --rm --name "${container_name}" "${cpuopts[@]}" ${container_opts} "${image}" ${container_args} >> "$outfile" 2>&1 || result=$?
+	${TEST_ENGINE} run -d --rm --name "${container_name}" "${cpuopts[@]}" ${container_opts} "${image}" ${container_args} >> "$outfile" 2>&1 || result=$?
 	if [[ $result -ne 0 ]]; then
 		echo -e "   - ${NORMAL}${RED}Error: Failed to start container ${display_name}.${NORMAL}"
 		cat "$outfile" 2>/dev/null || true
