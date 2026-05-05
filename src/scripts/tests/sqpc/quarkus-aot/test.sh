@@ -7,14 +7,16 @@
 ACTION=${1:-}
 TESTID=${2:-}
 
+app_jar="${TEST_TEST_CACHE}/repo/quarkus3/target/quarkus-app/quarkus-run.jar"
+
 case "${ACTION}" in
     app_start)
-        start_app "${TESTID}" "${TEST_TEST_CACHE}/repo/quarkus3/target/quarkus-app/quarkus-run.jar"
+        start_app "${TESTID}" "${app_jar}"
         ;;
     setup)
         REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
         clone "${REPO_URL}"
-        [[ $CLONE_CHANGED -eq 1 ]] || return 0
+        [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
         # Compile Quarkus app normally
         require_java "25+"
         compile_maven "repo/quarkus3" "-Dquarkus.package.jar.aot.enabled=true"

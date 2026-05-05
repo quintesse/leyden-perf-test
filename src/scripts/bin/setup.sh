@@ -19,23 +19,25 @@ source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
 function run_setup() {
 	local testpat=$1
-	local msg=$2
 
 	local tests=( $(select_tests "${testpat}") )
 	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
 
 	local cursuite=""
+	local curtest=""
 	local result=0
+	local msg="Setting up"
 	for test in "${tests[@]}"; do
-		_set_test_context "${test%%/*}" "${test#*/}"
-		if [[ -z "${cursuite}" ]]; then
-			_run_command_for_global "setup" "${msg}"
-		fi
+		local suitenm="${test%%/*}"
+		local testnm="${test#*/}"
+		_set_test_context "${suitenm}" "${testnm}"
+		result=0
 		if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
 			cursuite="${TEST_SUITE_NAME}"
-			_run_command_for_suite "setup" "${msg}" || result=$?
+			_run_command_for_suite "setup" "${msg}" "${testnm}" || result=$?
+			[[ $result -ne 0 ]] && continue
 		fi
-		_run_command_for_test "setup" "${msg}" || result=$?
+		_run_command_for_test "setup" "${msg}" "${testnm}" || result=$?
 	done
 	return $result
 }
@@ -46,4 +48,4 @@ if [[ $# -gt 0 && "$1" == "--clean" ]]; then
 	shift
 fi
 
-run_setup "${1:-all}" "Setting up"
+run_setup "${1:-all}"

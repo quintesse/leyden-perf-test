@@ -109,11 +109,14 @@ function read_description() {
 # Arguments:
 #   suite - suite name
 #   test  - (optional) test name (empty string if not provided)
+#   name_tag - (optional) additional tag to append to TEST_TEST_RUNID
 # Variables set:
-#   TEST_SUITE_NAME, TEST_TEST_NAME, TEST_SUITE_DIR, TEST_TEST_DIR
+#   TEST_SUITE_NAME, TEST_TEST_NAME, TEST_SUITE_DIR, TEST_TEST_DIR,
+#   TEST_SUITE_CACHE, TEST_TEST_CACHE, TEST_TEST_RUNID
 function _set_test_context() {
 	local suite=$1
 	local test=${2:-}
+	local name_tag=${3:-}
 	export TEST_SUITE_NAME="${suite}"
 	export TEST_TEST_NAME="${test}"
 	export TEST_SUITE_DIR="${TEST_ROOT_DIR}/${TEST_SUITE_NAME}"
@@ -121,9 +124,11 @@ function _set_test_context() {
 	if [[ -n "${test}" ]]; then
 		export TEST_TEST_DIR="${TEST_ROOT_DIR}/${TEST_SUITE_NAME}/${TEST_TEST_NAME}"
 		export TEST_TEST_CACHE="${TEST_CACHE_DIR}/${TEST_SUITE_NAME}/${TEST_TEST_NAME}"
+		export TEST_TEST_RUNID="${TEST_SUITE_NAME}-${TEST_TEST_NAME}${name_tag:+-$name_tag}"
 	else
 		export TEST_TEST_DIR=
 		export TEST_TEST_CACHE=
+		export TEST_TEST_RUNID=
 	fi
 }
 
@@ -182,30 +187,6 @@ function _run_command_for_suite() {
 	fi
 }
 
-# Runs a global command.
-# Commands are actions handled by test.sh located in the TEST_ROOT_DIR directory.
-# Arguments:
-#   cmd - command/action to run
-#   msg - message to display
-#   args - additional arguments
-function _run_command_for_global() {
-	local cmd=$1
-	local msg=$2
-	local args=("${@:3}")
-	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/test.sh"
-	local cmd_path="${TEST_ROOT_DIR}/test.sh"
-	if [[ -f "${cmd_path}" ]]; then
-		echo "   - ${msg} global ..."
-		local result=0
-		"${launcher_path}" "${cmd_path}" "${cmd}" "${args[@]}" || result=$?
-		if [[ $result -ne 0 ]]; then
-			echo -e "   - ${NORMAL}${RED}✗ ${msg} global   : Failed.${NORMAL}"
-			return $result
-		fi
-		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} global   : Done.${NORMAL}"
-	fi
-}
-
 # Runs a command for a specific driver.
 # Commands are actions handled by driver.sh located in the drivers/<driver> directory.
 # Arguments:
@@ -256,6 +237,27 @@ function detectJavaVersion() {
 			version=$(echo "${version_line}" | cut -d'"' -f2 | cut -d'.' -f1)
 			echo "${version}"
 		fi
+	fi
+}
+
+# Sets up the test output directories if not already set.
+# Arguments:
+#   subdir      - subdirectory name to create under TEST_OUT_BASE
+#   outputPath  - (optional) override for TEST_OUT_BASE path
+#   resultTag   - (optional) tag appended to the generated folder name
+# Variables exported:
+#   TEST_OUT_BASE - base test output directory
+#   TEST_OUT_DIR  - test output directory (TEST_OUT_BASE/subdir)
+function _setup_test_output_dir() {
+	local subdir="${1:-}"
+	local outputPath="${2:-}"
+	local resultTag="${3:-}"
+	if [[ ! -v TEST_OUT_DIR || -z "${TEST_OUT_DIR}" ]]; then
+		export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
+		mkdir -p "${TEST_OUT_BASE}"
+		export TEST_OUT_DIR=${TEST_OUT_BASE}/${subdir}
+		mkdir -p "${TEST_OUT_DIR}"
+		echo "   - Created test output folder ${TEST_OUT_DIR}"
 	fi
 }
 

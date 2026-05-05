@@ -155,12 +155,13 @@ function stop_process() {
 function wait_for_8080() {
     local results_name=$1
 	local app_pid
+    echo "   - Waiting for port 8080..."
 	app_pid=$(get_app_pid "${results_name}")
 	if [[ "${app_pid}" == "" ]]; then
+		echo -e "   - ${BOLD}${RED}✗ Application process not found${NORMAL}"
 		return 2
 	fi
     local time=$(date +%s%N)
-    echo "   - Waiting for port 8080..."
     for ((i=0; i<100000000; i++)); do
 		if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
 			echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"

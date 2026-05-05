@@ -9,9 +9,11 @@ TESTID=${2:-}
 
 PG_CONTAINER_NAME="gqaot-simpleorm-db"
 
+app_jar="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-simple/target/quarkus-app/quarkus-run.jar"
+
 case "${ACTION}" in
     app_start)
-        start_app "${TESTID}" "${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-simple/target/quarkus-app/quarkus-run.jar"
+        start_app "${TESTID}" "${app_jar}"
         ;;
     infra_start)
         PG_INITDB_PATH="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-simple/db"
@@ -24,7 +26,7 @@ case "${ACTION}" in
     setup)
         REPO_URL="https://github.com/gsmet/quarkus-aot.git"
         clone "${REPO_URL}"
-        [[ $CLONE_CHANGED -eq 1 ]] || return 0
+        [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
 
         test_repo_path="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-simple"
 

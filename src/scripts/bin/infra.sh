@@ -37,25 +37,23 @@ function run_infra() {
 	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
 
 	local cursuite=""
+	local curtest=""
 	local result=0
 	if [[ "${action}" == "start" ]]; then
 		local msg="Starting infrastructure for"
 		for test in "${tests[@]}"; do
-			_set_test_context "${test%%/*}" "${test#*/}"
-			if [[ -z "${cursuite}" ]]; then
-				_run_command_for_global "infra_first" "${msg}"
-			fi
+			local suitenm="${test%%/*}"
+			local testnm="${test#*/}"
+			_set_test_context "${suitenm}" "${testnm}"
+			result=0
 			if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
 				cursuite="${TEST_SUITE_NAME}"
-				result=0
-				_run_command_for_suite "infra_first" "${msg}" || result=$?
+				_run_command_for_suite "infra_first" "${msg}" "${testnm}" || result=$?
 				[[ $result -ne 0 ]] && continue
 			fi
-			result=0
-			_run_command_for_suite "infra_start" "${msg}" || result=$?
-			if [[ $result -eq 0 ]]; then
-				_run_command_for_test "infra_start" "${msg}" || result=$?
-			fi
+			_run_command_for_suite "infra_start" "${msg}" "${testnm}" || result=$?
+			[[ $result -ne 0 ]] && continue
+			_run_command_for_test "infra_start" "${msg}" "${testnm}" || result=$?
 		done
 	else
 		local msg="Stopping infrastructure for"
@@ -63,20 +61,21 @@ function run_infra() {
 			local suitenm="${test%%/*}"
 			local testnm="${test#*/}"
 			if [[ "${suitenm}" != "${cursuite}" && "${cursuite}" != "" ]]; then
-				_set_test_context "${cursuite}"
-				_run_command_for_suite "infra_last" "${msg}" || result=$?
+				_set_test_context "${cursuite}" "${curtest}"
+				_run_command_for_suite "infra_last" "${msg}" "${curtest}" || result=$?
 			fi
 			cursuite="${suitenm}"
+			curtest="${testnm}"
 			_set_test_context "${suitenm}" "${testnm}"
-			_run_command_for_test "infra_stop" "${msg}" || result=$?
-			_run_command_for_suite "infra_stop" "${msg}" || result=$?
+			_run_command_for_test "infra_stop" "${msg}" "${testnm}" || result=$?
+			_run_command_for_suite "infra_start" "${msg}" "${testnm}" || result=$?
 		done
 		if [[ "${cursuite}" != "" ]]; then
-			_set_test_context "${cursuite}"
-			_run_command_for_suite "infra_last" "${msg}" || result=$?
-			_run_command_for_global "infra_last" "${msg}"
+			_set_test_context "${cursuite}" "${curtest}"
+			_run_command_for_suite "infra_last" "${msg}" "${curtest}" || result=$?
 		fi
 	fi
+	return $result
 }
 
 resultTag=""
@@ -118,19 +117,17 @@ while [[ $# -gt 0 ]]; do
 			fi
 			shift
 			;;
+        -*)
+            echo "Error: Unknown option: $1"
+			exit 4
+            ;;
         *)
             break
             ;;
     esac
 done
 
-if [[ ! -v TEST_OUT_DIR || -z "${TEST_OUT_DIR}" ]]; then
-	export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
-	mkdir -p "${TEST_OUT_BASE}"
-	export TEST_OUT_DIR=${TEST_OUT_BASE}/infra
-	mkdir -p "${TEST_OUT_DIR}"
-	echo "   - Created test output folder ${TEST_OUT_DIR}"
-fi
+_setup_test_output_dir "infra" "${outputPath}" "${resultTag}"
 export TEST_TEST_RUNID
 
 for profile in "${profiles[@]}"; do
@@ -138,7 +135,7 @@ for profile in "${profiles[@]}"; do
 	source "${TEST_DIR}/profiles/${profile}.sh"
 done
 
-case "$2" in
+case "${2:-}" in
 	start)
 		run_infra "${1:-all}" "start"
 		;;

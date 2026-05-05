@@ -42,14 +42,16 @@ function start_app_native() {
     echo "$app_pid" > "$pidfile"
 }
 
+app_jar="${TEST_TEST_CACHE}/repo/quarkus3/target/quarkus3-runner"
+
 case "${ACTION}" in
     app_start)
-        start_app_native "${TESTID}" "${TEST_TEST_CACHE}/repo/quarkus3/target/quarkus3-runner"
+        start_app_native "${TESTID}" "${app_jar}"
         ;;
     setup)
         REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
         clone "${REPO_URL}"
-        [[ $CLONE_CHANGED -eq 1 ]] || return 0
+        [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
         # Compile Quarkus app natively
         require_java "21+"
         # It should be -O2 additional build args

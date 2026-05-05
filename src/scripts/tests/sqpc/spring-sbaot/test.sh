@@ -7,14 +7,16 @@
 ACTION=${1:-}
 TESTID=${2:-}
 
+app_jar="${TEST_TEST_CACHE}/repo/springboot3/target/application/springboot3.jar"
+
 case "${ACTION}" in
     app_start)
-        TEST_JAVA_OPTS="${TEST_JAVA_OPTS:-} -Dspring.aot.enabled=true" start_app "${TESTID}" "${TEST_TEST_CACHE}/repo/springboot3/target/application/springboot3.jar"
+        TEST_JAVA_OPTS="${TEST_JAVA_OPTS:-} -Dspring.aot.enabled=true" start_app "${TESTID}" "${app_jar}"
         ;;
     setup)
         REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
         clone "${REPO_URL}"
-        [[ $CLONE_CHANGED -eq 1 ]] || return 0
+        [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
         # Compile Spring Boot app as Spring Boot Buildpack Executable
         # Which means preparing for AOT cache and production environment
         # As described in https://docs.spring.io/spring-boot/reference/packaging/efficient.html

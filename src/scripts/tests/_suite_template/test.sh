@@ -36,13 +36,18 @@ case "${ACTION}" in
         # The infra_stop action is run to stop the infrastructure for each test.
         # This action is optional and can be removed if not needed.
         ;;
-    setup)
-        # The setup action manages any work that needs to be done to prepare the
+    setup_first)
+        # The setup_first action manages any work that needs to be done to prepare the
         # test suite for execution, such as cloning repositories and compiling code.
 
         # Put your setup code here
         echo "Cloning and compiling code for example test suite..."
 
+        # This action is optional and can be removed if not needed
+        ;;
+    setup)
+        # The setup action manages any work that needs to be done to prepare a
+        # test for execution, again such as cloning repositories and compiling code.
         # This action is optional and can be removed if not needed
         ;;
 esac
