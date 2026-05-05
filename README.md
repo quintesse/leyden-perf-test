@@ -8,16 +8,6 @@ These are some scripts to help with performance/load testing of different JVMs, 
 - [oha](https://github.com/hatoo/oha) - HTTP load testing tool
 - Docker or Podman (for infrastructure services like PostgreSQL)
 
-## Quick Start
-
-The first time you need to set up the test applications:
-
-```bash
-./run setup
-```
-
-This will clone and compile all the test applications.
-
 ## Running Tests
 
 The test framework supports running individual tests or entire test suites:
@@ -41,7 +31,7 @@ The test framework supports running individual tests or entire test suites:
 
 ## Test Output
 
-Test results are written to a folder in the `test-results/` directory with the format `test-run-YYYYMMDD-HHMMSS/j<VERSION>`. Each test produces:
+Test results are written to a folder in the `test-results/` directory with the format `test-run-YYYYMMDD-HHMMSS/j<VERSION>-<STRATEGY>`. Each test produces:
 
 - `<testname>-oha.json` - Performance metrics from oha
 - `<testname>-oha.db` - SQLite database with detailed request timings
@@ -79,9 +69,9 @@ Drivers are responsible for actually testing, or "driving", the test application
 ./run test -d oha sqpc/*
 ```
 
-Right now there's only a single driver, named `oha`, which is the driver that will be used if you don't specify this option.
+If no driver is specified, `oha` will be used by default.
 
-When multiple drivers exist you can list the available ones running:
+You can list the available drivers by running:
 
 ```bash
 ./run list-drivers
@@ -89,7 +79,9 @@ When multiple drivers exist you can list the available ones running:
 
 Currently existing drivers:
 
- - **oha** - Uses [oha](https://github.com/hatoo/oha) to perform load tests. Accepts an `TEST_DRIVER_OHA_RATE_LIMIT` env var to set a rate limit (requests per second) if so desired.
+ - **oha** - Uses [oha](https://github.com/hatoo/oha) to perform load tests.
+ - **ohac** - Like `oha`, but runs the load tester inside a container.
+ - **hyperfoil** - Uses [Hyperfoil](https://hyperfoil.io) to perform load tests.
 
 Custom drivers can be implemented by making a copy of the `_template.sh` file in the `./src/scripts/drivers`
 directory, renaming it and editing it to add the desired implementation.
@@ -111,8 +103,8 @@ The "aot" strategy first performs a training run for each test and will then res
 ./run list-strategies
 ```
 
-Custom strategies can be implemented by making a copy of the `_template.sh` file in the
-`./src/scripts/strategies` directory, renaming it and editing it to add the desired implementation.
+Custom strategies can be implemented by making a copy of the `_template` folder in the
+`./src/scripts/strategies` directory, renaming it and editing the files inside it to add the desired implementation.
 
 ### Profiles
 
@@ -152,11 +144,18 @@ You can manually control individual components:
 
 ## Available Test Suites
 
+- **gqaot** - Some sample Quarkus applications
+  - `quarkus-hibernate-orm-simple`
+  - `quarkus-hibernate-orm-spacefox`
+  - `quarkus-hibernate-orm-tribe-krd`
+  - `simple-rest`
+- **jpbrw**
+  - `quarkus` - Simple Quarkus app
 - **sqpc** - Spring Quarkus Performance Comparison
   - `spring-normal` - Spring Boot compiled normally
-  - `spring-sbaot` - Spring Boot with Spring AOT optimization
-  - `quarkus-normal` - Quarkus compiled normally
-  - `quarkus-uberjar` - Quarkus packaged as uber-jar
+  - `spring-sbaot` - Spring Boot compiled with Spring AOT optimization
+  - `quarkus-aot` - Quarkus compiled and packaged with the AOT jar
+  - `quarkus-native` - Quarkus natively compiled and packaged
 
 Run `./run list` to see all available tests with descriptions.
 
@@ -166,15 +165,13 @@ Tests are organized in a hierarchical structure under `src/scripts/tests/`:
 
 ```
 tests/
+  test.sh                 # Global script
   <suite-name>/
-    setup.sh              # Suite-level setup (clone repos, etc.)
-    infra.sh              # Suite-level infrastructure control
+    test.sh               # Suite-specific script
     shared-vars.sh        # Shared variables for all tests in suite
     DESCRIPTION           # One-line description of the suite
     <test-name>/
-      setup.sh            # Test-specific setup (compilation, etc.)
-      app.sh              # Application start/stop control
-      infra.sh            # Test-specific infrastructure (optional)
+      test.sh             # Test-specific script
       DESCRIPTION         # One-line description of the test
 ```
 
