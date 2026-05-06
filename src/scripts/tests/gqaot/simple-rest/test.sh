@@ -13,7 +13,7 @@ case "${ACTION}" in
     app_start)
         start_app "${TESTID}" "${app_jar}"
         ;;
-    setup)
+    app_setup)
         REPO_URL="https://github.com/gsmet/quarkus-aot.git"
         clone "${REPO_URL}"
         [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0

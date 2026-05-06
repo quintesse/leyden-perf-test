@@ -11,7 +11,7 @@ case "${ACTION}" in
     app_start)
         start_app "${TESTID}" "${TEST_TEST_CACHE}/wrapper/target/quarkus-app/quarkus-run.jar"
         ;;
-    setup)
+    app_setup)
         REPO_BENCHMARK_URL="https://github.com/ionutbalosin/jvm-performance-benchmarks.git"
         clone "${REPO_BENCHMARK_URL}" "benchmark"
         require_java "25"

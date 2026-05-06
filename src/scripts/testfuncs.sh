@@ -96,11 +96,11 @@ function _run_perf_tests() {
 
 function _run_before_test() {
 	local result=0
-	_run_command_for_suite "setup" "Setting up" "${TEST_TEST_RUNID}" || result=$?
+	_run_command_for_suite "app_setup" "Setting up" "${TEST_TEST_RUNID}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
-	_run_command_for_test "setup" "Setting up" "${TEST_TEST_RUNID}" || result=$?
+	_run_command_for_test "app_setup" "Setting up" "${TEST_TEST_RUNID}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
@@ -126,7 +126,11 @@ function _run_after_test() {
 
 function _run_test_suite_first() {
 	local result=0
-	_run_command_for_suite "setup_first" "Initial setup for" || result=$?
+	_run_command_for_suite "suite_setup" "Initial setup for" || result=$?
+	if [[ $result -ne 0 ]]; then
+		return $result
+	fi
+	_run_command_for_suite "infra_setup" "Setting up infrastructure for" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi

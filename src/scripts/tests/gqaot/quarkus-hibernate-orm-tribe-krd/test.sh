@@ -23,7 +23,7 @@ case "${ACTION}" in
     infra_stop)
         stop_postgres "${PG_CONTAINER_NAME}" 
         ;;
-    setup)
+    app_setup)
         REPO_URL="https://github.com/gsmet/quarkus-aot.git"
         clone "${REPO_URL}"
         [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
