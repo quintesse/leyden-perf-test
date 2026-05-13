@@ -15,12 +15,19 @@ function clone() {
 	local repo_url=$1
 	local repository=${2:-repo}
 
+	GIT_CMD=""
+	if command -v git >/dev/null 2>&1; then
+		GIT_CMD=git
+	else
+		GIT_CMD="${TEST_DIR}/jbang git@jbangdev"
+	fi
+
 	CLONE_CHANGED=0
 	local result
     if [[ ! -d ${TEST_TEST_CACHE}/$repository ]]; then
       echo "   - Cloning repository '$repo_url'..."
 	  local result=0
-      git clone -q --depth 1 "$repo_url" "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1 || result=$?
+      $GIT_CMD clone --quiet --depth 1 "$repo_url" "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1 || result=$?
       if [ $result -ne 0 ]; then
          echo -e "   - ${NORMAL}${RED}✗ Repository '$repo_url' failed to clone.${NORMAL}"
       else
@@ -32,12 +39,12 @@ function clone() {
 	  set +e
 	  local result=0
       if pushd "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1; then
-	      if git reset HEAD --hard > /tmp/leyden-perf-test-clone-$$.log 2>&1; then
+	      if $GIT_CMD reset HEAD --hard > /tmp/leyden-perf-test-clone-$$.log 2>&1; then
 		      local before
-		      before=$(git rev-parse HEAD)
-		      git pull > /tmp/leyden-perf-test-clone-$$.log 2>&1 || result=$?
+		      before=$($GIT_CMD rev-parse HEAD)
+		      $GIT_CMD pull > /tmp/leyden-perf-test-clone-$$.log 2>&1 || result=$?
 		      local after
-		      after=$(git rev-parse HEAD)
+		      after=$($GIT_CMD rev-parse HEAD)
 		      [[ "$before" != "$after" ]] && CLONE_CHANGED=1
 		  fi
 	  fi

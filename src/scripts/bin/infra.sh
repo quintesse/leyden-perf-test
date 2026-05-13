@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DESCRIPTION=Starts/stops required infrastructure for the tests.
+# DESCRIPTION=Start/stop required infrastructure for the tests.
 
 set -euo pipefail
 
@@ -11,7 +11,7 @@ fi
 
 if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -lt 2 ]]; then
 	echo "This command starts/stops the required infrastructure for the tests."
-	echo "Usage: ./run infra [<options>] <test-suite>/<test-name> start|stop"
+	echo "Usage: ./run infra [<options>] <test-suite>/<test-name> setup|start|stop"
 	echo ""
 	echo "Options:"
 	echo "  -o|--output <path>           Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
@@ -27,55 +27,6 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -lt 2 ]]; then
 fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
-
-function run_infra() {
-	local testpat=$1
-	local action=$2
-
-	local tests=( $(select_tests "${testpat}") )
-	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
-
-	local cursuite=""
-	local curtest=""
-	local result=0
-	if [[ "${action}" == "start" ]]; then
-		local msg="Starting infrastructure for"
-		for test in "${tests[@]}"; do
-			local suitenm="${test%%/*}"
-			local testnm="${test#*/}"
-			_set_test_context "${suitenm}" "${testnm}"
-			result=0
-			if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
-				cursuite="${TEST_SUITE_NAME}"
-				_run_command_for_suite "infra_first" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-				[[ $result -ne 0 ]] && continue
-			fi
-			_run_command_for_suite "infra_start" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-			[[ $result -ne 0 ]] && continue
-			_run_command_for_test "infra_start" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-		done
-	else
-		local msg="Stopping infrastructure for"
-		for test in "${tests[@]}"; do
-			local suitenm="${test%%/*}"
-			local testnm="${test#*/}"
-			if [[ "${suitenm}" != "${cursuite}" && "${cursuite}" != "" ]]; then
-				_set_test_context "${cursuite}" "${curtest}"
-				_run_command_for_suite "infra_last" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-			fi
-			cursuite="${suitenm}"
-			curtest="${testnm}"
-			_set_test_context "${suitenm}" "${testnm}"
-			_run_command_for_test "infra_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-			_run_command_for_suite "infra_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-		done
-		if [[ "${cursuite}" != "" ]]; then
-			_set_test_context "${cursuite}" "${curtest}"
-			_run_command_for_suite "infra_last" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-		fi
-	fi
-	return $result
-}
 
 outputPath="test-results/manual_run"
 profiles=()
@@ -125,14 +76,17 @@ for profile in "${profiles[@]}"; do
 done
 
 case "${2:-}" in
+	setup)
+		run_suite_start_commands "${1:-all}" "Setting up infrastructure for" "infra_setup" "" "infra_setup"
+		;;
 	start)
-		run_infra "${1:-all}" "start"
+		run_suite_start_commands "${1:-all}" "Starting infrastructure for" "infra_start" "infra_start" "infra_first"
 		;;
 	stop)
-		run_infra "${1:-all}" "stop"
+		run_suite_stop_commands "${1:-all}" "Stopping infrastructure for" "infra_stop" "infra_stop" "infra_last"
 		;;
 	*)
-		echo "ERROR: Second argument must be 'start' or 'stop'."
+		echo "ERROR: Second argument must be 'setup', 'start' or 'stop'."
 		exit 4
 		;;
 esac

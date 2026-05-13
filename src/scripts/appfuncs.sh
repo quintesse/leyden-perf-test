@@ -42,19 +42,19 @@ function start_app() {
 
 	if [[ "$DETECTED_OS" == "linux" ]]; then
 		echo "Flushing disk buffers..."
-		sudo sync
+		sudo sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
 
 		echo "Purging RAM caches..."
-		echo 3 | sudo tee /proc/sys/vm/drop_caches
+		echo 3 | sudo tee /proc/sys/vm/drop_caches || echo -e "   - ${BOLD}${RED}✗ Couldn't drop caches. ${NORMAL}"
 
 		echo "Clearing Swap..."
-		sudo swapoff -a && sudo swapon -a
+		sudo swapoff -a && sudo swapon -a || echo -e "   - ${BOLD}${RED}✗ Couldn't clear swap. ${NORMAL}"
 	elif [[ "$DETECTED_OS" == "mac" ]]; then
 		echo "Flushing disk buffers..."
-		sudo sync
+		sudo sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
 
 		echo "Purging RAM caches..."
-		sudo purge
+		sudo purge || echo -e "   - ${BOLD}${RED}✗ Couldn't purge RAM caches. ${NORMAL}"
 	fi
 
 	local app_pid
@@ -158,7 +158,7 @@ function check_app_process() {
 	local pid=$1
 	local results_name=$2
 
-	if [[ -n "${app_pid}" ]] && ! kill -0 "${app_pid}" > /dev/null 2>&1; then
+	if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
 		echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
 		if [[ -n "${results_name}" ]]; then
 			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
@@ -200,18 +200,28 @@ function wait_for_8080() {
 		echo "   - Waiting for port 8080 on ${TEST_APP_HOST:-localhost}..."
 	fi
 
-    local time=$(date +%s%N)
+    local timens=$(date +%s%N)
+    local times=$(date +%s)
+    local last_msg_time=${times}
     for ((i=0; i<100000000; i++)); do
-		check_app_process "${app_pid}" "${results_name}" || return 2
+        local now=$(date +%s)
+        if (( now - times >= 60 )); then
+			break
+		fi
+        if (( now - last_msg_time >= 3 )); then
+			[[ -n "${app_pid}" ]] && { check_app_process "${app_pid}" "${results_name}" || return 2; }
+            echo "   - Still waiting ..."
+            last_msg_time=$now
+        fi
         # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
-        if (echo -n < /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
-			local final_time=$(($(date +%s%N) - time))
+        if (echo -n < /dev/tcp/${TEST_APP_HOST:-127.0.0.1}/8080) >/dev/null 2>&1; then
+			local final_time=$(($(date +%s%N) - timens))
             echo "${results_name},${final_time}" >> "${TEST_OUT_DIR}/time-to-8080.csv"
-			echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Port open for ${results_name} (${i} attempts, ${final_time} ns).${NORMAL}${CLREOL}"
+			echo -e "   - ${NORMAL}${GREEN}✓ Port open for ${results_name} (${i} attempts, ${final_time} ns).${NORMAL}"
             return 0
         fi
     done
-    echo "   - Timeout waiting for port 8080"
+    echo -e "   - ${BOLD}${RED}✗ Timeout waiting for port 8080${NORMAL}"
     return 1
 }
 

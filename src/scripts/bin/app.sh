@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DESCRIPTION=Starts/stops a test application.
+# DESCRIPTION=Start/stop a test application.
 
 set -euo pipefail
 
@@ -13,7 +13,7 @@ fi
 
 if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "This command starts/stops a test application."
-	echo "Usage: ./run app [<options>] <test-suite>/<test-name> start|stop"
+	echo "Usage: ./run app [<options>] <test-suite>/<test-name> setup|start|stop"
 	echo ""
 	echo "Options:"
 	echo "  -o, --output <path>    Path to the output folder."
@@ -32,52 +32,6 @@ fi
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/infrafuncs.sh
-
-function run_app() {
-	local testpat=$1
-	local action=$2
-
-	local tests=( $(select_tests "${testpat}") )
-	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
-
-	local cursuite=""
-	local curtest=""
-	local result=0
-	if [[ "${action}" == "start" ]]; then
-		local msg="Starting application for"
-		for test in "${tests[@]}"; do
-			local suitenm="${test%%/*}"
-			local testnm="${test#*/}"
-			_set_test_context "${suitenm}" "${testnm}"
-			result=0
-			if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
-				cursuite="${TEST_SUITE_NAME}"
-				_run_command_for_suite "app_start" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-				[[ $result -ne 0 ]] && continue
-			fi
-			_run_command_for_test "app_start" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-		done
-	else
-		local msg="Stopping application for"
-		for test in "${tests[@]}"; do
-			local suitenm="${test%%/*}"
-			local testnm="${test#*/}"
-			if [[ "${suitenm}" != "${cursuite}" && "${cursuite}" != "" ]]; then
-				_set_test_context "${cursuite}" "${curtest}"
-				_run_command_for_suite "app_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-			fi
-			cursuite="${suitenm}"
-			curtest="${testnm}"
-			_set_test_context "${suitenm}" "${testnm}"
-			_run_command_for_test "app_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-		done
-		if [[ "${cursuite}" != "" ]]; then
-			_set_test_context "${cursuite}" "${curtest}"
-			_run_command_for_suite "app_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-		fi
-	fi
-	return $result
-}
 
 outputPath="test-results/manual_run"
 profiles=()
@@ -139,14 +93,17 @@ for profile in "${profiles[@]}"; do
 done
 
 case "${2:-}" in
+	setup)
+		run_suite_start_commands "${1:-all}" "Setting up application for" "app_setup" "" "app_setup"
+		;;
 	start)
-		run_app "${1:-all}" "start"
+		run_suite_start_commands "${1:-all}" "Starting application for" "app_start" "app_start"
 		;;
 	stop)
-		run_app "${1:-all}" "stop"
+		run_suite_stop_commands "${1:-all}" "Stopping application for" "app_stop" "app_stop"
 		;;
 	*)
-		echo "ERROR: Second argument must be 'start' or 'stop'."
+		echo "ERROR: Second argument must be 'setup', 'start' or 'stop'."
 		exit 4
 		;;
 esac

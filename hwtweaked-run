@@ -120,13 +120,11 @@ else
 fi
 
 echo "Clearing IO Operations"
-sudo sync
-echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ IO Operations cleared.${NORMAL}${CLREOL}"
+( sudo sync && echo -e "   - ${NORMAL}${GREEN}✓ IO Operations cleared.${NORMAL}" ) || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
 
 echo "Clearing Swap"
-echo 3 | sudo tee /proc/sys/vm/drop_caches
-sudo swapoff -a && sudo swapon -a
-echo -e "${CURUP}${CURUP}   - ${NORMAL}${GREEN}✓ Swap cleared.${NORMAL}${CLREOL}${CLREOL}"
+( echo 3 | sudo tee /proc/sys/vm/drop_caches && echo -e "   - ${NORMAL}${GREEN}✓ Caches dropped.${NORMAL}" ) || echo -e "   - ${BOLD}${RED}✗ Couldn't drop caches. ${NORMAL}"
+( sudo swapoff -a && sudo swapon -a && echo -e "   - ${NORMAL}${GREEN}✓ Swap cleared.${NORMAL}" ) || echo -e "   - ${BOLD}${RED}✗ Couldn't clear swap. ${NORMAL}"
 
 echo "Self-assigning CPU"
 taskset -cp ${TEST_FRAMEWORK_CPUS} $$

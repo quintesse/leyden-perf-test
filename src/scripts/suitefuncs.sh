@@ -105,6 +105,69 @@ function read_description() {
 	fi
 }
 
+function run_suite_start_commands() {
+	local testpat=$1
+	local msg=$2
+	local testcmd=${3:-}
+	local suitecmd=${4:-}
+	local firstcmd=${5:-}
+
+	local tests=( $(select_tests "${testpat}") )
+	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
+
+	local cursuite=""
+	local curtest=""
+	local result=0
+	for test in "${tests[@]}"; do
+		local suitenm="${test%%/*}"
+		local testnm="${test#*/}"
+		_set_test_context "${suitenm}" "${testnm}"
+		result=0
+		if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
+			cursuite="${TEST_SUITE_NAME}"
+			[[ -n "${firstcmd}" ]] && { _run_command_for_suite "${firstcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+			[[ $result -ne 0 ]] && continue
+		fi
+		[[ -n "${suitecmd}" ]] && { _run_command_for_suite "${suitecmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+		[[ $result -ne 0 ]] && continue
+		[[ -n "${testcmd}" ]] && { _run_command_for_test "${testcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+	done
+	return $result
+}
+
+function run_suite_stop_commands() {
+	local testpat=$1
+	local msg=$2
+	local testcmd=${3:-}
+	local suitecmd=${4:-}
+	local lastcmd=${5:-}
+
+	local tests=( $(select_tests "${testpat}") )
+	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
+
+	local cursuite=""
+	local curtest=""
+	local result=0
+	for test in "${tests[@]}"; do
+		local suitenm="${test%%/*}"
+		local testnm="${test#*/}"
+		if [[ "${suitenm}" != "${cursuite}" && "${cursuite}" != "" ]]; then
+			_set_test_context "${cursuite}" "${curtest}"
+			[[ -n "${lastcmd}" ]] && { _run_command_for_suite "${lastcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+		fi
+		cursuite="${suitenm}"
+		curtest="${testnm}"
+		_set_test_context "${suitenm}" "${testnm}"
+		[[ -n "${testcmd}" ]] && { _run_command_for_test "${testcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+		[[ -n "${suitecmd}" ]] && { _run_command_for_suite "${suitecmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+	done
+	if [[ "${cursuite}" != "" ]]; then
+		_set_test_context "${cursuite}" "${curtest}"
+		[[ -n "${lastcmd}" ]] && { _run_command_for_suite "${lastcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+	fi
+	return $result
+}
+
 # Sets the test context environment variables.
 # Arguments:
 #   suite - suite name

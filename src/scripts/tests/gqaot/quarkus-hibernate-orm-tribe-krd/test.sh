@@ -30,7 +30,7 @@ case "${ACTION}" in
 
         test_repo_path="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-tribe-krd"
 
-        sed -i 's/localhost:5433/localhost:5432/g' "$test_repo_path/src/main/resources/application.properties"
+        sed -i "s/localhost:5433/${TEST_INFRA_HOST:-localhost}:5432/g" "$test_repo_path/src/main/resources/application.properties"
         sed -i 's/quarkus-tribe-krd/gqaot/g' "$test_repo_path/src/main/resources/application.properties"
         sed -i 's/999-SNAPSHOT/3.32.0/g' "$test_repo_path/pom.xml"
 

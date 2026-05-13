@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DESCRIPTION=Run tests.
+# DESCRIPTION=Run tests using qdup.
 
 set -euo pipefail
 
@@ -12,8 +12,8 @@ if [[ ! -v TEST_SRC_DIR ]]; then
 fi
 
 if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
-	echo "This command runs tests."
-	echo "Usage: ./run test [<options>] [<test-suite>/<test-name>]"
+	echo "This command runs tests using qdup."
+	echo "Usage: ./run qdup [<options>] [<test-suite>/<test-name>]"
 	echo ""
 	echo "Options:"
 	echo "  -t|--tag <tag>               Tag to add to the test results folder name"
@@ -31,8 +31,6 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
-source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
-source "${TEST_SRC_DIR}"/scripts/infrafuncs.sh
 
 resultTag=""
 jdkTag=""
@@ -142,45 +140,23 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
-mkdir -p "${TEST_OUT_BASE}"
+function run_qdup() {
+	local testpat=$1
 
-testPat=${1:-all}
+	local tests=( $(select_tests "${testpat}") )
+	local qdupdir="${TEST_SRC_DIR}/qdup"
 
-if [[ ${#strategies[@]} -eq 0 ]]; then
-	strategies=("normal" "aot")
-fi
-
-if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
-	profiles=("default")
-fi
-
-{
-	"${TEST_DIR}/run" list "${testPat}"
-	echo "Test driver: ${TEST_DRIVER}"
-	echo "Selected JDKs: ${javaVersions[*]}"
-	echo "Selected strategies: ${strategies[*]}"
-	echo "Activated profiles: ${profiles[*]}"
-} > "${TEST_OUT_BASE}/test-run-info.txt"
-
-export TEST_OUT_DIR
-export TEST_TEST_RUNID
-
-for profile in "${profiles[@]}"; do
-	echo "   - Applying profile: ${profile}"
-	source "${TEST_DIR}/profiles/${profile}.sh"
-done
-
-_run_command_for_driver "${TEST_DRIVER}" "setup" "Setting up ${TEST_DRIVER} test driver"
-
-echo "   - Selected java versions ${javaVersions[*]}"
-for javaVersion in "${javaVersions[@]}"; do
-	echo "   - Running tests with Java version ${javaVersion}"
-	export TEST_APP_JAVA=${javaVersion}
-	
-	for strategy in "${strategies[@]}"; do
-		echo "   - Using strategy: ${strategy}"
-		_setup_test_output_dir "j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}" "${outputPath}" "${resultTag}"
-		source "${TEST_SRC_DIR}/scripts/strategies/${strategy}/strategy.sh"
+	local result=0
+	for test in "${tests[@]}"; do
+		echo -e "${BOLD}Running test: ${test}${NORMAL}"
+		"$qdupdir/bin/qdup-test" \
+			"${test}" --output "${outputPath}" \
+			--tag "${resultTag}" --jdk-tag "${jdkTag}" \
+			--java-versions "$(IFS=,; echo "${javaVersions[*]}")" \
+			--strategies "$(IFS=,; echo "${strategies[*]}")" \
+			--profiles "$(IFS=,; echo "${profiles[*]}")"
 	done
-done
+	return $result
+}
+
+run_qdup "${1:-all}"

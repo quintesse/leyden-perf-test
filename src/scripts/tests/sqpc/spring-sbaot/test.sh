@@ -17,14 +17,20 @@ case "${ACTION}" in
         REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
         clone "${REPO_URL}"
         [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
+
+        # Make sure we connect to the right server
+        REPO_DIR="repo/springboot3"
+        test_repo_path="${TEST_TEST_CACHE}/${REPO_DIR}"
+        sed -i "s/localhost:5432/${TEST_INFRA_HOST:-localhost}:5432/g" "$test_repo_path/src/main/resources/application.yml"
+
         # Compile Spring Boot app as Spring Boot Buildpack Executable
         # Which means preparing for AOT cache and production environment
         # As described in https://docs.spring.io/spring-boot/reference/packaging/efficient.html
         # and in https://docs.spring.io/spring-boot/reference/packaging/aot.html
         require_java "21+"
-        compile_maven "repo/springboot3" "-Pnative"
+        compile_maven "${REPO_DIR}" "-Pnative"
         echo "   - Extracting Spring Boot Buildpack Executable..."
-        target="${TEST_TEST_CACHE}/repo/springboot3/target"
+        target="${TEST_TEST_CACHE}/${REPO_DIR}/target"
         rm -rf "${target}/application" > /dev/null 2>&1
         java -Djarmode=tools -jar "${target}/springboot3.jar" extract --destination "${target}/application" > /dev/null
         ;;
