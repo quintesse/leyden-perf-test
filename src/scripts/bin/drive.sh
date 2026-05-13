@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DESCRIPTION=Runs the driver (performance tests) against a running test application.
+# DESCRIPTION=Run the driver (performance tests) against a running test application.
 
 set -euo pipefail
 
@@ -32,8 +32,10 @@ fi
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 
-function run_drive() {
+function run_driver() {
 	local testpat=$1
+	local action=$2
+	local msg=$3
 
 	local tests=( $(select_tests "${testpat}") )
 	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
@@ -45,9 +47,7 @@ function run_drive() {
 		_set_test_context "${suitenm}" "${testnm}"
 		[[ -f "${TEST_SUITE_DIR}/shared-vars.sh" ]] && source "${TEST_SUITE_DIR}/shared-vars.sh"
 		result=0
-		_run_command_for_driver "${TEST_DRIVER}" "prepare" "Preparing ${TEST_DRIVER} test driver for" "${TEST_TEST_RUNID}" || result=$?
-        [[ $result -ne 0 ]] && continue
-		_run_command_for_driver "${TEST_DRIVER}" "run" "[TEST] Running tests for ${TEST_TEST_NAME} using ${TEST_DRIVER} driver..." "${TEST_TEST_RUNID}" || result=$?
+		_run_command_for_driver "${TEST_DRIVER}" "${action}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 	done
 	return $result
 }
@@ -68,15 +68,6 @@ while [[ $# -gt 0 ]]; do
             outputPath="$1"
             shift
             ;;
-        -j|--java)
-            shift
-			if [[ $# -eq 0 ]]; then
-				echo "Error: Java version option specified but no version value provided."
-				exit 4
-			fi
-			TEST_APP_JAVA="$1"
-			shift
-			;;
         -d|--driver)
 			shift
 			if [[ $# -eq 0 ]]; then
@@ -116,8 +107,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-javaVersion="${TEST_APP_JAVA:-Unknown}"
-
 _setup_test_output_dir "" "${outputPath}"
 export TEST_TEST_RUNID
 
@@ -126,6 +115,18 @@ for profile in "${profiles[@]}"; do
 	source "${TEST_DIR}/profiles/${profile}.sh"
 done
 
-_run_command_for_driver "${TEST_DRIVER}" "setup" "Setting up ${TEST_DRIVER} test driver"
-
-run_drive "${1:-all}"
+case "${2:-}" in
+	setup)
+		_run_command_for_driver "${TEST_DRIVER}" "setup" "Setting up ${TEST_DRIVER} test driver"
+		;;
+	prepare)
+		run_driver "${1:-all}" "prepare" "Preparing ${TEST_DRIVER} test driver for"
+		;;
+	run)
+		run_driver "${1:-all}" "run" "Running tests using ${TEST_DRIVER} driver for"
+		;;
+	*)
+		echo "ERROR: Second argument must be 'setup', 'prepare' or 'run'."
+		exit 4
+		;;
+esac

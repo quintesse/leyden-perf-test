@@ -17,39 +17,11 @@ fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
-function run_setup() {
-	local testpat=$1
-
-	local tests=( $(select_tests "${testpat}") )
-	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
-
-	local cursuite=""
-	local curtest=""
-	local result=0
-	local msg="Setting up"
-	for test in "${tests[@]}"; do
-		local suitenm="${test%%/*}"
-		local testnm="${test#*/}"
-		_set_test_context "${suitenm}" "${testnm}"
-		result=0
-		if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
-			cursuite="${TEST_SUITE_NAME}"
-			_run_command_for_suite "app_setup" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-			[[ $result -ne 0 ]] && continue
-			_run_command_for_suite "infra_setup" "${msg} infrastructure for" "${TEST_TEST_RUNID}" || result=$?
-			[[ $result -ne 0 ]] && continue
-		fi
-		_run_command_for_test "app_setup" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-		[[ $result -ne 0 ]] && continue
-		_run_command_for_test "infra_setup" "${msg} infrastructure for" "${TEST_TEST_RUNID}" || result=$?
-	done
-	return $result
-}
-
 if [[ $# -gt 0 && "$1" == "--clean" ]]; then
 	rm -rf "${TEST_CACHE_DIR}" > /dev/null || true
 	echo -e "   - ${NORMAL}${GREEN}✓ Cleaned 'cache' directory${NORMAL}"
 	shift
 fi
 
-run_setup "${1:-all}"
+run_suite_start_commands "${1:-all}" "Setting up infrastructure for" "infra_setup" "" "infra_setup"
+run_suite_start_commands "${1:-all}" "Setting up application for" "app_setup" "" "app_setup"

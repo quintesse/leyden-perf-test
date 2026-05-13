@@ -40,7 +40,7 @@ case "${ACTION}" in
         # Prepare list of urls to use
         URLS_FIXED_FILE="${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-urls.txt"
         rm -f "$URLS_FIXED_FILE" > /dev/null 2>&1 || true
-        URL="http:\/\/localhost:8080"
+        URL="http:\/\/${TEST_APP_HOST:-localhost}:8080"
         sed -e "s/^/$URL/" "$URLS_FILE" > "$URLS_FIXED_FILE"
 
         EXP_OPTS=""

@@ -41,8 +41,7 @@ if command -v podman >/dev/null 2>&1; then
 elif command -v docker >/dev/null 2>&1; then
   TEST_ENGINE="docker"
 else
-  echo "Error: Neither podman nor docker can be found"
-  exit 3
+	echo -e "   - ${BOLD}${RED}✗ Warning: Neither podman nor docker can be found!${NORMAL}"
 fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh

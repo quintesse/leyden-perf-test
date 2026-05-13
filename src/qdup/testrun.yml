@@ -1,0 +1,112 @@
+name: leyden-perf-test-qdup
+
+scripts:
+  upload_code:
+  - sh: echo "Uploading test framework to ${HOSTNAME}..."
+  - upload: ${{TEST_DIR}}/src/ ~/leyden-perf-test/
+  - upload: ${{TEST_DIR}}/profiles/ ~/leyden-perf-test/
+  - upload: ${{TEST_DIR}}/hwtweaked-run ~/leyden-perf-test/
+  - upload: ${{TEST_DIR}}/hardware-tweaks.conf ~/leyden-perf-test/
+  - upload: ${{TEST_DIR}}/local-settings.xml ~/leyden-perf-test/
+  - upload: ${{TEST_DIR}}/jbang ~/leyden-perf-test/
+  - upload: ${{TEST_DIR}}/run ~/leyden-perf-test/
+  
+  setup_infra:
+  - sh: export JBANG_DEFAULT_JAVA_VERSION=25
+  - sh: echo ${HOSTNAME}
+    then:
+    - set-state: RUN.INFRA_HOST
+  - sh: ${{RUN}} infra ${{TEST}} setup
+
+  run_infra:
+  - sh: echo "Starting infrastructure on ${HOSTNAME}"
+  - sh: ${{RUN}} infra ${{TEST}} start
+  - signal: INFRA_READY
+  - wait-for: TEST_END
+
+  stop_infra:
+  - sh: echo "Stopping infrastructure on ${HOSTNAME}"
+  - sh: ${{RUN}} infra ${{TEST}} stop
+
+  setup_app:
+  - sh: export JBANG_DEFAULT_JAVA_VERSION=25
+  - sh: echo ${HOSTNAME}
+    then:
+    - set-state: RUN.APP_HOST
+  - sh: ${{RUN}} app -j ${{JAVA_VERSION}} ${{TEST}} setup
+    
+  run_app:
+  - sh: echo "Application waiting for infrastructure on ${HOSTNAME}"
+  - wait-for: INFRA_READY
+  - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
+  - sh: echo "Starting application on ${HOSTNAME}"
+  - sh: ${{RUN}} app -j ${{JAVA_VERSION}} ${{TEST}} start
+  - signal: APP_READY
+  - wait-for: TEST_END
+
+  stop_app:
+  - sh: echo "Stopping application on ${HOSTNAME}"
+  - sh: ${{RUN}} app -j ${{JAVA_VERSION}} ${{TEST}} stop
+
+  setup_driver:
+  - sh: export JBANG_DEFAULT_JAVA_VERSION=25
+  - sh: echo ${HOSTNAME}
+    then:
+    - set-state: RUN.DRIVER_HOST
+  - sh: ${{RUN}} drive -d ${{TEST_DRIVER}} ${{TEST}} setup
+    
+  run_driver:
+  - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
+  - sh: export TEST_APP_HOST=${{APP_HOST}}
+  - sh: echo "Preparing driver on ${HOSTNAME}"
+  - sh: ${{RUN}} drive -d ${{TEST_DRIVER}} ${{TEST}} prepare
+  - sh: echo "Driver waiting for application on ${HOSTNAME}"
+  - wait-for: APP_READY
+  - sh: echo "Running tests on ${HOSTNAME} ..."
+  - sh: ${{RUN}} drive -d ${{TEST_DRIVER}} ${{TEST}} run
+  - signal: TEST_END
+
+  collate_results:
+  - sh: echo "Collating results on ${HOSTNAME}"
+
+hosts:
+  infrahost: quay.io/fedora/fedora
+  apphost: quay.io/fedora/fedora
+  driverhost: quay.io/fedora/fedora
+
+roles:
+  infra:
+    hosts:
+    - infrahost
+    setup-scripts:
+    - upload_code
+    - setup_infra
+    run-scripts:
+    - run_infra
+    cleanup-scripts:
+    - stop_infra
+  app:
+    hosts:
+    - apphost
+    setup-scripts:
+    - upload_code
+    - setup_app
+    run-scripts:
+    - run_app
+    cleanup-scripts:
+    - stop_app
+  driver:
+    hosts:
+    - driverhost
+    setup-scripts:
+    - upload_code
+    - setup_driver
+    run-scripts:
+    - run_driver
+
+states:
+  TEST_DIR: ${{ENV.SCRIPT_DIR}}/../..
+  RUN: ~/leyden-perf-test/run
+  TEST: _set_outside_
+  JAVA_VERSION: 25
+  TEST_DRIVER: oha
