@@ -180,9 +180,7 @@ for javaVersion in "${javaVersions[@]}"; do
 	
 	for strategy in "${strategies[@]}"; do
 		echo "   - Using strategy: ${strategy}"
-		TEST_OUT_DIR=${TEST_OUT_BASE}/j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}
-		mkdir -p "${TEST_OUT_DIR}"
-		echo "   - Created test output folder ${TEST_OUT_DIR}"
+		_setup_test_output_dir "j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}" "${outputPath}" "${resultTag}"
 		source "${TEST_SRC_DIR}/scripts/strategies/${strategy}/strategy.sh"
 	done
 done

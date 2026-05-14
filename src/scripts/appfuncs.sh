@@ -61,6 +61,9 @@ function start_app() {
 	"${preamble[@]}" java ${TEST_JAVA_OPTS} ${TEST_STRAT_OPTS} -jar "${jar_path}" >> "$outfile" 2>&1 &
 	app_pid=$!
 	
+	sleep 5 # give the application some time to start and potentially fail before we check the PID
+	check_app_process "${app_pid}" "${results_name}" || return 2
+
 	local pidfile="${TEST_OUT_DIR}/${results_name}-app.pid"
 	echo "$app_pid" > "$pidfile"
 }
@@ -145,6 +148,32 @@ function stop_process() {
 	fi
 }
 
+# Checks if the application process is still running.
+# Arguments:
+#   pid          - PID of the application process
+#   results_name - (optional) Base name to use for output files
+# Returns:
+#   0 if the process is running, 2 if it has exited
+function check_app_process() {
+	local pid=$1
+	local results_name=$2
+
+	if [[ -n "${app_pid}" ]] && ! kill -0 "${app_pid}" > /dev/null 2>&1; then
+		echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
+		if [[ -n "${results_name}" ]]; then
+			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
+			sleep 2 # give time for output to be flushed
+			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+			local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
+			cat "$outfile" 2>/dev/null || true
+			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+		fi
+		return 2
+	fi
+
+	return 0
+}
+
 # Waits for the application to start listening on port 8080.
 # Arguments:
 #   results_name - Base name to use for output files
@@ -154,25 +183,26 @@ function stop_process() {
 #   0 if port 8080 is open, 1 on timeout, 2 if application process is not running
 function wait_for_8080() {
     local results_name=$1
-	local app_pid
-    echo "   - Waiting for port 8080..."
-	app_pid=$(get_app_pid "${results_name}")
-	if [[ "${app_pid}" == "" ]]; then
-		echo -e "   - ${BOLD}${RED}✗ Application process not found${NORMAL}"
-		return 2
+
+	# Only check for the application when the caller process and application are on the same host
+	local app_pid=""
+	local app_host="${TEST_APP_HOST:-localhost}"
+	if [[ "${app_host}" == "${HOSTNAME}" || "${app_host}" == "localhost" ]]; then
+		echo "   - Waiting for port 8080..."
+		app_pid=$(get_app_pid "${results_name}")
+		if [[ "${app_pid}" != "" ]]; then
+			echo -e "   - ${BOLD}${GREEN}✓ Application process found${NORMAL}"
+		else
+			echo -e "   - ${BOLD}${RED}✗ Application process not found${NORMAL}"
+			return 2
+		fi
+	else
+		echo "   - Waiting for port 8080 on ${TEST_APP_HOST:-localhost}..."
 	fi
+
     local time=$(date +%s%N)
     for ((i=0; i<100000000; i++)); do
-		if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
-			echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
-			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
-			sleep 2 # give time for output to be flushed
-			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
-			local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
-			cat "$outfile" 2>/dev/null || true
-			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
-			return 2
-        fi
+		check_app_process "${app_pid}" "${results_name}" || return 2
         # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
         if (echo -n < /dev/tcp/127.0.0.1/8080) >/dev/null 2>&1; then
 			local final_time=$(($(date +%s%N) - time))

@@ -34,14 +34,14 @@ function run_setup() {
 		result=0
 		if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
 			cursuite="${TEST_SUITE_NAME}"
-			_run_command_for_suite "app_setup" "${msg}" "${testnm}" || result=$?
+			_run_command_for_suite "app_setup" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 			[[ $result -ne 0 ]] && continue
-			_run_command_for_suite "infra_setup" "${msg} infrastructure for" "${testnm}" || result=$?
+			_run_command_for_suite "infra_setup" "${msg} infrastructure for" "${TEST_TEST_RUNID}" || result=$?
 			[[ $result -ne 0 ]] && continue
 		fi
-		_run_command_for_test "app_setup" "${msg}" "${testnm}" || result=$?
+		_run_command_for_test "app_setup" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 		[[ $result -ne 0 ]] && continue
-		_run_command_for_test "infra_setup" "${msg} infrastructure for" "${testnm}" || result=$?
+		_run_command_for_test "infra_setup" "${msg} infrastructure for" "${TEST_TEST_RUNID}" || result=$?
 	done
 	return $result
 }

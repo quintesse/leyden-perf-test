@@ -14,7 +14,6 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -lt 2 ]]; then
 	echo "Usage: ./run infra [<options>] <test-suite>/<test-name> start|stop"
 	echo ""
 	echo "Options:"
-	echo "  -t|--tag <tag>               Tag to add to the test results folder name"
 	echo "  -o|--output <path>           Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
 	echo "  -P|--profile <profile>       Test profile to use (can be specified multiple times)"
 	echo ""
@@ -48,12 +47,12 @@ function run_infra() {
 			result=0
 			if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
 				cursuite="${TEST_SUITE_NAME}"
-				_run_command_for_suite "infra_first" "${msg}" "${testnm}" || result=$?
+				_run_command_for_suite "infra_first" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 				[[ $result -ne 0 ]] && continue
 			fi
-			_run_command_for_suite "infra_start" "${msg}" "${testnm}" || result=$?
+			_run_command_for_suite "infra_start" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 			[[ $result -ne 0 ]] && continue
-			_run_command_for_test "infra_start" "${msg}" "${testnm}" || result=$?
+			_run_command_for_test "infra_start" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 		done
 	else
 		local msg="Stopping infrastructure for"
@@ -62,37 +61,27 @@ function run_infra() {
 			local testnm="${test#*/}"
 			if [[ "${suitenm}" != "${cursuite}" && "${cursuite}" != "" ]]; then
 				_set_test_context "${cursuite}" "${curtest}"
-				_run_command_for_suite "infra_last" "${msg}" "${curtest}" || result=$?
+				_run_command_for_suite "infra_last" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 			fi
 			cursuite="${suitenm}"
 			curtest="${testnm}"
 			_set_test_context "${suitenm}" "${testnm}"
-			_run_command_for_test "infra_stop" "${msg}" "${testnm}" || result=$?
-			_run_command_for_suite "infra_start" "${msg}" "${testnm}" || result=$?
+			_run_command_for_test "infra_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
+			_run_command_for_suite "infra_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 		done
 		if [[ "${cursuite}" != "" ]]; then
 			_set_test_context "${cursuite}" "${curtest}"
-			_run_command_for_suite "infra_last" "${msg}" "${curtest}" || result=$?
+			_run_command_for_suite "infra_last" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 		fi
 	fi
 	return $result
 }
 
-resultTag=""
-outputPath=""
+outputPath="test-results/manual_run"
 profiles=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -t|--tag)
-            shift
-            if [[ $# -eq 0 ]]; then
-                echo "Error: Tag option specified but no tag value provided."
-                exit 4
-            fi
-            resultTag="$1"
-            shift
-            ;;
         -o|--output)
             shift
             if [[ $# -eq 0 ]]; then
@@ -127,7 +116,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-_setup_test_output_dir "infra" "${outputPath}" "${resultTag}"
+_setup_test_output_dir "" "${outputPath}"
 export TEST_TEST_RUNID
 
 for profile in "${profiles[@]}"; do

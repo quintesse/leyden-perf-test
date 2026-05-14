@@ -18,8 +18,6 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "Options:"
 	echo "  -o, --output <path>    Path to the output folder."
 	echo "  -j, --java <version>   Java version to use for the test application."
-	echo "  -t|--tag <tag>         Tag to add to the test results folder name"
-	echo "  --jdk-tag <tag>        Tag to add to the JDK folder name."
 	echo "  -P|--profile <profile> Test profile to use (can be specified multiple times)"
 	echo ""
 	echo "This script can be used to manually start/stop a test application, and is normally"
@@ -43,6 +41,7 @@ function run_app() {
 	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
 
 	local cursuite=""
+	local curtest=""
 	local result=0
 	if [[ "${action}" == "start" ]]; then
 		local msg="Starting application for"
@@ -53,10 +52,10 @@ function run_app() {
 			result=0
 			if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
 				cursuite="${TEST_SUITE_NAME}"
-				_run_command_for_suite "app_start" "${msg}" "${testnm}" || result=$?
+				_run_command_for_suite "app_start" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 				[[ $result -ne 0 ]] && continue
 			fi
-			_run_command_for_test "app_start" "${msg}" "${testnm}" || result=$?
+			_run_command_for_test "app_start" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 		done
 	else
 		local msg="Stopping application for"
@@ -65,47 +64,27 @@ function run_app() {
 			local testnm="${test#*/}"
 			if [[ "${suitenm}" != "${cursuite}" && "${cursuite}" != "" ]]; then
 				_set_test_context "${cursuite}" "${curtest}"
-				_run_command_for_suite "app_stop" "${msg}" "${curtest}" || result=$?
+				_run_command_for_suite "app_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 			fi
 			cursuite="${suitenm}"
 			curtest="${testnm}"
 			_set_test_context "${suitenm}" "${testnm}"
-			_run_command_for_test "app_stop" "${msg}" "${testnm}" || result=$?
+			_run_command_for_test "app_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 		done
 		if [[ "${cursuite}" != "" ]]; then
 			_set_test_context "${cursuite}" "${curtest}"
-			_run_command_for_suite "app_stop" "${msg}" "${curtest}" || result=$?
+			_run_command_for_suite "app_stop" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 		fi
 	fi
 	return $result
 }
 
-resultTag=""
-jdkTag=""
-outputPath=""
+outputPath="test-results/manual_run"
 profiles=()
 export TEST_APP_JAVA=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -t|--tag)
-            shift
-            if [[ $# -eq 0 ]]; then
-                echo "Error: Tag option specified but no tag value provided."
-                exit 4
-            fi
-            resultTag="$1"
-            shift
-            ;;
-        --jdk-tag)
-            shift
-            if [[ $# -eq 0 ]]; then
-                echo "Error: Jdk Tag option specified but no tag value provided."
-                exit 4
-            fi
-            jdkTag="$1"
-            shift
-            ;;
         -o|--output)
             shift
             if [[ $# -eq 0 ]]; then
@@ -151,7 +130,7 @@ done
 
 javaVersion="${TEST_APP_JAVA:-Unknown}"
 
-_setup_test_output_dir "j${javaVersion}${jdkTag:+-$jdkTag}" "${outputPath}" "${resultTag}"
+_setup_test_output_dir "" "${outputPath}"
 export TEST_TEST_RUNID
 
 for profile in "${profiles[@]}"; do

@@ -254,8 +254,11 @@ function _setup_test_output_dir() {
 	local resultTag="${3:-}"
 	if [[ ! -v TEST_OUT_DIR || -z "${TEST_OUT_DIR}" ]]; then
 		export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
-		mkdir -p "${TEST_OUT_BASE}"
-		export TEST_OUT_DIR=${TEST_OUT_BASE}/${subdir}
+		if [[ -n "${subdir}" ]]; then
+			export TEST_OUT_DIR=${TEST_OUT_BASE}/${subdir}
+		else
+			export TEST_OUT_DIR=${TEST_OUT_BASE}
+		fi
 		mkdir -p "${TEST_OUT_DIR}"
 		echo "   - Created test output folder ${TEST_OUT_DIR}"
 	fi

@@ -18,8 +18,6 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "Options:"
 	echo "  -o, --output <path>    Path to the output folder."
 	echo "  -j, --java <version>   Java version used to tag the output folder."
-	echo "  -t|--tag <tag>         Tag to add to the test results folder name."
-	echo "  --jdk-tag <tag>        Tag to add to the JDK folder name."
 	echo "  -d|--driver <driver>   Test driver to use (default: oha)."
 	echo "  -P|--profile <profile> Test profile to use (can be specified multiple times)."
 	echo ""
@@ -47,40 +45,20 @@ function run_drive() {
 		_set_test_context "${suitenm}" "${testnm}"
 		[[ -f "${TEST_SUITE_DIR}/shared-vars.sh" ]] && source "${TEST_SUITE_DIR}/shared-vars.sh"
 		result=0
-		_run_command_for_driver "${TEST_DRIVER}" "prepare" "Preparing ${TEST_DRIVER} test driver for" "${name}" || result=$?
+		_run_command_for_driver "${TEST_DRIVER}" "prepare" "Preparing ${TEST_DRIVER} test driver for" "${TEST_TEST_RUNID}" || result=$?
         [[ $result -ne 0 ]] && continue
-		_run_command_for_driver "${TEST_DRIVER}" "run" "[TEST] Running tests for ${TEST_TEST_NAME} using ${TEST_DRIVER} driver..." "${name}" || result=$?
+		_run_command_for_driver "${TEST_DRIVER}" "run" "[TEST] Running tests for ${TEST_TEST_NAME} using ${TEST_DRIVER} driver..." "${TEST_TEST_RUNID}" || result=$?
 	done
 	return $result
 }
 
-resultTag=""
-jdkTag=""
-outputPath=""
+outputPath="test-results/manual_run"
 profiles=()
 export TEST_APP_JAVA=""
 export TEST_DRIVER="oha"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -t|--tag)
-            shift
-            if [[ $# -eq 0 ]]; then
-                echo "Error: Tag option specified but no tag value provided."
-                exit 4
-            fi
-            resultTag="$1"
-            shift
-            ;;
-        --jdk-tag)
-            shift
-            if [[ $# -eq 0 ]]; then
-                echo "Error: Jdk Tag option specified but no tag value provided."
-                exit 4
-            fi
-            jdkTag="$1"
-            shift
-            ;;
         -o|--output)
             shift
             if [[ $# -eq 0 ]]; then
@@ -140,7 +118,7 @@ done
 
 javaVersion="${TEST_APP_JAVA:-Unknown}"
 
-_setup_test_output_dir "j${javaVersion}${jdkTag:+-$jdkTag}" "${outputPath}" "${resultTag}"
+_setup_test_output_dir "" "${outputPath}"
 export TEST_TEST_RUNID
 
 for profile in "${profiles[@]}"; do
