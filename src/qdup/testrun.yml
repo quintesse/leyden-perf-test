@@ -3,67 +3,67 @@ name: leyden-perf-test-qdup
 scripts:
   upload_code:
   - sh: echo "Uploading test framework to ${HOSTNAME}..."
-  - upload: ${{TEST_DIR}}/src/ ~/leyden-perf-test/
-  - upload: ${{TEST_DIR}}/profiles/ ~/leyden-perf-test/
-  - upload: ${{TEST_DIR}}/hwtweaked-run ~/leyden-perf-test/
-  - upload: ${{TEST_DIR}}/hardware-tweaks.conf ~/leyden-perf-test/
-  - upload: ${{TEST_DIR}}/local-settings.xml ~/leyden-perf-test/
-  - upload: ${{TEST_DIR}}/jbang ~/leyden-perf-test/
-  - upload: ${{TEST_DIR}}/run ~/leyden-perf-test/
+  - upload: ${{TEST_DIR}}/src/ ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/profiles/ ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/hwtweaked-run ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/hardware-tweaks.conf ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/local-settings.xml ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/jbang ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/run ${{TEST_HOME}}/
   
   setup_infra:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
     then:
     - set-state: RUN.INFRA_HOST
-  - sh: ${{RUN}} infra ${{TEST}} setup
+  - sh: ${{RUN_CMD}} infra ${{TEST}} setup
 
   run_infra:
   - sh: echo "Starting infrastructure on ${HOSTNAME}"
-  - sh: ${{RUN}} infra ${{TEST}} start
+  - sh: ${{RUN_CMD}} infra ${{TEST}} start
   - signal: INFRA_READY
   - wait-for: TEST_END
 
   stop_infra:
   - sh: echo "Stopping infrastructure on ${HOSTNAME}"
-  - sh: ${{RUN}} infra ${{TEST}} stop
+  - sh: ${{RUN_CMD}} infra ${{TEST}} stop
 
   setup_app:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
     then:
     - set-state: RUN.APP_HOST
-  - sh: ${{RUN}} app -j ${{JAVA_VERSION}} ${{TEST}} setup
+  - sh: ${{RUN_CMD}} app -j ${{JAVA_VERSION}} ${{TEST}} setup
     
   run_app:
   - sh: echo "Application waiting for infrastructure on ${HOSTNAME}"
   - wait-for: INFRA_READY
   - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
   - sh: echo "Starting application on ${HOSTNAME}"
-  - sh: ${{RUN}} app -j ${{JAVA_VERSION}} ${{TEST}} start
+  - sh: ${{RUN_CMD}} app -j ${{JAVA_VERSION}} ${{TEST}} start
   - signal: APP_READY
   - wait-for: TEST_END
 
   stop_app:
   - sh: echo "Stopping application on ${HOSTNAME}"
-  - sh: ${{RUN}} app -j ${{JAVA_VERSION}} ${{TEST}} stop
+  - sh: ${{RUN_CMD}} app -j ${{JAVA_VERSION}} ${{TEST}} stop
 
   setup_driver:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
     then:
     - set-state: RUN.DRIVER_HOST
-  - sh: ${{RUN}} drive -d ${{TEST_DRIVER}} ${{TEST}} setup
+  - sh: ${{RUN_CMD}} drive -d ${{TEST_DRIVER}} ${{TEST}} setup
     
   run_driver:
   - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
   - sh: export TEST_APP_HOST=${{APP_HOST}}
   - sh: echo "Preparing driver on ${HOSTNAME}"
-  - sh: ${{RUN}} drive -d ${{TEST_DRIVER}} ${{TEST}} prepare
+  - sh: ${{RUN_CMD}} drive -d ${{TEST_DRIVER}} ${{TEST}} prepare
   - sh: echo "Driver waiting for application on ${HOSTNAME}"
   - wait-for: APP_READY
   - sh: echo "Running tests on ${HOSTNAME} ..."
-  - sh: ${{RUN}} drive -d ${{TEST_DRIVER}} ${{TEST}} run
+  - sh: ${{RUN_CMD}} drive -d ${{TEST_DRIVER}} ${{TEST}} run
   - signal: TEST_END
 
   collate_results:
@@ -106,7 +106,8 @@ roles:
 
 states:
   TEST_DIR: ${{ENV.SCRIPT_DIR}}/../..
-  RUN: ~/leyden-perf-test/run
+  TEST_HOME: ~/leyden-perf-test
+  RUN_CMD: ${{TEST_HOME}}/run
   TEST: _set_outside_
   JAVA_VERSION: 25
   TEST_DRIVER: oha
