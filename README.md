@@ -133,13 +133,22 @@ The activated profiles will be made part of the test output directory name so it
 You can manually control individual components:
 
 ```bash
-# Manually start/stop infrastructure
-./run infra sqpc/spring-normal start
-./run infra sqpc/spring-normal stop
+# Do necessary setup (eg install commands, clone repos, compile)
+./run app sqpc/spring-normal setup
+./run infra sqpc/spring-normal setup
+./run drive sqpc/spring-normal setup
 
-# Manually start/stop application
+# Start infrastructure & test app (also give driver chance to prepare)
+./run infra sqpc/spring-normal start
+./run drive sqpc/spring-normal prepare
 ./run app sqpc/spring-normal start
+
+# Run the tests
+./run drive sqpc/spring-normal run
+
+# And finally start everything again
 ./run app sqpc/spring-normal stop
+./run infra sqpc/spring-normal stop
 ```
 
 ## Available Test Suites
