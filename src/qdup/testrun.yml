@@ -11,6 +11,12 @@ scripts:
   - upload: ${{TEST_DIR}}/jbang ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/run ${{TEST_HOME}}/
   
+  init_infra:
+  - set-state:
+      key: HOST.TEST_HOME
+      value: ~/leyden-perf-test
+      #value: ~/leyden-perf-test/infra
+  
   setup_infra:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
@@ -28,6 +34,12 @@ scripts:
   - sh: echo "Stopping infrastructure on ${HOSTNAME}"
   - sh: ${{RUN_CMD}} infra ${{TEST}} stop
 
+  init_app:
+  - set-state:
+      key: HOST.TEST_HOME
+      value: ~/leyden-perf-test
+      #value: ~/leyden-perf-test/app
+  
   setup_app:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
@@ -48,6 +60,12 @@ scripts:
   - sh: echo "Stopping application on ${HOSTNAME}"
   - sh: ${{RUN_CMD}} app -j ${{JAVA_VERSION}} ${{TEST}} stop
 
+  init_driver:
+  - set-state:
+      key: HOST.TEST_HOME
+      value: ~/leyden-perf-test
+      #value: ~/leyden-perf-test/driver
+  
   setup_driver:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
@@ -70,15 +88,31 @@ scripts:
   - sh: echo "Collating results on ${HOSTNAME}"
 
 hosts:
-  infrahost: quay.io/fedora/fedora
-  apphost: quay.io/fedora/fedora
-  driverhost: quay.io/fedora/fedora
+  infrahost:
+    local: true
+    platform: podman
+    container: quay.io/fedora/fedora
+    create-container: podman run -ti --name infrahost --hostname infrahost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}}
+    #create-connected-container: podman run -ti --name infrahost --hostname infrahost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} /bin/bash
+  apphost:
+    local: true
+    platform: podman
+    container: quay.io/fedora/fedora
+    create-container: podman run -ti --name apphost --hostname apphost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" -p 8080:8080 ${{image}}
+    #create-connected-container: podman run -ti --name apphost --hostname apphost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" -p 8080:8080 ${{image}} /bin/bash
+  driverhost:
+    local: true
+    platform: podman
+    container: quay.io/fedora/fedora
+    create-container: podman run -ti --name driverhost --hostname driverhost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}}
+    #create-connected-container: podman run -ti --name driverhost --hostname driverhost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} /bin/bash
 
 roles:
   infra:
     hosts:
     - infrahost
     setup-scripts:
+    - init_infra
     - upload_code
     - setup_infra
     run-scripts:
@@ -89,6 +123,7 @@ roles:
     hosts:
     - apphost
     setup-scripts:
+    - init_app
     - upload_code
     - setup_app
     run-scripts:
@@ -99,6 +134,7 @@ roles:
     hosts:
     - driverhost
     setup-scripts:
+    - init_driver
     - upload_code
     - setup_driver
     run-scripts:
@@ -106,7 +142,6 @@ roles:
 
 states:
   TEST_DIR: ${{ENV.SCRIPT_DIR}}/../..
-  TEST_HOME: ~/leyden-perf-test
   RUN_CMD: ${{TEST_HOME}}/run
   TEST: _set_outside_
   JAVA_VERSION: 25
