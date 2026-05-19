@@ -14,74 +14,76 @@ scripts:
   init_infra:
   - set-state:
       key: HOST.TEST_HOME
-      value: ~/leyden-perf-test
-      #value: ~/leyden-perf-test/infra
+      value: ${{TEST_HOME_BASE}}
+      #value: ${{TEST_HOME_BASE}}/infra
   
   setup_infra:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
     then:
     - set-state: RUN.INFRA_HOST
-  - sh: ${{RUN_CMD}} infra ${{TEST}} setup
+  - sh: ${{RUN_CMD}} infra -o ${{TEST_OUT_DIR}} ${{TEST}} setup
 
   run_infra:
   - sh: echo "Starting infrastructure on ${HOSTNAME}"
-  - sh: ${{RUN_CMD}} infra ${{TEST}} start
+  - sh: ${{RUN_CMD}} infra -o ${{TEST_OUT_DIR}} ${{TEST}} start
   - signal: INFRA_READY
   - wait-for: TEST_END
+  - script: stop_infra
 
   stop_infra:
   - sh: echo "Stopping infrastructure on ${HOSTNAME}"
-  - sh: ${{RUN_CMD}} infra ${{TEST}} stop
+  - sh: ${{RUN_CMD}} infra -o ${{TEST_OUT_DIR}} ${{TEST}} stop
 
   init_app:
   - set-state:
       key: HOST.TEST_HOME
-      value: ~/leyden-perf-test
-      #value: ~/leyden-perf-test/app
+      value: ${{TEST_HOME_BASE}}
+      #value: ${{TEST_HOME_BASE}}/app
   
   setup_app:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
     then:
     - set-state: RUN.APP_HOST
-  - sh: ${{RUN_CMD}} app -j ${{JAVA_VERSION}} ${{TEST}} setup
+  - sh: ${{RUN_CMD}} app -o ${{TEST_OUT_DIR}} -j ${{JAVA_VERSION}} ${{TEST}} setup
     
   run_app:
   - sh: echo "Application waiting for infrastructure on ${HOSTNAME}"
   - wait-for: INFRA_READY
   - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
   - sh: echo "Starting application on ${HOSTNAME}"
-  - sh: ${{RUN_CMD}} app -j ${{JAVA_VERSION}} ${{TEST}} start
+  - sh: ${{RUN_CMD}} app -o ${{TEST_OUT_DIR}} -j ${{JAVA_VERSION}} ${{TEST}} start
   - signal: APP_READY
   - wait-for: TEST_END
+  - script: stop_app
 
   stop_app:
   - sh: echo "Stopping application on ${HOSTNAME}"
-  - sh: ${{RUN_CMD}} app -j ${{JAVA_VERSION}} ${{TEST}} stop
+  - sh: ${{RUN_CMD}} app -o ${{TEST_OUT_DIR}} -j ${{JAVA_VERSION}} ${{TEST}} stop
 
   init_driver:
   - set-state:
       key: HOST.TEST_HOME
-      value: ~/leyden-perf-test
-      #value: ~/leyden-perf-test/driver
+      value: ${{TEST_HOME_BASE}}
+      #value: ${{TEST_HOME_BASE}}/driver
   
   setup_driver:
   - sh: export JBANG_DEFAULT_JAVA_VERSION=25
   - sh: echo ${HOSTNAME}
     then:
     - set-state: RUN.DRIVER_HOST
-  - sh: ${{RUN_CMD}} drive -d ${{TEST_DRIVER}} ${{TEST}} setup
+  - sh: ${{RUN_CMD}} drive -o ${{TEST_OUT_DIR}} -d ${{TEST_DRIVER}} ${{TEST}} setup
     
   run_driver:
   - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
   - sh: export TEST_APP_HOST=${{APP_HOST}}
   - sh: echo "Preparing driver on ${HOSTNAME}"
-  - sh: ${{RUN_CMD}} drive -d ${{TEST_DRIVER}} ${{TEST}} prepare
+  - sh: ${{RUN_CMD}} drive -o ${{TEST_OUT_DIR}} -d ${{TEST_DRIVER}} ${{TEST}} prepare
   - sh: echo "Driver waiting for application on ${HOSTNAME}"
   - wait-for: APP_READY
   - sh: echo "Running tests on ${HOSTNAME} ..."
-  - sh: ${{RUN_CMD}} drive -d ${{TEST_DRIVER}} ${{TEST}} run
+  - sh: ${{RUN_CMD}} drive -o ${{TEST_OUT_DIR}} -d ${{TEST_DRIVER}} ${{TEST}} run
   - signal: TEST_END
 
   collate_results:
@@ -92,19 +94,19 @@ hosts:
     local: true
     platform: podman
     container: quay.io/fedora/fedora
-    create-container: podman run -ti --name infrahost --hostname infrahost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}}
+    create-container: podman run --detach --name infrahost --hostname infrahost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} sleep infinity
     #create-connected-container: podman run -ti --name infrahost --hostname infrahost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} /bin/bash
   apphost:
     local: true
     platform: podman
     container: quay.io/fedora/fedora
-    create-container: podman run -ti --name apphost --hostname apphost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" -p 8080:8080 ${{image}}
+    create-container: podman run --detach --name apphost --hostname apphost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" -p 8080:8080 ${{image}} sleep infinity
     #create-connected-container: podman run -ti --name apphost --hostname apphost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" -p 8080:8080 ${{image}} /bin/bash
   driverhost:
     local: true
     platform: podman
     container: quay.io/fedora/fedora
-    create-container: podman run -ti --name driverhost --hostname driverhost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}}
+    create-container: podman run --detach --name driverhost --hostname driverhost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} sleep infinity
     #create-connected-container: podman run -ti --name driverhost --hostname driverhost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} /bin/bash
 
 roles:
@@ -142,7 +144,9 @@ roles:
 
 states:
   TEST_DIR: ${{ENV.SCRIPT_DIR}}/../..
-  RUN_CMD: ${{TEST_HOME}}/run
+  TEST_HOME_BASE: /tmp/leyden-perf-test
+  TEST_OUT_DIR: ${{TEST_HOME_BASE}}/results
+  RUN_CMD: ${{TEST_HOME_BASE}}/run
   TEST: _set_outside_
   JAVA_VERSION: 25
   TEST_DRIVER: oha
