@@ -1,4 +1,2 @@
-/nqueens/16
 /fibonacci/100
-/nqueens
 /fibonacci
