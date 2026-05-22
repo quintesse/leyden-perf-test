@@ -1,0 +1,1 @@
+This app run loops. But those loops are dead code, irrelevant for the result. There is also a dead branch never used that the compiler should optimize by removing it. The service, once optimized, just returns a constant value.
