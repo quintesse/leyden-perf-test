@@ -30,6 +30,7 @@ scripts:
   - signal: INFRA_READY
   - wait-for: TEST_END
   - script: stop_infra
+  - queue-download: ${{TEST_OUT_DIR}}/
 
   stop_infra:
   - sh: echo "Stopping infrastructure on ${HOSTNAME}"
@@ -57,6 +58,7 @@ scripts:
   - signal: APP_READY
   - wait-for: TEST_END
   - script: stop_app
+  - queue-download: ${{TEST_OUT_DIR}}/
 
   stop_app:
   - sh: echo "Stopping application on ${HOSTNAME}"
@@ -85,6 +87,7 @@ scripts:
   - sh: echo "Running tests on ${HOSTNAME} ..."
   - sh: ${{RUN_CMD}} drive -o ${{TEST_OUT_DIR}} -d ${{TEST_DRIVER}} ${{TEST}} run
   - signal: TEST_END
+  - queue-download: ${{TEST_OUT_DIR}}/
 
   collate_results:
   - sh: echo "Collating results on ${HOSTNAME}"
