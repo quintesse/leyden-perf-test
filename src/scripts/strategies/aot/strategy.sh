@@ -16,7 +16,7 @@ function prepare_aot_training {
 
 function prepare_aot_run {
 	echo "   - AOT enabled, starting test run ${TEST_TEST_RUNID}..."
-	export TEST_STRAT_OPTS="-XX:AOTCache=${TEST_OUT_DIR}/${TEST_SUITE_NAME}-${TEST_TEST_NAME}-app.aot -Xlog:${TEST_LOG_LABEL:-}aot=warning:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}.log:level,tags"
+	export TEST_STRAT_OPTS="-XX:AOTMode=on -XX:AOTCache=${TEST_OUT_DIR}/${TEST_SUITE_NAME}-${TEST_TEST_NAME}-app.aot -Xlog:${TEST_LOG_LABEL:-}aot=warning:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}.log:level,tags"
 }
 
 # First we do a training run to create an AOT cache
