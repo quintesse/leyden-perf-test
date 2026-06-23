@@ -16,6 +16,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "Usage: ./run qdup [<options>] [<test-suite>/<test-name>]"
 	echo ""
 	echo "Options:"
+	echo "  -H|--hosts <hosts>           Hosts file to use that defines which hosts to run the tests on (default: local)"
 	echo "  -t|--tag <tag>               Tag to add to the test results folder name"
 	echo "  --jdk-tag <tag>              Additional tag to add to the test results folder name indicating the JDK variant"
 	echo "  -o|--output <path>           Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
@@ -32,6 +33,7 @@ fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
+hosts="local"
 resultTag=""
 jdkTag=""
 outputPath=""
@@ -42,6 +44,15 @@ export TEST_DRIVER="oha"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -H|--hosts)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "Error: Hosts option specified but no value provided."
+                exit 4
+            fi
+            hosts="$1"
+            shift
+            ;;
         -t|--tag)
             shift
             if [[ $# -eq 0 ]]; then
@@ -146,15 +157,13 @@ function run_qdup() {
 	local tests=( $(select_tests "${testpat}") )
 	local qdupdir="${TEST_SRC_DIR}/qdup"
 
+	export TEST_OUT_BASE=${outputPath:-/tmp/leyden-perf-test/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
+	mkdir -p "${TEST_OUT_BASE}"
+
 	local result=0
 	for test in "${tests[@]}"; do
 		echo -e "${BOLD}Running test: ${test}${NORMAL}"
-		"$qdupdir/bin/qdup-test" \
-			"${test}" --output "${outputPath}" \
-			--tag "${resultTag}" --jdk-tag "${jdkTag}" \
-			--java-versions "$(IFS=,; echo "${javaVersions[*]}")" \
-			--strategies "$(IFS=,; echo "${strategies[*]}")" \
-			--profiles "$(IFS=,; echo "${profiles[*]}")"
+		"$qdupdir/bin/qdup-test" "${hosts}" "${test}" "${TEST_OUT_BASE}"
 	done
 	return $result
 }
