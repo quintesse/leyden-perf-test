@@ -1,0 +1,8 @@
+
+hosts:
+  infrahost:
+    local: true
+  apphost:
+    local: true
+  driverhost:
+    local: true

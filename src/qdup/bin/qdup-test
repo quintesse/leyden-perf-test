@@ -3,4 +3,14 @@ set -uo pipefail
 
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-"$script_dir/qdup" "${script_dir}/../testrun.yml" -S TEST=$1
+if [[ "$1" == /* || "$1" == .* ]]; then
+    # Path to a hosts yml file
+    hosts_file="$1"
+else
+    # Name of a hosts file in the ../hosts directory
+    hosts_file="${script_dir}/../hosts/$1.yml"
+fi
+
+work_dir=${3:-/tmp/leyden-perf-test}
+
+"$script_dir/qdup" "${hosts_file}" "${script_dir}/../testrun.yml" -B ${work_dir}/qdup -S TEST=$2 -S WORK_DIR=${work_dir}

@@ -42,19 +42,19 @@ function start_app() {
 
 	if [[ "$DETECTED_OS" == "linux" ]]; then
 		echo "Flushing disk buffers..."
-		sudo sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
+		sudo -A sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
 
 		echo "Purging RAM caches..."
-		echo 3 | sudo tee /proc/sys/vm/drop_caches || echo -e "   - ${BOLD}${RED}✗ Couldn't drop caches. ${NORMAL}"
+		echo 3 | sudo -A tee /proc/sys/vm/drop_caches || echo -e "   - ${BOLD}${RED}✗ Couldn't drop caches. ${NORMAL}"
 
 		echo "Clearing Swap..."
-		sudo swapoff -a && sudo swapon -a || echo -e "   - ${BOLD}${RED}✗ Couldn't clear swap. ${NORMAL}"
+		sudo -A swapoff -a && sudo -A swapon -a || echo -e "   - ${BOLD}${RED}✗ Couldn't clear swap. ${NORMAL}"
 	elif [[ "$DETECTED_OS" == "mac" ]]; then
 		echo "Flushing disk buffers..."
-		sudo sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
+		sudo -A sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
 
 		echo "Purging RAM caches..."
-		sudo purge || echo -e "   - ${BOLD}${RED}✗ Couldn't purge RAM caches. ${NORMAL}"
+		sudo -A purge || echo -e "   - ${BOLD}${RED}✗ Couldn't purge RAM caches. ${NORMAL}"
 	fi
 
 	local app_pid

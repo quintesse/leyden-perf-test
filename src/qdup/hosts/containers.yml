@@ -1,0 +1,20 @@
+
+hosts:
+  infrahost:
+    local: true
+    platform: podman
+    container: quay.io/fedora/fedora
+    create-container: podman run --detach --name infrahost --hostname infrahost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} sleep infinity
+    #create-connected-container: podman run -ti --name infrahost --hostname infrahost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} /bin/bash
+  apphost:
+    local: true
+    platform: podman
+    container: quay.io/fedora/fedora
+    create-container: podman run --detach --name apphost --hostname apphost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" -p 8080:8080 ${{image}} sleep infinity
+    #create-connected-container: podman run -ti --name apphost --hostname apphost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" -p 8080:8080 ${{image}} /bin/bash
+  driverhost:
+    local: true
+    platform: podman
+    container: quay.io/fedora/fedora
+    create-container: podman run --detach --name driverhost --hostname driverhost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} sleep infinity
+    #create-connected-container: podman run -ti --name driverhost --hostname driverhost --network leyden-perf-test-net --cidfile ${{cidfile}} --env PS1="${{QDUP_PROMPT}}" ${{image}} /bin/bash
