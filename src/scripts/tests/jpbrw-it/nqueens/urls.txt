@@ -1,0 +1,3 @@
+/nqueens/16
+/nqueens/8
+/nqueens

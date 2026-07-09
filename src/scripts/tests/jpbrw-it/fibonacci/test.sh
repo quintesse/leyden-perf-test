@@ -11,6 +11,12 @@ app_jar="${TEST_TEST_CACHE}/wrapper/target/quarkus-app/quarkus-run.jar"
 
 case "${ACTION}" in
     app_start)
+        if [[ -v TEST_APP_JAVA ]]; then
+          require_java "${TEST_APP_JAVA}"
+        fi
+        eval $(jbang jdk java-env)
+        compile_maven "wrapper" " -Dquarkus.package.jar.aot.enabled=true -DskipITs=false -P Fibonacci -Dquarkus.package.jar.aot.additional-recording-args=-XX:+UseG1GC "
+        export TEST_STRAT_OPTS="-XX:AOTMode=on -XX:AOTCache=${TEST_TEST_CACHE}/wrapper/target/quarkus-app/app.aot -Xlog:${TEST_LOG_LABEL:-}aot=warning:file=${TEST_OUT_DIR}/${TEST_TEST_RUNID}.log:level,tags"
         start_app "${TESTID}" "${TEST_TEST_CACHE}/wrapper/target/quarkus-app/quarkus-run.jar"
         ;;
     app_stop)
@@ -26,6 +32,6 @@ case "${ACTION}" in
         clone "${REPO_WRAPPER_URL}" "wrapper"
         require_java "25+"
         [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
-        compile_maven "wrapper" "-Dquarkus.package.jar.type=aot-jar"
+        compile_maven "wrapper" "-Dquarkus.package.jar.aot.enabled=true -DskipITs=false"
         ;;
 esac

@@ -73,11 +73,15 @@ function compile_maven() {
     local repository=${1:-repo}
     local opts=${2:-}
 
+    if [[ -z "$opts" ]]; then
+        opts="-DskipTests"
+    fi
+
     echo "   - Compiling application '$repository'..."
 	set +e
     if pushd "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-build-$$.log 2>&1; then
 		local repo="${TEST_CACHE_DIR}/_mvn_repo"
-	    ./mvnw deploy -s "${TEST_DIR}/local-settings.xml" "-Dperf.test.repo=${repo}" "-DaltDeploymentRepository=local-repo::default::file:${repo}" -DskipTests $opts > /tmp/leyden-perf-test-build-$$.log 2>&1
+	    ./mvnw deploy -s "${TEST_DIR}/local-settings.xml" "-Dperf.test.repo=${repo}" "-DaltDeploymentRepository=local-repo::default::file:${repo}" ${opts}  > /tmp/leyden-perf-test-build-$$.log 2>&1
 	fi
     local result=$?
 	set -e
