@@ -43,20 +43,6 @@ infra_setup() {
     :
 }
 
-# The infra_first action is run once before any of the tests in the suite are run.
-# IMPORTANT: This action should wait and return only when the infrastructure
-# is fully started and ready to use!
-# This action is optional and can be removed if not needed.
-infra_first() {
-    :
-}
-
-# The infra_last action is run once after all tests in the suite have run.
-# This action is optional and can be removed if not needed.
-infra_last() {
-    :
-}
-
 # The infra_start action is run to start the infrastructure for each test.
 # IMPORTANT: This action should wait and return only when the infrastructure
 # is fully started and ready to use!

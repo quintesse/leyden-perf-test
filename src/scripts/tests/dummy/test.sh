@@ -28,14 +28,6 @@ infra_setup() {
     echo "Dummy suite infra_setup action"
 }
 
-infra_first() {
-    echo "Dummy suite infra_first action"
-}
-
-infra_last() {
-    echo "Dummy suite infra_last action"
-}
-
 infra_start() {
     echo "Dummy suite infra_start action"
 }

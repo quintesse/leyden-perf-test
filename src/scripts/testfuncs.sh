@@ -131,17 +131,11 @@ function _run_test_suite_first() {
 		return $result
 	fi
 	_run_command_for_suite "infra_setup" "Setting up infrastructure for" || result=$?
-	if [[ $result -ne 0 ]]; then
-		return $result
-	fi
-	_run_command_for_suite "infra_first" "Starting initial infrastructure for" || result=$?
 	return $result
 }
 
 function _run_test_suite_last() {
-	local result=0
-	_run_command_for_suite "infra_last" "Stopping initial infrastructure for" || result=$?
-	return $result
+	return 0
 }
 
 function generate_profiling_results() {
