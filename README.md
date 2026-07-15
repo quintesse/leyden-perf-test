@@ -170,7 +170,7 @@ Run `./run list` to see all available tests with descriptions.
 
 ## Creating New Tests
 
-Tests are organized in a hierarchical structure under `src/scripts/tests/`:
+Tests are organized in a hierarchical structure under `tests/`:
 
 ```
 tests/
@@ -184,14 +184,14 @@ tests/
       DESCRIPTION         # One-line description of the test
 ```
 
-Adding a new suite of tests is best done by making a copy of the [`_suite_template`](src/scripts/tests/_suite_template) 
+Adding a new suite of tests is best done by making a copy of the [`_suite_template`](tests/_suite_template) 
 directory and renaming it to something that will identify the tests that you want to add (we recommend something short,
 you migh tbe typing the name a lot).
 
 Once that copy is created take a look at each of the files in that directory, there's inline explanation in
 each of them on how they are to be used. Edit them to perform the desired actions.
 
-And finally for each of the tests that you want to add you make a copy of the [`example_test`](src/scripts/tests/_suite_template/example_test)
+And finally for each of the tests that you want to add you make a copy of the [`example_test`](tests/_suite_template/example_test)
 folder and give it a unique (and short!) name. Like the suite itself there are files in the directory that you will
 need to edit to run your tests in exactly the way you want them.
 

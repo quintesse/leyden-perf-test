@@ -9,7 +9,7 @@ set -euo pipefail
 #   list of test suites
 function list_test_suites() {
 	local pat=${1:-*/}
-	list_files_in_dir_except "${TEST_SRC_DIR}/scripts/tests" "$pat"
+	list_files_in_dir_except "${TEST_DIR}/tests" "$pat"
 }
 
 # Lists tests in a suite
@@ -21,7 +21,7 @@ function list_test_suites() {
 function list_tests_in_suite() {
 	local suite=$1
 	local pat=${2:-*/}
-	list_files_in_dir_except "${TEST_SRC_DIR}/scripts/tests/${suite}" "$pat"
+	list_files_in_dir_except "${TEST_DIR}/tests/${suite}" "$pat"
 }
 
 # Lists files in a directory except those starting with '_'
@@ -87,9 +87,9 @@ function read_test_description() {
 	local suite=$1
 	local test=${2:-}
 	if [[ -z "${test}" ]]; then
-		read_description "${TEST_SRC_DIR}/scripts/tests/${suite}/DESCRIPTION"
+		read_description "${TEST_DIR}/tests/${suite}/DESCRIPTION"
 	else
-		read_description "${TEST_SRC_DIR}/scripts/tests/${suite}/${test}/DESCRIPTION"
+		read_description "${TEST_DIR}/tests/${suite}/${test}/DESCRIPTION"
 	fi
 }
 
@@ -113,7 +113,7 @@ function run_suite_start_commands() {
 	local firstcmd=${5:-}
 
 	local tests=( $(select_tests "${testpat}") )
-	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
+	export TEST_ROOT_DIR="${TEST_DIR}/tests"
 
 	local cursuite=""
 	local curtest=""
@@ -143,7 +143,7 @@ function run_suite_stop_commands() {
 	local lastcmd=${5:-}
 
 	local tests=( $(select_tests "${testpat}") )
-	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
+	export TEST_ROOT_DIR="${TEST_DIR}/tests"
 
 	local cursuite=""
 	local curtest=""
