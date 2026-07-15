@@ -266,12 +266,13 @@ function _run_command_for_driver() {
 	local action=$2
 	local msg=$3
 	local args=("${@:4}")
+	local launcher_path="${TEST_SRC_DIR}/scripts/launcher.sh"
 	local cmd_path="${TEST_SRC_DIR}/scripts/drivers/${driver}/driver.sh"
 	local ctx="${TEST_SUITE_NAME:-}/${TEST_TEST_NAME:-}"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test: ${ctx} ..."
 		local result=0
-		"${cmd_path}" "${action}" "${args[@]}" || result=$?
+		"${launcher_path}" "${cmd_path}" "${action}" "${args[@]}" || result=$?
 		if [[ $result -ne 0 ]]; then
 			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${ctx}   : Failed.${NORMAL}"
 			return $result
