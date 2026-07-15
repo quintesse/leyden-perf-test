@@ -128,9 +128,13 @@ function run_suite_start_commands() {
 			[[ -n "${firstcmd}" ]] && { _run_command_for_suite "${firstcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
 			[[ $result -ne 0 ]] && continue
 		fi
-		[[ -n "${suitecmd}" ]] && { _run_command_for_suite "${suitecmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
-		[[ $result -ne 0 ]] && continue
-		[[ -n "${testcmd}" ]] && { _run_command_for_test "${testcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+		if [[ -n "${suitecmd}" && -n "${testcmd}" && "${suitecmd}" == "${testcmd}" ]]; then
+			run_command "${suitecmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
+		else
+			[[ -n "${suitecmd}" ]] && { _run_command_for_suite "${suitecmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+			[[ $result -ne 0 ]] && continue
+			[[ -n "${testcmd}" ]] && { _run_command_for_test "${testcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+		fi
 	done
 	return $result
 }
@@ -158,8 +162,12 @@ function run_suite_stop_commands() {
 		cursuite="${suitenm}"
 		curtest="${testnm}"
 		_set_test_context "${suitenm}" "${testnm}"
-		[[ -n "${testcmd}" ]] && { _run_command_for_test "${testcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
-		[[ -n "${suitecmd}" ]] && { _run_command_for_suite "${suitecmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+		if [[ -n "${suitecmd}" && -n "${testcmd}" && "${suitecmd}" == "${testcmd}" ]]; then
+			run_command "${suitecmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
+		else
+			[[ -n "${testcmd}" ]] && { _run_command_for_test "${testcmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+			[[ -n "${suitecmd}" ]] && { _run_command_for_suite "${suitecmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?; }
+		fi
 	done
 	if [[ "${cursuite}" != "" ]]; then
 		_set_test_context "${cursuite}" "${curtest}"
@@ -221,6 +229,48 @@ function _run_command_for_test() {
 		fi
 		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${TEST_SUITE_NAME}/${TEST_TEST_NAME}   : Done.${NORMAL}"
 	fi
+}
+
+# Runs a command by sourcing suite script first and test script second in a single launcher process.
+# If both scripts define the same function, the test script definition overrides the suite one.
+# Arguments:
+#   cmd - command/action to run
+#   msg - message to display
+#   args - additional arguments
+# Variables used:
+#   TEST_SUITE_NAME - name of the test suite
+#   TEST_TEST_NAME  - name of the test (optional)
+#   TEST_SUITE_DIR  - directory of the test suite
+#   TEST_TEST_DIR   - directory of the test
+function run_command() {
+	local cmd=$1
+	local msg=$2
+	local args=("${@:3}")
+	local launcher_path="${TEST_SRC_DIR}/scripts/launcher.sh"
+	local suite_cmd_path="${TEST_SUITE_DIR}/test.sh"
+	local test_cmd_path="${TEST_TEST_DIR:-}/test.sh"
+	local cmd_paths=()
+
+	if [[ -f "${suite_cmd_path}" ]]; then
+		cmd_paths+=("${suite_cmd_path}")
+	fi
+	if [[ -n "${TEST_TEST_DIR:-}" && -f "${test_cmd_path}" ]]; then
+		cmd_paths+=("${test_cmd_path}")
+	fi
+
+	if [[ ${#cmd_paths[@]} -eq 0 ]]; then
+		return 0
+	fi
+
+	local ctx="${TEST_SUITE_NAME}${TEST_TEST_NAME:+/${TEST_TEST_NAME}}"
+	echo "   - ${msg} test: ${ctx} ..."
+	local result=0
+	"${launcher_path}" "${cmd_paths[@]}" -- "${cmd}" "${args[@]}" || result=$?
+	if [[ $result -ne 0 ]]; then
+		echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${ctx}   : Failed.${NORMAL}"
+		return $result
+	fi
+	echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${ctx}   : Done.${NORMAL}"
 }
 
 # Runs a command for a specific test suite.

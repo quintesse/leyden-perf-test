@@ -15,19 +15,44 @@ if [[ -z "${1:-}" ]]; then
     exit 1
 fi
 
-script_path=$1
-command_name=${2:-}
-command_args=("${@:3}")
+script_paths=()
+command_name=
+command_args=()
 
-if [[ ! -f "${script_path}" ]]; then
-    echo "Error: [$0] script '${script_path}' not found or is not a regular file."
-    exit 1
-elif [[ ! -r "${script_path}" ]]; then
-    echo "Error: [$0] script '${script_path}' is not readable."
+# New mode: launcher.sh <script1> [<script2> ...] -- <command> [args...]
+if [[ " $* " == *" -- "* ]]; then
+    while [[ $# -gt 0 && "$1" != "--" ]]; do
+        script_paths+=("$1")
+        shift
+    done
+    shift
+    command_name=${1:-}
+    command_args=("${@:2}")
+else
+    # Backward-compatible mode: launcher.sh <script> <command> [args...]
+    script_paths=("$1")
+    command_name=${2:-}
+    command_args=("${@:3}")
+fi
+
+if [[ ${#script_paths[@]} -eq 0 ]]; then
+    echo "Error: [$0] No script path provided."
     exit 1
 fi
 
-source "${script_path}" "${command_args[@]}"
+for script_path in "${script_paths[@]}"; do
+    if [[ ! -f "${script_path}" ]]; then
+        echo "Error: [$0] script '${script_path}' not found or is not a regular file."
+        exit 1
+    elif [[ ! -r "${script_path}" ]]; then
+        echo "Error: [$0] script '${script_path}' is not readable."
+        exit 1
+    fi
+done
+
+for script_path in "${script_paths[@]}"; do
+    source "${script_path}" "${command_args[@]}"
+done
 
 if [[ -n "${command_name}" ]] && declare -F "${command_name}" > /dev/null; then
     "${command_name}" "${command_args[@]}"

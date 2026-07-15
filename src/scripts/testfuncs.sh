@@ -58,11 +58,7 @@ function _run_test() {
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
-	_run_command_for_suite "app_start" "Starting test application for" "${TEST_TEST_RUNID}" || result=$?
-	if [[ $result -ne 0 ]]; then
-		return $result
-	fi
-	_run_command_for_test "app_start" "Starting test application for" "${TEST_TEST_RUNID}" || result=$?
+	run_command "app_start" "Starting test application for" "${TEST_TEST_RUNID}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
@@ -73,17 +69,14 @@ function _run_test() {
 	# don't exit on error yet!
 
 	local result2=0
-	_run_command_for_test "app_stop" "Stopping test application for" "${TEST_TEST_RUNID}" || result2=$?
-
-	local result3=0
-	_run_command_for_suite "app_stop" "Stopping test application for" "${TEST_TEST_RUNID}" || result3=$?
+	run_command "app_stop" "Stopping test application for" "${TEST_TEST_RUNID}" || result2=$?
 
 	if [[ -f "${TEST_OUT_DIR}/${TEST_TEST_RUNID}-profile.jfr" ]]; then
 		# If we have JFR files, process them
 		generate_profiling_results "${TEST_TEST_RUNID}"
 	fi
 	
-	result=$((result1 + result2 + result3))
+	result=$((result1 + result2))
 	return $result
 }
 
@@ -96,31 +89,19 @@ function _run_perf_tests() {
 
 function _run_before_test() {
 	local result=0
-	_run_command_for_suite "app_setup" "Setting up" "${TEST_TEST_RUNID}" || result=$?
+	run_command "app_setup" "Setting up" "${TEST_TEST_RUNID}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
-	_run_command_for_test "app_setup" "Setting up" "${TEST_TEST_RUNID}" || result=$?
-	if [[ $result -ne 0 ]]; then
-		return $result
-	fi
-	_run_command_for_suite "infra_start" "Starting infrastructure for" "${TEST_TEST_RUNID}" || result=$?
-	if [[ $result -ne 0 ]]; then
-		return $result
-	fi
-	_run_command_for_test "infra_start" "Starting test infrastructure for" "${TEST_TEST_RUNID}" || result=$?
+	run_command "infra_start" "Starting infrastructure for" "${TEST_TEST_RUNID}" || result=$?
 	return $result
 }
 
 function _run_after_test() {
 	local result1=0
-	_run_command_for_test "infra_stop" "Stopping test infrastructure for" "${TEST_TEST_RUNID}" || result1=$?
-	
-	# don't exit on error yet!
-	local result2=0
-	_run_command_for_suite "infra_stop" "Stopping infrastructure for" "${TEST_TEST_RUNID}" || result2=$?
+	run_command "infra_stop" "Stopping infrastructure for" "${TEST_TEST_RUNID}" || result1=$?
 
-	local result=$((result1 + result2))
+	local result=$result1
 	return $result
 }
 
