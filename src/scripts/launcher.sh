@@ -12,12 +12,20 @@ if [[ -z "${1:-}" ]]; then
     exit 1
 fi
 
-if [[ ! -f "$1" ]]; then
-    echo "Error: [$0] script '$1' not found or is not a regular file."
+script_path=$1
+command_name=${2:-}
+command_args=("${@:3}")
+
+if [[ ! -f "${script_path}" ]]; then
+    echo "Error: [$0] script '${script_path}' not found or is not a regular file."
     exit 1
-elif [[ ! -r "$1" ]]; then
-    echo "Error: [$0] script '$1' is not readable."
+elif [[ ! -r "${script_path}" ]]; then
+    echo "Error: [$0] script '${script_path}' is not readable."
     exit 1
 fi
 
-source "$1" "${@:2}"
+source "${script_path}" "${command_args[@]}"
+
+if [[ -n "${command_name}" ]] && declare -F "${command_name}" > /dev/null; then
+    "${command_name}" "${command_args[@]}"
+fi
