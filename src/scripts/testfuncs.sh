@@ -8,7 +8,7 @@ function run_all_tests() {
 	local preparefunccall=${3:-}
 
 	local tests=( $(select_tests "${testpat}") )
-	export TEST_ROOT_DIR="${TEST_SRC_DIR}/scripts/tests"
+	export TEST_ROOT_DIR="${TEST_DIR}/tests"
 
 	local result=0
 	local cursuite=""
