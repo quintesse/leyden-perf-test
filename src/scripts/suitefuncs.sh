@@ -209,7 +209,7 @@ function _run_command_for_test() {
 	local cmd=$1
 	local msg=$2
 	local args=("${@:3}")
-	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/suite/test/test.sh"
+	local launcher_path="${TEST_SRC_DIR}/scripts/launcher.sh"
 	local cmd_path="${TEST_TEST_DIR}/test.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test: ${TEST_SUITE_NAME}/${TEST_TEST_NAME} ..."
@@ -236,7 +236,7 @@ function _run_command_for_suite() {
 	local cmd=$1
 	local msg=$2
 	local args=("${@:3}")
-	local launcher_path="${TEST_SRC_DIR}/scripts/launchers/tests/suite/test.sh"
+	local launcher_path="${TEST_SRC_DIR}/scripts/launcher.sh"
 	local cmd_path="${TEST_SUITE_DIR}/test.sh"
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test suite: ${TEST_SUITE_NAME} ..."
