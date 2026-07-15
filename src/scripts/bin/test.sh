@@ -155,6 +155,11 @@ if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
 	profiles=("default")
 fi
 
+if [[ ${#javaVersions[@]} -eq 0 ]]; then
+	echo "Error: No Java versions specified."
+	exit 4
+fi
+
 {
 	"${TEST_DIR}/run" list "${testPat}"
 	echo "Test driver: ${TEST_DRIVER}"
