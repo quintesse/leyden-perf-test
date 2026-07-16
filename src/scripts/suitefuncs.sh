@@ -111,10 +111,41 @@ function read_description() {
 	fi
 }
 
+# This function loops over all tests matching a given pattern, sets up the test context
+# and runs the specified function for each test.
+# Arguments:
+#   testpat - pattern to match tests in the form suite/test
+#   testfunc - function that will be called for all tests
+#   name_tag - (optional) tag to append to the test run ID
+# Variables used:
+#   TEST_ROOT_DIR - root directory where test suites are located
+# Returns:
+#   0 if all tests passed, non-zero if any test failed
+function run_for_suite() {
+	local testpat=$1
+	local testfunc=$2
+	local name_tag=${3:-}
+
+	local tests=( $(select_tests "${testpat}") )
+
+	local result=0
+	local finalresult=0
+	local cursuite=""
+	local curtest=""
+	for test in "${tests[@]}"; do
+		local suitenm="${test%%/*}"
+		local testnm="${test#*/}"
+		_set_test_context "${suitenm}" "${testnm}" "${name_tag}"
+		result=0
+		${testfunc} "${suitenm}" "${testnm}" || result=$?
+		finalresult=$((finalresult + result))
+	done
+	return $finalresult
+}
+
 # Runs a command for a suite of tests
 # Arguments:
 #   testpat - pattern to match tests in the form suite/test
-#   msg     - message to display for each test
 #   cmds    - one or more commands to run for each test
 #             if a command is in form start/stop, start runs immediately and
 #             stop is queued and executed later in reverse order
@@ -127,9 +158,6 @@ function run_suite_commands() {
 	local testpat=$1
 	local msg=$2
 	local cmds=("${@:3}")
-	local stop_suites=()
-	local stop_tests=()
-	local stop_cmds=()
 
 	if [[ ${#cmds[@]} -eq 0 ]]; then
 		return 0
@@ -149,37 +177,14 @@ function run_suite_commands() {
 			# We no longer run suite commands here, but leaving the block here for now
 			[[ $result -ne 0 ]] && continue
 		fi
-		for cmd in "${cmds[@]}"; do
-			if [[ "${cmd}" == */* ]]; then
-				local start_cmd="${cmd%%/*}"
-				local stop_cmd="${cmd#*/}"
-				if [[ -n "${start_cmd}" && -n "${stop_cmd}" ]]; then
-					_run_command "${start_cmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-					if [[ $result -ne 0 ]]; then
-						abort=1
-						break
-					fi
-					stop_suites+=("${suitenm}")
-					stop_tests+=("${testnm}")
-					stop_cmds+=("${stop_cmd}")
-					continue
-				fi
-			fi
-
-			_run_command "${cmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-			if [[ $result -ne 0 ]]; then
-				abort=1
-				break
-			fi
-		done
+		_run_commands "${cmds[@]}" || result=$?
+		if [[ $result -ne 0 ]]; then
+			abort=1
+			break
+		fi
 		if [[ $abort -ne 0 ]]; then
 			break
 		fi
-	done
-
-	for (( idx=${#stop_cmds[@]}-1; idx>=0; idx-- )); do
-		_set_test_context "${stop_suites[$idx]}" "${stop_tests[$idx]}"
-		_run_command "${stop_cmds[$idx]}" "${msg}" "${TEST_TEST_RUNID}" || true
 	done
 
 	return $result
@@ -210,6 +215,69 @@ function _set_test_context() {
 		export TEST_TEST_CACHE=
 		export TEST_TEST_RUNID=
 	fi
+}
+
+
+# Runs a command for a suite of tests
+# Arguments:
+#   cmds    - one or more commands to run for the test
+#             command list can be followed by "--" and optional args
+#             optional args are forwarded to each command invocation
+#             if a command is in form start/stop, start runs immediately and
+#             stop is queued and executed at end of the test in reverse order
+# Variables used:
+#   TEST_SUITE_NAME, TEST_TEST_NAME, TEST_TEST_RUNID - current test context
+# Returns:
+#   0 on success, or exit code of the command that failed
+function _run_commands() {
+	local input=("$@")
+	local cmds=()
+	local cmd_args=()
+	local seen_sep=0
+
+	for token in "${input[@]}"; do
+		if [[ $seen_sep -eq 0 && "${token}" == "--" ]]; then
+			seen_sep=1
+			continue
+		fi
+		if [[ $seen_sep -eq 0 ]]; then
+			cmds+=("${token}")
+		else
+			cmd_args+=("${token}")
+		fi
+	done
+
+	if [[ ${#cmds[@]} -eq 0 ]]; then
+		return 0
+	fi
+
+	local stop_cmds=()
+
+	local result=0
+	for cmd in "${cmds[@]}"; do
+		if [[ "${cmd}" == */* ]]; then
+			local start_cmd="${cmd%%/*}"
+			local stop_cmd="${cmd#*/}"
+			if [[ -n "${start_cmd}" && -n "${stop_cmd}" ]]; then
+				_run_command "${start_cmd}" "Running ${start_cmd} for" "${cmd_args[@]}" || result=$?
+				if [[ $result -ne 0 ]]; then
+					break
+				fi
+				stop_cmds+=("${stop_cmd}")
+			fi
+		else
+			_run_command "${cmd}" "Running ${cmd} for" "${cmd_args[@]}" || result=$?
+			if [[ $result -ne 0 ]]; then
+				break
+			fi
+		fi
+	done
+
+	for (( idx=${#stop_cmds[@]}-1; idx>=0; idx-- )); do
+		_run_command "${stop_cmds[$idx]}" "Running ${stop_cmds[$idx]} for" "${cmd_args[@]}" || true
+	done
+
+	return $result
 }
 
 # Runs a command by sourcing a global script first, the suite script second and the test script last in a single launcher process.

@@ -19,9 +19,9 @@ extract_test_block() {
 	local block_file=$2
 
 	awk -v test_id="${test_id}" '
-		index($0, "Setting up infrastructure for test: " test_id " ...") { capture = 1 }
+		index($0, "Running infra_setup for test: " test_id " ...") { capture = 1 }
 		capture { print }
-		index($0, "Stopping infrastructure for test: " test_id " ...") { stop_seen = 1 }
+		index($0, "Running infra_stop for test: " test_id " ...") { stop_seen = 1 }
 		stop_seen && index($0, ": Done.") { exit }
 	' "${log_file}" > "${block_file}"
 }
@@ -29,7 +29,7 @@ extract_test_block() {
 extract_action_lines() {
 	local input_file=$1
 	local output_file=$2
-	grep -E '^(Dummy|Empty) (global|suite|test) (infra_setup|app_setup|infra_start|driver_prime|app_start|driver_run|app_stop|infra_stop) action$' "${input_file}" > "${output_file}"
+	grep -E '^(Dummy|Empty) (global|suite|test) (infra_setup|app_setup|driver_setup|infra_start|driver_prime|app_start|driver_run|app_stop|infra_stop) action$' "${input_file}" > "${output_file}"
 }
 
 assert_lines_exact() {
@@ -58,42 +58,6 @@ assert_lines_exact() {
 	done
 }
 
-assert_driver_setup_order() {
-	local setup_line block_start_line
-	setup_line=$(grep -n '^Dummy driver setup action$' "${log_file}" | cut -d: -f1 | head -n 1)
-	block_start_line=$(grep -n '^   - Setting up infrastructure for test: ' "${log_file}" | cut -d: -f1 | head -n 1)
-
-	if [[ -z "${setup_line}" ]]; then
-		echo "Missing driver setup action line."
-		echo "--- Full output ---"
-		cat "${log_file}"
-		exit 1
-	fi
-
-	if [[ -z "${block_start_line}" ]]; then
-		echo "Missing first test block start line."
-		echo "--- Full output ---"
-		cat "${log_file}"
-		exit 1
-	fi
-
-	if [[ ${setup_line} -ge ${block_start_line} ]]; then
-		echo "Driver setup action did not occur before the first test block."
-		echo "--- Full output ---"
-		cat "${log_file}"
-		exit 1
-	fi
-
-	local setup_count
-	setup_count=$(grep -c '^Dummy driver setup action$' "${log_file}" || true)
-	if [[ ${setup_count} -ne 1 ]]; then
-		echo "Expected exactly one driver setup action line, got ${setup_count}."
-		echo "--- Full output ---"
-		cat "${log_file}"
-		exit 1
-	fi
-}
-
 assert_mapping_for_test() {
 	local test_id=$1
 	local expected_prefix=$2
@@ -119,41 +83,43 @@ cd "${repo_root}"
 
 ./run test -j 25 -d dummy -s normal -T tests-dummy all -o "${out_dir}" > "${log_file}" 2>&1
 
-assert_driver_setup_order
-
 assert_mapping_for_test "dummy/override" "Dummy test" \
 	"Dummy test infra_setup action" \
 	"Dummy test app_setup action" \
+	"Dummy test driver_setup action" \
 	"Dummy test infra_start action" \
-	"Dummy global driver_prime action" \
+	"Dummy test driver_prime action" \
 	"Dummy test app_start action" \
-	"Dummy global driver_run action" \
+	"Dummy test driver_run action" \
 	"Dummy test app_stop action" \
 	"Dummy test infra_stop action"
 
 assert_mapping_for_test "dummy/empty" "Dummy suite" \
 	"Dummy suite infra_setup action" \
 	"Dummy suite app_setup action" \
+	"Dummy suite driver_setup action" \
 	"Dummy suite infra_start action" \
-	"Dummy global driver_prime action" \
+	"Dummy suite driver_prime action" \
 	"Dummy suite app_start action" \
-	"Dummy global driver_run action" \
+	"Dummy suite driver_run action" \
 	"Dummy suite app_stop action" \
 	"Dummy suite infra_stop action"
 
 assert_mapping_for_test "empty/override" "Empty test" \
 	"Empty test infra_setup action" \
 	"Empty test app_setup action" \
+	"Empty test driver_setup action" \
 	"Empty test infra_start action" \
-	"Dummy global driver_prime action" \
+	"Empty test driver_prime action" \
 	"Empty test app_start action" \
-	"Dummy global driver_run action" \
+	"Empty test driver_run action" \
 	"Empty test app_stop action" \
 	"Empty test infra_stop action"
 
 assert_mapping_for_test "empty/empty" "Dummy global" \
 	"Dummy global infra_setup action" \
 	"Dummy global app_setup action" \
+	"Dummy global driver_setup action" \
 	"Dummy global infra_start action" \
 	"Dummy global driver_prime action" \
 	"Dummy global app_start action" \
