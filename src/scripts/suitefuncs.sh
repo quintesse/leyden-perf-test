@@ -116,15 +116,20 @@ function read_description() {
 #   testpat - pattern to match tests in the form suite/test
 #   msg     - message to display for each test
 #   cmds    - one or more commands to run for each test
+#             if a command is in form start/stop, start runs immediately and
+#             stop is queued and executed later in reverse order
 # Variables used:
 #   TEST_SRC_DIR  - directory where the test framework scripts are located
 #   TEST_ROOT_DIR - root directory where test suites are located
 # Returns:
-#   0 on success, or exit code of the first failed command
+#   0 on success, or exit code of the command that caused abort
 function run_suite_commands() {
 	local testpat=$1
 	local msg=$2
 	local cmds=("${@:3}")
+	local stop_suites=()
+	local stop_tests=()
+	local stop_cmds=()
 
 	if [[ ${#cmds[@]} -eq 0 ]]; then
 		return 0
@@ -134,6 +139,7 @@ function run_suite_commands() {
 
 	local cursuite=""
 	local result=0
+	local abort=0
 	for test in "${tests[@]}"; do
 		local suitenm="${test%%/*}"
 		local testnm="${test#*/}"
@@ -144,13 +150,39 @@ function run_suite_commands() {
 			[[ $result -ne 0 ]] && continue
 		fi
 		for cmd in "${cmds[@]}"; do
+			if [[ "${cmd}" == */* ]]; then
+				local start_cmd="${cmd%%/*}"
+				local stop_cmd="${cmd#*/}"
+				if [[ -n "${start_cmd}" && -n "${stop_cmd}" ]]; then
+					_run_command "${start_cmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
+					if [[ $result -ne 0 ]]; then
+						abort=1
+						break
+					fi
+					stop_suites+=("${suitenm}")
+					stop_tests+=("${testnm}")
+					stop_cmds+=("${stop_cmd}")
+					continue
+				fi
+			fi
+
 			_run_command "${cmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
 			if [[ $result -ne 0 ]]; then
-				return $result
+				abort=1
+				break
 			fi
 		done
+		if [[ $abort -ne 0 ]]; then
+			break
+		fi
 	done
-	return 0
+
+	for (( idx=${#stop_cmds[@]}-1; idx>=0; idx-- )); do
+		_set_test_context "${stop_suites[$idx]}" "${stop_tests[$idx]}"
+		_run_command "${stop_cmds[$idx]}" "${msg}" "${TEST_TEST_RUNID}" || true
+	done
+
+	return $result
 }
 
 # Sets the test context environment variables.
