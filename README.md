@@ -39,7 +39,9 @@ This project contains several test-related roots with distinct purposes:
 
 ## Harness Checks
 
-This repository is itself a test harness. To keep harness verification separate from workload definitions in `tests/`, self-check scripts live under `harness-checks/`.
+This repository is itself a test harness. Harness verification tests live under `verify/bats/`.
+The repository includes a local `./bats` launcher script so you do not need
+to install bats-core globally.
 
 Run all harness checks with:
 
@@ -47,7 +49,18 @@ Run all harness checks with:
 ./run verify
 ```
 
-The `dummy-output` check validates action-resolution precedence by running:
+`./run verify` runs the Bats verification suite from `verify/bats/*.bats`.
+
+Run only the Bats checks directly with:
+
+```bash
+./bats verify/bats
+```
+
+By default, `./bats` installs bats-core into `cache/_tools/bats/` on first run.
+Set `BATS_VERSION` to override the default version.
+
+The `dummy-output` Bats test validates action-resolution precedence by running:
 
 ```bash
 ./run test -j 25 -d dummy -s normal -T tests-dummy all
@@ -229,7 +242,7 @@ For each test in that suite, copy
 to `tests/<your-suite-name>/<your-test-name>` and edit it for your scenario.
 
 If you want to validate harness behavior (rather than workload behavior), add checks under
-`harness-checks/` and, if needed, dummy fixtures under `tests-dummy/`.
+`verify/bats/` and, if needed, dummy fixtures under `tests-dummy/`.
 
 ## Performance Analysis
 
