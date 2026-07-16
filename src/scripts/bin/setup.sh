@@ -56,5 +56,5 @@ if [[ "${cleanCache}" == true ]]; then
 	echo -e "   - ${NORMAL}${GREEN}✓ Cleaned 'cache' directory${NORMAL}"
 fi
 
-run_suite_commands "${1:-all}" "Setting up infrastructure for" "infra_setup"
-run_suite_commands "${1:-all}" "Setting up application for" "app_setup"
+run_suite_commands_for_tests "${1:-all}" "Setting up infrastructure for" "infra_setup"
+run_suite_commands_for_tests "${1:-all}" "Setting up application for" "app_setup"

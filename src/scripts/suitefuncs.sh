@@ -154,7 +154,7 @@ function run_for_suite() {
 #   TEST_ROOT_DIR - root directory where test suites are located
 # Returns:
 #   0 on success, or exit code of the command that caused abort
-function run_suite_commands() {
+function run_suite_commands_for_tests() {
 	local testpat=$1
 	local msg=$2
 	local cmds=("${@:3}")
@@ -177,7 +177,7 @@ function run_suite_commands() {
 			# We no longer run suite commands here, but leaving the block here for now
 			[[ $result -ne 0 ]] && continue
 		fi
-		_run_commands "${cmds[@]}" || result=$?
+		run_suite_commands "${cmds[@]}" || result=$?
 		if [[ $result -ne 0 ]]; then
 			abort=1
 			break
@@ -229,7 +229,7 @@ function _set_test_context() {
 #   TEST_SUITE_NAME, TEST_TEST_NAME, TEST_TEST_RUNID - current test context
 # Returns:
 #   0 on success, or exit code of the command that failed
-function _run_commands() {
+function run_suite_commands() {
 	local input=("$@")
 	local cmds=()
 	local cmd_args=()

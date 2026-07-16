@@ -10,14 +10,14 @@ fi
 testpattern=$1
 
 function _cmds() {
-	_run_commands \
-        "infra_setup" \
-        "app_setup" \
-        "driver_setup" \
-        "infra_start/infra_stop" \
-        "driver_prime" \
-        "app_start/app_stop" \
-        "driver_run" -- "${TEST_TEST_RUNID}"
+	run_suite_commands \
+		"infra_setup" \
+		"app_setup" \
+		"driver_setup" \
+		"infra_start/infra_stop" \
+		"driver_prime" \
+		"app_start/app_stop" \
+		"driver_run" -- "${TEST_TEST_RUNID}"
 }
 
 function _train() {

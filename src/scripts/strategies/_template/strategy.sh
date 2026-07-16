@@ -20,9 +20,9 @@ testpattern=$1
 # This is the function that will be run for each test in the suite.
 # It should do all the setup, execution, and teardown necessary for the test.
 function _test() {
-	local result=0
+    local result=0
 
-	_run_commands \
+    run_suite_commands \
         "infra_setup" \
         "app_setup" \
         "driver_setup" \
@@ -31,7 +31,7 @@ function _test() {
         "app_start/app_stop" \
         "driver_run" -- "${TEST_TEST_RUNID}" || result=$?
 
-	return $result
+    return $result
 }
 
 # This is the toplevel part of the strategy.
