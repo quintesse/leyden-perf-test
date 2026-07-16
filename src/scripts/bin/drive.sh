@@ -32,25 +32,7 @@ fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
-
-function run_driver() {
-	local testpat=$1
-	local action=$2
-	local msg=$3
-
-	local tests=( $(select_tests "${testpat}") )
-
-	local result=0
-	for test in "${tests[@]}"; do
-		local suitenm="${test%%/*}"
-		local testnm="${test#*/}"
-		_set_test_context "${suitenm}" "${testnm}"
-		[[ -f "${TEST_SUITE_DIR}/shared-vars.sh" ]] && source "${TEST_SUITE_DIR}/shared-vars.sh"
-		result=0
-		_run_command_for_driver "${TEST_DRIVER}" "${action}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
-	done
-	return $result
-}
+source "${TEST_SRC_DIR}"/scripts/driverfuncs.sh
 
 outputPath="test-results/manual_run"
 profiles=()
@@ -129,16 +111,16 @@ done
 
 case "${2:-}" in
 	setup)
-		_run_command_for_driver "${TEST_DRIVER}" "setup" "Setting up ${TEST_DRIVER} test driver"
+		setup_driver
 		;;
-	prepare)
-		run_driver "${1:-all}" "prepare" "Preparing ${TEST_DRIVER} test driver for"
+	prime)
+		run_suite_commands "${1:-all}" "Priming ${TEST_DRIVER} test driver for" "driver_prime"
 		;;
 	run)
-		run_driver "${1:-all}" "run" "Running tests using ${TEST_DRIVER} driver for"
+		run_suite_commands "${1:-all}" "Running tests using ${TEST_DRIVER} driver for" "driver_run"
 		;;
 	*)
-		echo "ERROR: Second argument must be 'setup', 'prepare' or 'run'."
+		echo "ERROR: Second argument must be 'setup', 'prime' or 'run'."
 		exit 4
 		;;
 esac

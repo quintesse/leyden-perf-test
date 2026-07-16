@@ -34,6 +34,7 @@ fi
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/infrafuncs.sh
+source "${TEST_SRC_DIR}"/scripts/driverfuncs.sh
 
 resultTag=""
 jdkTag=""
@@ -189,7 +190,7 @@ for profile in "${profiles[@]}"; do
 	source "${TEST_DIR}/profiles/${profile}.sh"
 done
 
-_run_command_for_driver "${TEST_DRIVER}" "setup" "Setting up ${TEST_DRIVER} test driver"
+setup_driver
 
 echo "   - Selected java versions ${javaVersions[*]}"
 for javaVersion in "${javaVersions[@]}"; do

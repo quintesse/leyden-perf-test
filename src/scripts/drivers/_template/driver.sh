@@ -11,7 +11,7 @@ setup() {
     :
 }
 
-prepare() {
+prime() {
     # ... Perform any work required before the driver is run ...
     # This action is optional and can be removed if not needed
     :

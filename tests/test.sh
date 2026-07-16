@@ -30,3 +30,14 @@ infra_stop() {
     :
 }
 
+driver_setup() {
+    setup_driver
+}
+
+driver_prime() {
+    prime_driver
+}
+
+driver_run() {
+    run_driver
+}

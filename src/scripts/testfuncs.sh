@@ -62,7 +62,7 @@ function run_all_tests() {
 
 function _run_test() {
 	local result=0
-	_run_command_for_driver "${TEST_DRIVER}" "prepare" "Preparing ${TEST_DRIVER} test driver for" "${TEST_TEST_RUNID}" || result=$?
+	_run_command "driver_prime" "Priming driver for" "${TEST_TEST_RUNID}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
@@ -89,7 +89,7 @@ function _run_test() {
 }
 
 function _run_perf_tests() {
-	_run_command_for_driver "${TEST_DRIVER}" "run" "[TEST] Running tests for ${TEST_TEST_NAME} using ${TEST_DRIVER} driver..." "${TEST_TEST_RUNID}" || result=$?
+	_run_command "driver_run" "Running driver for" "${TEST_TEST_RUNID}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi

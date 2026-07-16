@@ -63,7 +63,7 @@ scripts:
   - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
   - sh: export TEST_APP_HOST=${{APP_HOST}}
   - sh: echo "Preparing driver on ${HOSTNAME}"
-  - sh: ${{RUN_CMD}} drive -o ${{TEST_OUT}} -d ${{TEST_DRIVER}} ${{TEST}} prepare
+  - sh: ${{RUN_CMD}} drive -o ${{TEST_OUT}} -d ${{TEST_DRIVER}} ${{TEST}} prime
   - sh: echo "Driver waiting for application on ${HOSTNAME}"
   - wait-for: APP_READY
   - sh: echo "Running tests on ${HOSTNAME} ..."

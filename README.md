@@ -171,7 +171,7 @@ You can manually control individual components:
 
 # Start infrastructure & test app (also give driver chance to prepare)
 ./run infra sqpc/spring-normal start
-./run drive sqpc/spring-normal prepare
+./run drive sqpc/spring-normal prime
 ./run app sqpc/spring-normal start
 
 # Run the tests
