@@ -29,3 +29,15 @@ infra_start() {
 infra_stop() {
     echo "Dummy global infra_stop action"
 }
+
+driver_setup() {
+    echo "Dummy global driver_setup action"
+}
+
+driver_prime() {
+    echo "Dummy global driver_prime action"
+}
+
+driver_run() {
+    echo "Dummy global driver_run action"
+}

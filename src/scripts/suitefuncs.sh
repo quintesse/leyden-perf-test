@@ -172,8 +172,8 @@ function _set_test_context() {
 	fi
 }
 
-# Runs a command by sourcing suite script first and test script second in a single launcher process.
-# If both scripts define the same function, the test script definition overrides the suite one.
+# Runs a command by sourcing a global script first, the suite script second and the test script last in a single launcher process.
+# If any of the scripts define the same function, the later script definition overrides the earlier one.
 # Arguments:
 #   cmd - command/action to run
 #   msg - message to display
@@ -216,37 +216,6 @@ function _run_command() {
 		return $result
 	fi
 	echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${ctx}   : Done.${NORMAL}"
-}
-
-# Runs a command for a specific driver.
-# Commands are actions handled by driver.sh located in the drivers/<driver> directory.
-# Arguments:
-#   driver - driver name
-#   action - action to run (prepare, run)
-#   msg    - message to display
-#   args   - additional arguments
-# Variables used:
-#   TEST_SUITE_NAME - name of the test suite
-#   TEST_TEST_NAME  - name of the test
-#   TEST_SRC_DIR    - directory of the sources
-function _run_command_for_driver() {
-	local driver=$1
-	local action=$2
-	local msg=$3
-	local args=("${@:4}")
-	local launcher_path="${TEST_SRC_DIR}/scripts/launcher.sh"
-	local cmd_path="${TEST_SRC_DIR}/scripts/drivers/${driver}/driver.sh"
-	local ctx="${TEST_SUITE_NAME:-}/${TEST_TEST_NAME:-}"
-	if [[ -f "${cmd_path}" ]]; then
-		echo "   - ${msg} test: ${ctx} ..."
-		local result=0
-		"${launcher_path}" "${cmd_path}" -- "${action}" "${args[@]}" || result=$?
-		if [[ $result -ne 0 ]]; then
-			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${ctx}   : Failed.${NORMAL}"
-			return $result
-		fi
-		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${ctx}   : Done.${NORMAL}"
-	fi
 }
 
 # Detects the Java version from java command on the user's PATH

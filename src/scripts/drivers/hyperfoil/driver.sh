@@ -4,7 +4,7 @@ set -euo pipefail
 
 source "${TEST_SRC_DIR}/scripts/appfuncs.sh"
 
-prepare() {
+prime() {
     # Prepare command prefix if CPU affinity is to be set
     declare -a preamble=()
     if [[ -v HARDWARE_CONFIGURED && "$HARDWARE_CONFIGURED" == true && -v TEST_DRIVER_CPUS && -n "${TEST_DRIVER_CPUS}" ]]; then

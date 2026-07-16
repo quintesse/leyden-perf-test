@@ -6,8 +6,8 @@ setup() {
     echo "Dummy driver setup action"
 }
 
-prepare() {
-    echo "Dummy driver prepare action"
+prime() {
+    echo "Dummy driver prime action"
 }
 
 run() {
