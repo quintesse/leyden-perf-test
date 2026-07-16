@@ -26,11 +26,79 @@ extract_test_block() {
 	' "${log_file}" > "${block_file}"
 }
 
+extract_action_lines() {
+	local input_file=$1
+	local output_file=$2
+	grep -E '^(Dummy|Empty) (global|suite|test) (infra_setup|app_setup|infra_start|driver_prime|app_start|driver_run|app_stop|infra_stop) action$' "${input_file}" > "${output_file}"
+}
+
+assert_lines_exact() {
+	local actual_file=$1
+	shift
+	local expected_lines=("$@")
+
+	mapfile -t actual_lines < "${actual_file}"
+	if [[ ${#actual_lines[@]} -ne ${#expected_lines[@]} ]]; then
+		echo "Expected ${#expected_lines[@]} action lines, got ${#actual_lines[@]}."
+		echo "--- Actual lines ---"
+		cat "${actual_file}"
+		exit 1
+	fi
+
+	local i
+	for i in "${!expected_lines[@]}"; do
+		if [[ "${actual_lines[i]}" != "${expected_lines[i]}" ]]; then
+			echo "Action line ${i} did not match."
+			echo "Expected: ${expected_lines[i]}"
+			echo "Actual:   ${actual_lines[i]}"
+			echo "--- Actual lines ---"
+			cat "${actual_file}"
+			exit 1
+		fi
+	done
+}
+
+assert_driver_setup_order() {
+	local setup_line block_start_line
+	setup_line=$(grep -n '^Dummy driver setup action$' "${log_file}" | cut -d: -f1 | head -n 1)
+	block_start_line=$(grep -n '^   - Setting up infrastructure for test: ' "${log_file}" | cut -d: -f1 | head -n 1)
+
+	if [[ -z "${setup_line}" ]]; then
+		echo "Missing driver setup action line."
+		echo "--- Full output ---"
+		cat "${log_file}"
+		exit 1
+	fi
+
+	if [[ -z "${block_start_line}" ]]; then
+		echo "Missing first test block start line."
+		echo "--- Full output ---"
+		cat "${log_file}"
+		exit 1
+	fi
+
+	if [[ ${setup_line} -ge ${block_start_line} ]]; then
+		echo "Driver setup action did not occur before the first test block."
+		echo "--- Full output ---"
+		cat "${log_file}"
+		exit 1
+	fi
+
+	local setup_count
+	setup_count=$(grep -c '^Dummy driver setup action$' "${log_file}" || true)
+	if [[ ${setup_count} -ne 1 ]]; then
+		echo "Expected exactly one driver setup action line, got ${setup_count}."
+		echo "--- Full output ---"
+		cat "${log_file}"
+		exit 1
+	fi
+}
+
 assert_mapping_for_test() {
 	local test_id=$1
 	local expected_prefix=$2
 	shift 2
-	local forbidden_prefixes=("$@")
+	local expected_lines=("$@")
 
 	local block_file="${tmp_dir}/${test_id//\//-}.log"
 	extract_test_block "${test_id}" "${block_file}"
@@ -42,34 +110,55 @@ assert_mapping_for_test() {
 		exit 1
 	fi
 
-	local action_regex="(app_setup|app_start|app_stop|infra_setup|infra_start|infra_stop)"
-	local expected_count
-	expected_count=$(grep -Ec "^${expected_prefix} ${action_regex} action$" "${block_file}" || true)
-	if [[ ${expected_count} -ne 6 ]]; then
-		echo "Expected 6 '${expected_prefix}' action lines for ${test_id}, got ${expected_count}."
-		echo "--- Extracted block (${test_id}) ---"
-		cat "${block_file}"
-		exit 1
-	fi
-
-	local forbidden
-	for forbidden in "${forbidden_prefixes[@]}"; do
-		if grep -Eq "^${forbidden} ${action_regex} action$" "${block_file}"; then
-			echo "Found unexpected '${forbidden}' action lines for ${test_id}."
-			echo "--- Extracted block (${test_id}) ---"
-			cat "${block_file}"
-			exit 1
-		fi
-	done
+	local action_lines_file="${tmp_dir}/${test_id//\//-}.actions"
+	extract_action_lines "${block_file}" "${action_lines_file}"
+	assert_lines_exact "${action_lines_file}" "${expected_lines[@]}"
 }
 
 cd "${repo_root}"
 
 ./run test -j 25 -d dummy -s normal -T tests-dummy all -o "${out_dir}" > "${log_file}" 2>&1
 
-assert_mapping_for_test "dummy/override" "Dummy test" "Dummy suite" "Empty test" "Dummy global"
-assert_mapping_for_test "dummy/empty" "Dummy suite" "Dummy test" "Empty test" "Dummy global"
-assert_mapping_for_test "empty/override" "Empty test" "Dummy test" "Dummy suite" "Dummy global"
-assert_mapping_for_test "empty/empty" "Dummy global" "Dummy test" "Dummy suite" "Empty test"
+assert_driver_setup_order
+
+assert_mapping_for_test "dummy/override" "Dummy test" \
+	"Dummy test infra_setup action" \
+	"Dummy test app_setup action" \
+	"Dummy test infra_start action" \
+	"Dummy global driver_prime action" \
+	"Dummy test app_start action" \
+	"Dummy global driver_run action" \
+	"Dummy test app_stop action" \
+	"Dummy test infra_stop action"
+
+assert_mapping_for_test "dummy/empty" "Dummy suite" \
+	"Dummy suite infra_setup action" \
+	"Dummy suite app_setup action" \
+	"Dummy suite infra_start action" \
+	"Dummy global driver_prime action" \
+	"Dummy suite app_start action" \
+	"Dummy global driver_run action" \
+	"Dummy suite app_stop action" \
+	"Dummy suite infra_stop action"
+
+assert_mapping_for_test "empty/override" "Empty test" \
+	"Empty test infra_setup action" \
+	"Empty test app_setup action" \
+	"Empty test infra_start action" \
+	"Dummy global driver_prime action" \
+	"Empty test app_start action" \
+	"Dummy global driver_run action" \
+	"Empty test app_stop action" \
+	"Empty test infra_stop action"
+
+assert_mapping_for_test "empty/empty" "Dummy global" \
+	"Dummy global infra_setup action" \
+	"Dummy global app_setup action" \
+	"Dummy global infra_start action" \
+	"Dummy global driver_prime action" \
+	"Dummy global app_start action" \
+	"Dummy global driver_run action" \
+	"Dummy global app_stop action" \
+	"Dummy global infra_stop action"
 
 echo "dummy-output check passed"
