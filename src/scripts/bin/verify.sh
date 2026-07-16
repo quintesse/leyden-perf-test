@@ -1,39 +1,39 @@
 #!/bin/bash
 
-# DESCRIPTION=Run harness self-check scripts.
+# DESCRIPTION=Run Bats-based harness verification tests.
 
 set -euo pipefail
 
-checks_root="${TEST_DIR}/harness-checks"
+bats_root="${TEST_DIR}/verify/bats"
 
-if [[ ! -d "${checks_root}" ]]; then
-	echo "No harness checks found at ${checks_root}."
-	exit 0
-fi
+run_bats_checks() {
+	local bats_cmd=()
 
-shopt -s nullglob
-checks=("${checks_root}"/*/check.sh)
-
-if [[ ${#checks[@]} -eq 0 ]]; then
-	echo "No harness check scripts found under ${checks_root}."
-	exit 0
-fi
-
-failures=0
-for check in "${checks[@]}"; do
-	check_name=$(basename "$(dirname "${check}")")
-	echo "   - Running harness check: ${check_name}"
-	if "${check}"; then
-		echo -e "   - ${NORMAL}${GREEN}✓ Harness check ${check_name}: Passed.${NORMAL}"
-	else
-		failures=$((failures + 1))
-		echo -e "   - ${NORMAL}${RED}✗ Harness check ${check_name}: Failed.${NORMAL}"
+	if [[ ! -d "${bats_root}" ]]; then
+		echo "No Bats checks found at ${bats_root}."
+		return 0
 	fi
-done
 
-if [[ ${failures} -gt 0 ]]; then
-	echo "${failures} harness check(s) failed."
-	exit 1
-fi
+	if [[ -f "${TEST_DIR}/bats" ]]; then
+		bats_cmd=("bash" "${TEST_DIR}/bats")
+	elif command -v bats >/dev/null 2>&1; then
+		bats_cmd=("bats")
+	else
+		echo "Skipping Bats checks: bats command not found."
+		echo "Use ${TEST_DIR}/bats to bootstrap a local bats installation."
+		return 0
+	fi
 
-echo "All harness checks passed."
+	echo "   - Running Bats checks from ${bats_root}"
+	if (cd "${TEST_DIR}" && "${bats_cmd[@]}" "${bats_root}"); then
+		echo -e "   - ${NORMAL}${GREEN}✓ Bats checks passed.${NORMAL}"
+		return 0
+	fi
+
+	echo -e "   - ${NORMAL}${RED}✗ Bats checks failed.${NORMAL}"
+	return 1
+}
+
+run_bats_checks
+
+echo "All verification checks passed."

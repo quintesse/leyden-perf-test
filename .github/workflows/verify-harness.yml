@@ -1,0 +1,23 @@
+name: Verify Harness
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make runners executable
+        run: chmod +x ./run ./bats
+
+      - name: Run harness checks
+        run: ./run verify
