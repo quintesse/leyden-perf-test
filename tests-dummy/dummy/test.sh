@@ -25,3 +25,14 @@ infra_stop() {
     echo "Dummy suite infra_stop action"
 }
 
+driver_setup() {
+    echo "Dummy suite driver_setup action"
+}
+
+driver_prime() {
+    echo "Dummy suite driver_prime action"
+}
+
+driver_run() {
+    echo "Dummy suite driver_run action"
+}

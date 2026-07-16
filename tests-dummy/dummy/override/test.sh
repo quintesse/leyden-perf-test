@@ -25,3 +25,14 @@ infra_stop() {
     echo "Dummy test infra_stop action"
 }
 
+driver_setup() {
+    echo "Dummy test driver_setup action"
+}
+
+driver_prime() {
+    echo "Dummy test driver_prime action"
+}
+
+driver_run() {
+    echo "Dummy test driver_run action"
+}

@@ -158,7 +158,7 @@ function check_app_process() {
 	local pid=$1
 	local results_name=$2
 
-	if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
+	if ! kill -0 "${pid}" > /dev/null 2>&1; then
 		echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
 		if [[ -n "${results_name}" ]]; then
 			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
