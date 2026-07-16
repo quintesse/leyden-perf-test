@@ -114,10 +114,10 @@ case "${2:-}" in
 		setup_driver
 		;;
 	prime)
-		run_suite_commands "${1:-all}" "Priming ${TEST_DRIVER} test driver for" "driver_prime"
+		run_suite_commands_for_tests "${1:-all}" "Priming ${TEST_DRIVER} test driver for" "driver_prime"
 		;;
 	run)
-		run_suite_commands "${1:-all}" "Running tests using ${TEST_DRIVER} driver for" "driver_run"
+		run_suite_commands_for_tests "${1:-all}" "Running tests using ${TEST_DRIVER} driver for" "driver_run"
 		;;
 	*)
 		echo "ERROR: Second argument must be 'setup', 'prime' or 'run'."
