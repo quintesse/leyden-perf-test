@@ -29,6 +29,14 @@ The test framework supports running individual tests or entire test suites:
 ./run test -j 25,26 'sqpc/quarkus-*'
 ```
 
+## Repository Test Layout
+
+This project contains several test-related roots with distinct purposes:
+
+- `tests/` - main performance workload definitions used for regular runs
+- `tests-dummy/` - lightweight dummy suites used to validate harness behavior
+- `tests-template/` - templates for creating new suites and tests
+
 ## Harness Checks
 
 This repository is itself a test harness. To keep harness verification separate from workload definitions in `tests/`, self-check scripts live under `harness-checks/`.
@@ -106,8 +114,8 @@ Currently existing drivers:
  - **ohac** - Like `oha`, but runs the load tester inside a container.
  - **hyperfoil** - Uses [Hyperfoil](https://hyperfoil.io) to perform load tests.
 
-Custom drivers can be implemented by making a copy of the `_template.sh` file in the `./src/scripts/drivers`
-directory, renaming it and editing it to add the desired implementation.
+Custom drivers can be implemented by making a copy of the `_template` directory in `./src/scripts/drivers`,
+renaming it and editing it to add the desired implementation.
 
 ### Select Strategies
 
@@ -120,7 +128,7 @@ Strategies are responsible for the manner in which testing is performed. This in
 Right now there are two strategies: "normal" and "aot".
 If no strategies are supplied the default is to use both "normal" and "aot", in that order.
 The "normal" strategy doesn't do anything special and will just run each test in turn.
-The "aot" strategy first performs a training run for each test and will then restart the test whith the newly created AOT cache.
+The "aot" strategy first performs a training run for each test and then restarts the test with the newly created AOT cache.
 
 ```bash
 ./run list-strategies
@@ -149,7 +157,7 @@ And activated by running:
 ./run test -P lowmem sqpc/*
 ```
 
-The activated profiles will be made part of the test output directory name so it will be easy to see which test runs where run with what profiles.
+The activated profiles are added to the test output directory name so it is easy to see which test runs were executed with which profiles.
 
 ## Manual Test Control
 
@@ -169,7 +177,7 @@ You can manually control individual components:
 # Run the tests
 ./run drive sqpc/spring-normal run
 
-# And finally start everything again
+# And finally stop everything again
 ./run app sqpc/spring-normal stop
 ./run infra sqpc/spring-normal stop
 ```
@@ -182,7 +190,10 @@ You can manually control individual components:
   - `quarkus-hibernate-orm-tribe-krd`
   - `simple-rest`
 - **jpbrw**
-  - `quarkus` - Simple Quarkus app
+  - `dead-loop`
+  - `fibonacci`
+  - `if-conditional-branch`
+  - `nqueens`
 - **sqpc** - Spring Quarkus Performance Comparison
   - `spring-normal` - Spring Boot compiled normally
   - `spring-sbaot` - Spring Boot compiled with Spring AOT optimization
@@ -193,7 +204,7 @@ Run `./run list` to see all available tests with descriptions.
 
 ## Creating New Tests
 
-Tests are organized in a hierarchical structure under `tests/`:
+Main workloads are organized in a hierarchical structure under `tests/`:
 
 ```
 tests/
@@ -207,16 +218,18 @@ tests/
       DESCRIPTION         # One-line description of the test
 ```
 
-Adding a new suite of tests is best done by making a copy of the [`_suite_template`](tests/_suite_template) 
-directory and renaming it to something that will identify the tests that you want to add (we recommend something short,
-you migh tbe typing the name a lot).
+To create a new suite, copy [`tests-template/suite_template`](tests-template/suite_template)
+into `tests/<your-suite-name>` (we recommend a short name because you will type it often).
 
-Once that copy is created take a look at each of the files in that directory, there's inline explanation in
-each of them on how they are to be used. Edit them to perform the desired actions.
+Once copied, review each file in your new suite directory. The templates include inline guidance
+on what to customize.
 
-And finally for each of the tests that you want to add you make a copy of the [`example_test`](tests/_suite_template/example_test)
-folder and give it a unique (and short!) name. Like the suite itself there are files in the directory that you will
-need to edit to run your tests in exactly the way you want them.
+For each test in that suite, copy
+[`tests-template/suite_template/example_test`](tests-template/suite_template/example_test)
+to `tests/<your-suite-name>/<your-test-name>` and edit it for your scenario.
+
+If you want to validate harness behavior (rather than workload behavior), add checks under
+`harness-checks/` and, if needed, dummy fixtures under `tests-dummy/`.
 
 ## Performance Analysis
 
