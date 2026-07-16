@@ -8,10 +8,6 @@
 
 TESTID=${1:-}
 
-suite_setup() {
-    echo "Dummy suite suite_setup action"
-}
-
 app_setup() {
     echo "Dummy suite app_setup action"
 }

@@ -58,7 +58,7 @@ function _run_test() {
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
-	run_command "app_start" "Starting test application for" "${TEST_TEST_RUNID}" || result=$?
+	_run_command "app_start" "Starting test application for" "${TEST_TEST_RUNID}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
@@ -69,7 +69,7 @@ function _run_test() {
 	# don't exit on error yet!
 
 	local result2=0
-	run_command "app_stop" "Stopping test application for" "${TEST_TEST_RUNID}" || result2=$?
+	_run_command "app_stop" "Stopping test application for" "${TEST_TEST_RUNID}" || result2=$?
 
 	if [[ -f "${TEST_OUT_DIR}/${TEST_TEST_RUNID}-profile.jfr" ]]; then
 		# If we have JFR files, process them
@@ -89,30 +89,27 @@ function _run_perf_tests() {
 
 function _run_before_test() {
 	local result=0
-	run_command "app_setup" "Setting up" "${TEST_TEST_RUNID}" || result=$?
+	_run_command "infra_setup" "Setting up infrastructure for" "${TEST_TEST_RUNID}" || result=$?
 	if [[ $result -ne 0 ]]; then
 		return $result
 	fi
-	run_command "infra_start" "Starting infrastructure for" "${TEST_TEST_RUNID}" || result=$?
+	_run_command "app_setup" "Setting up application for" "${TEST_TEST_RUNID}" || result=$?
+	if [[ $result -ne 0 ]]; then
+		return $result
+	fi
+	_run_command "infra_start" "Starting infrastructure for" "${TEST_TEST_RUNID}" || result=$?
 	return $result
 }
 
 function _run_after_test() {
 	local result1=0
-	run_command "infra_stop" "Stopping infrastructure for" "${TEST_TEST_RUNID}" || result1=$?
-
+	_run_command "infra_stop" "Stopping infrastructure for" "${TEST_TEST_RUNID}" || result1=$?
 	local result=$result1
 	return $result
 }
 
 function _run_test_suite_first() {
-	local result=0
-	_run_command_for_suite "suite_setup" "Initial setup for" || result=$?
-	if [[ $result -ne 0 ]]; then
-		return $result
-	fi
-	_run_command_for_suite "infra_setup" "Setting up infrastructure for" || result=$?
-	return $result
+	return 0
 }
 
 function _run_test_suite_last() {

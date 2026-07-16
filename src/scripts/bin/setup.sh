@@ -23,5 +23,5 @@ if [[ $# -gt 0 && "$1" == "--clean" ]]; then
 	shift
 fi
 
-run_suite_start_commands "${1:-all}" "Setting up infrastructure for" "infra_setup" "" "infra_setup"
-run_suite_start_commands "${1:-all}" "Setting up application for" "app_setup" "" "app_setup"
+run_suite_commands "${1:-all}" "Setting up infrastructure for" "infra_setup"
+run_suite_commands "${1:-all}" "Setting up application for" "app_setup"
