@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-source "${TEST_SRC_DIR}"/scripts/testfuncs.sh
-
 if [[ ${TEST_APP_JAVA} -lt 25 ]]; then
 	echo "   - Skipping AOT strategy for Java ${TEST_APP_JAVA}."
 	exit 1
