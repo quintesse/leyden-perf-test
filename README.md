@@ -29,6 +29,29 @@ The test framework supports running individual tests or entire test suites:
 ./run test -j 25,26 'sqpc/quarkus-*'
 ```
 
+## Harness Checks
+
+This repository is itself a test harness. To keep harness verification separate from workload definitions in `tests/`, self-check scripts live under `harness-checks/`.
+
+Run all harness checks with:
+
+```bash
+./run verify
+```
+
+The `dummy-output` check validates action-resolution precedence by running:
+
+```bash
+./run test -j 25 -d dummy -s normal -T tests-dummy all
+```
+
+It asserts these expected output families:
+
+- `dummy/override` -> `Dummy test ...`
+- `dummy/empty` -> `Dummy suite ...`
+- `empty/override` -> `Empty test ...`
+- `empty/empty` -> `Dummy global ...`
+
 ## Test Output
 
 Test results are written to a folder in the `test-results/` directory with the format `test-run-YYYYMMDD-HHMMSS/j<VERSION>-<STRATEGY>`. Each test produces:
