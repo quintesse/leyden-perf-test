@@ -19,21 +19,19 @@ script_paths=()
 command_name=
 command_args=()
 
-# New mode: launcher.sh <script1> [<script2> ...] -- <command> [args...]
-if [[ " $* " == *" -- "* ]]; then
-    while [[ $# -gt 0 && "$1" != "--" ]]; do
-        script_paths+=("$1")
-        shift
-    done
+while [[ $# -gt 0 && "$1" != "--" ]]; do
+    script_paths+=("$1")
     shift
-    command_name=${1:-}
-    command_args=("${@:2}")
-else
-    # Backward-compatible mode: launcher.sh <script> <command> [args...]
-    script_paths=("$1")
-    command_name=${2:-}
-    command_args=("${@:3}")
+done
+
+if [[ $# -eq 0 || "$1" != "--" ]]; then
+    echo "Error: [$0] Missing '--' separator. Usage: launcher.sh <script1> [<script2> ...] -- <command> [args...]"
+    exit 1
 fi
+
+shift
+command_name=${1:-}
+command_args=("${@:2}")
 
 if [[ ${#script_paths[@]} -eq 0 ]]; then
     echo "Error: [$0] No script path provided."

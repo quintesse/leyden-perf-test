@@ -174,10 +174,14 @@ function _run_command() {
 	local msg=$2
 	local args=("${@:3}")
 	local launcher_path="${TEST_SRC_DIR}/scripts/launcher.sh"
+	local global_cmd_path="${TEST_ROOT_DIR}/test.sh"
 	local suite_cmd_path="${TEST_SUITE_DIR}/test.sh"
 	local test_cmd_path="${TEST_TEST_DIR:-}/test.sh"
 	local cmd_paths=()
 
+	if [[ -f "${global_cmd_path}" ]]; then
+		cmd_paths+=("${global_cmd_path}")
+	fi
 	if [[ -f "${suite_cmd_path}" ]]; then
 		cmd_paths+=("${suite_cmd_path}")
 	fi
@@ -222,7 +226,7 @@ function _run_command_for_driver() {
 	if [[ -f "${cmd_path}" ]]; then
 		echo "   - ${msg} test: ${ctx} ..."
 		local result=0
-		"${launcher_path}" "${cmd_path}" "${action}" "${args[@]}" || result=$?
+		"${launcher_path}" "${cmd_path}" -- "${action}" "${args[@]}" || result=$?
 		if [[ $result -ne 0 ]]; then
 			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${ctx}   : Failed.${NORMAL}"
 			return $result

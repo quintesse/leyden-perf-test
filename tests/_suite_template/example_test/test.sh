@@ -1,10 +1,8 @@
 
 # The test.sh script handles all actions for the test.
-# Actions are dispatched by scripts/launcher.sh. Positional args start with TESTID.
 # Variables defined in shared-vars.sh are available to this script, as well as
 # TEST_SUITE_NAME, TEST_SUITE_DIR, TEST_SUITE_CACHE, TEST_TEST_NAME, TEST_TEST_DIR,
 # TEST_TEST_CACHE and TEST_TEST_RUNID.
-
 
 TESTID=${1:-}
 
