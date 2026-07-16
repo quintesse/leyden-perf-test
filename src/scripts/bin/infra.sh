@@ -14,8 +14,9 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -lt 2 ]]; then
 	echo "Usage: ./run infra [<options>] <test-suite>/<test-name> setup|start|stop"
 	echo ""
 	echo "Options:"
-	echo "  -o|--output <path>           Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
-	echo "  -P|--profile <profile>       Test profile to use (can be specified multiple times)"
+	echo "  -o|--output <path>      Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
+	echo "  -P|--profile <profile>  Test profile to use (can be specified multiple times)"
+	echo "  -T|--tests-root <path>  Path to the test root folder (default: ./tests)"
 	echo ""
 	echo "This script can be used to manually start/stop infrastructure, and is normally"
 	echo "run with a <test-suite>/<test-name> argument referring to a single test. It is"
@@ -30,6 +31,7 @@ source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
 outputPath="test-results/manual_run"
 profiles=()
+testsRootDir="${TEST_DIR}/tests"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -42,6 +44,15 @@ while [[ $# -gt 0 ]]; do
             outputPath="$1"
             shift
             ;;
+        -T|--tests-root)
+			shift
+			if [[ $# -eq 0 ]]; then
+				echo "Error: Tests root option specified but no path provided."
+				exit 4
+			fi
+			testsRootDir="$1"
+			shift
+			;;
         -P|--profile)
 			shift
 			if [[ $# -eq 0 ]]; then
@@ -66,6 +77,8 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+export TEST_ROOT_DIR="${testsRootDir}"
 
 _setup_test_output_dir "" "${outputPath}"
 export TEST_TEST_RUNID

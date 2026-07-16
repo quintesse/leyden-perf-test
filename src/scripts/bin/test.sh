@@ -16,13 +16,14 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "Usage: ./run test [<options>] [<test-suite>/<test-name>]"
 	echo ""
 	echo "Options:"
-	echo "  -t|--tag <tag>               Tag to add to the test results folder name"
-	echo "  --jdk-tag <tag>              Additional tag to add to the test results folder name indicating the JDK variant"
-	echo "  -o|--output <path>           Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
-	echo "  -j|--java <versions>         Comma-separated list of Java versions to use for the tests (eg. 8,11,17)."
-	echo "  -d|--driver <driver>         Test driver to use (default: oha)"
-	echo "  -s|--strategy <strategy>     Test strategy to use (can be specified multiple times, comma-separated)."
-	echo "  -P|--profile <profile>       Test profile to use (can be specified multiple times)"
+	echo "  -t|--tag <tag>            Tag to add to the test results folder name"
+	echo "  --jdk-tag <tag>           Additional tag to add to the test results folder name indicating the JDK variant"
+	echo "  -o|--output <path>        Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
+	echo "  -j|--java <versions>      Comma-separated list of Java versions to use for the tests (eg. 8,11,17)."
+	echo "  -d|--driver <driver>      Test driver to use (default: oha)"
+	echo "  -s|--strategy <strategy>  Test strategy to use (can be specified multiple times, comma-separated)."
+	echo "  -P|--profile <profile>    Test profile to use (can be specified multiple times)"
+	echo "  -T|--tests-root <path>    Path to the test root folder (default: ./tests)"
 	echo ""
 	echo "This script can be used to run tests."
 	echo ""
@@ -40,6 +41,7 @@ outputPath=""
 javaVersions=()
 strategies=()
 profiles=()
+testsRootDir="${TEST_DIR}/tests"
 export TEST_DRIVER="oha"
 
 while [[ $# -gt 0 ]]; do
@@ -53,6 +55,15 @@ while [[ $# -gt 0 ]]; do
             resultTag="$1"
             shift
             ;;
+        -T|--tests-root)
+			shift
+			if [[ $# -eq 0 ]]; then
+				echo "Error: Tests root option specified but no path provided."
+				exit 4
+			fi
+			testsRootDir="$1"
+			shift
+			;;
         --jdk-tag)
             shift
             if [[ $# -eq 0 ]]; then
@@ -142,6 +153,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+export TEST_ROOT_DIR="${testsRootDir}"
+
 export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
 mkdir -p "${TEST_OUT_BASE}"
 
@@ -161,7 +174,7 @@ if [[ ${#javaVersions[@]} -eq 0 ]]; then
 fi
 
 {
-	"${TEST_DIR}/run" list "${testPat}"
+	"${TEST_DIR}/run" list -T "${testsRootDir}" "${testPat}"
 	echo "Test driver: ${TEST_DRIVER}"
 	echo "Selected JDKs: ${javaVersions[*]}"
 	echo "Selected strategies: ${strategies[*]}"
