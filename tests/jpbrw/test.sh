@@ -11,7 +11,7 @@ app_stop() {
     stop_app "${TESTID}"
 }
 
-setup() {
+app_setup() {
     REPO_BENCHMARK_URL="https://github.com/ionutbalosin/jvm-performance-benchmarks.git"
     clone "${REPO_BENCHMARK_URL}" "benchmark"
     require_java "25"
