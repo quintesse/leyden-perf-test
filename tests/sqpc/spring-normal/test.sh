@@ -4,6 +4,7 @@ TESTID=${1:-}
 app_jar="${TEST_TEST_CACHE}/repo/springboot3/target/application/springboot3.jar"
 
 app_start() {
+    TEST_JAVA_OPTS="${TEST_JAVA_OPTS:-} -Dotel.sdk.disabled=true"
     start_app "${TESTID}" "${app_jar}"
 }
 
