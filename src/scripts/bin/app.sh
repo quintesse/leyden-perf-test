@@ -94,13 +94,13 @@ done
 
 case "${2:-}" in
 	setup)
-		run_suite_start_commands "${1:-all}" "Setting up application for" "app_setup" "" "app_setup"
+		run_suite_commands "${1:-all}" "Setting up application for" "app_setup"
 		;;
 	start)
-		run_suite_start_commands "${1:-all}" "Starting application for" "app_start" "app_start"
+		run_suite_commands "${1:-all}" "Starting application for" "app_start"
 		;;
 	stop)
-		run_suite_stop_commands "${1:-all}" "Stopping application for" "app_stop" "app_stop"
+		run_suite_commands "${1:-all}" "Stopping application for" "app_stop"
 		;;
 	*)
 		echo "ERROR: Second argument must be 'setup', 'start' or 'stop'."

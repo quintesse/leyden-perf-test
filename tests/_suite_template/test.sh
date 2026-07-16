@@ -8,14 +8,6 @@
 
 TESTID=${1:-}
 
-# The suite_setup action manages any work that needs to be done to prepare the
-# test suite for execution, such as cloning repositories and compiling code.
-# This action is optional and can be removed if not needed
-suite_setup() {
-    # Put your setup code here
-    echo "Cloning and compiling code for example test suite..."
-}
-
 # The app_setup action manages any work that needs to be done to prepare a
 # test for execution, again such as cloning repositories and compiling code.
 # This action is optional and can be removed if not needed
