@@ -11,7 +11,8 @@ fi
 
 if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
 	echo "This command lists all available test suites and tests."
-	echo "Usage: ./run list [<pattern>]"
+	echo "Usage: ./run list [<options>] [<pattern>]"
+	echo "  -T|--tests-root <path> Path to the test root folder (default: ${TEST_DIR}/tests)."
 	echo "  If a pattern is provided, only tests matching the pattern are listed."
 	echo "  The pattern can be in the form of 'suite/*' to list all tests in a suite,"
 	echo "  or 'suite/test' to list a specific test. Partial matches are supported."
@@ -20,6 +21,31 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
 fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
+
+testsRootDir="${TEST_DIR}/tests"
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-T|--tests-root)
+			shift
+			if [[ $# -eq 0 ]]; then
+				echo "Error: Tests root option specified but no path provided."
+				exit 4
+			fi
+			testsRootDir="$1"
+			shift
+			;;
+		-*)
+			echo "Error: Unknown option: $1"
+			exit 4
+			;;
+		*)
+			break
+			;;
+	esac
+done
+
+export TEST_ROOT_DIR="${testsRootDir}"
 
 if [[ $# -gt 0 ]]; then
 	tests=$(select_tests "$1")

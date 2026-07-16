@@ -5,23 +5,27 @@ set -euo pipefail
 # Lists test suites
 # Arguments:
 #   pat - (optional) pattern to match suites (default: */)
+# Variables used:
+#   TEST_ROOT_DIR - root directory where test suites are located
 # Returns:
 #   list of test suites
 function list_test_suites() {
 	local pat=${1:-*/}
-	list_files_in_dir_except "${TEST_DIR}/tests" "$pat"
+	list_files_in_dir_except "${TEST_ROOT_DIR}" "$pat"
 }
 
 # Lists tests in a suite
 # Arguments:
 #   suite - suite name
 #   pat   - (optional) pattern to match tests (default: */)
+# Variables used:
+#   TEST_ROOT_DIR - root directory where test suites are located
 # Returns:
 #   list of tests in the suite
 function list_tests_in_suite() {
 	local suite=$1
 	local pat=${2:-*/}
-	list_files_in_dir_except "${TEST_DIR}/tests/${suite}" "$pat"
+	list_files_in_dir_except "${TEST_ROOT_DIR}/${suite}" "$pat"
 }
 
 # Lists files in a directory except those starting with '_'
@@ -81,15 +85,17 @@ function select_tests() {
 # Arguments:
 #   suite - suite name
 #   test  - (optional) test name
+# Variables used:
+#   TEST_ROOT_DIR - root directory where test suites are located
 # Returns:
 #   description string
 function read_test_description() {
 	local suite=$1
 	local test=${2:-}
 	if [[ -z "${test}" ]]; then
-		read_description "${TEST_DIR}/tests/${suite}/DESCRIPTION"
+		read_description "${TEST_ROOT_DIR}/${suite}/DESCRIPTION"
 	else
-		read_description "${TEST_DIR}/tests/${suite}/${test}/DESCRIPTION"
+		read_description "${TEST_ROOT_DIR}/${suite}/${test}/DESCRIPTION"
 	fi
 }
 
@@ -105,13 +111,21 @@ function read_description() {
 	fi
 }
 
+# Runs a command for a suite of tests
+# Arguments:
+#   testpat - pattern to match tests in the form suite/test
+#   msg     - message to display for each test
+#   cmd     - command to run for each test
+# Variables used:
+#   TEST_ROOT_DIR - root directory where test suites are located
+# Returns:
+#   exit code of the last command run
 function run_suite_commands() {
 	local testpat=$1
 	local msg=$2
 	local cmd=${3:-}
 
 	local tests=( $(select_tests "${testpat}") )
-	export TEST_ROOT_DIR="${TEST_DIR}/tests"
 
 	local cursuite=""
 	local curtest=""

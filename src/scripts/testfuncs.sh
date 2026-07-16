@@ -2,13 +2,21 @@
 
 set -euo pipefail
 
+# This function runs all tests matching a given pattern, optionally with a name tag and a preparation function.
+# Arguments:
+#   testpat - pattern to match tests in the form suite/test
+#   name_tag - (optional) tag to append to the test run ID
+#   preparefunccall - (optional) function call to prepare the test environment before running
+# Variables used:
+#   TEST_ROOT_DIR - root directory where test suites are located
+# Returns:
+#   exit code of the last command run
 function run_all_tests() {
 	local testpat=$1
 	local name_tag=${2:-}
 	local preparefunccall=${3:-}
 
 	local tests=( $(select_tests "${testpat}") )
-	export TEST_ROOT_DIR="${TEST_DIR}/tests"
 
 	local result=0
 	local cursuite=""
