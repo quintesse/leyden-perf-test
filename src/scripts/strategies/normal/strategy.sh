@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-source "${TEST_SRC_DIR}"/scripts/testfuncs.sh
-
 function _test() {
 	local result=0
 
