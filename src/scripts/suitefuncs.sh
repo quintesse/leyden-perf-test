@@ -115,34 +115,42 @@ function read_description() {
 # Arguments:
 #   testpat - pattern to match tests in the form suite/test
 #   msg     - message to display for each test
-#   cmd     - command to run for each test
+#   cmds    - one or more commands to run for each test
 # Variables used:
+#   TEST_SRC_DIR  - directory where the test framework scripts are located
 #   TEST_ROOT_DIR - root directory where test suites are located
 # Returns:
-#   exit code of the last command run
+#   0 on success, or exit code of the first failed command
 function run_suite_commands() {
 	local testpat=$1
 	local msg=$2
-	local cmd=${3:-}
+	local cmds=("${@:3}")
+
+	if [[ ${#cmds[@]} -eq 0 ]]; then
+		return 0
+	fi
 
 	local tests=( $(select_tests "${testpat}") )
 
 	local cursuite=""
-	local curtest=""
 	local result=0
 	for test in "${tests[@]}"; do
 		local suitenm="${test%%/*}"
 		local testnm="${test#*/}"
 		_set_test_context "${suitenm}" "${testnm}"
-		result=0
 		if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
 			cursuite="${TEST_SUITE_NAME}"
 			# We no longer run suite commands here, but leaving the block here for now
 			[[ $result -ne 0 ]] && continue
 		fi
-		_run_command "${cmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
+		for cmd in "${cmds[@]}"; do
+			_run_command "${cmd}" "${msg}" "${TEST_TEST_RUNID}" || result=$?
+			if [[ $result -ne 0 ]]; then
+				return $result
+			fi
+		done
 	done
-	return $result
+	return 0
 }
 
 # Sets the test context environment variables.
@@ -179,6 +187,8 @@ function _set_test_context() {
 #   msg - message to display
 #   args - additional arguments
 # Variables used:
+#   TEST_SRC_DIR    - directory where the test framework scripts are located
+#   TEST_ROOT_DIR   - root directory where test suites are located
 #   TEST_SUITE_NAME - name of the test suite
 #   TEST_TEST_NAME  - name of the test (optional)
 #   TEST_SUITE_DIR  - directory of the test suite
