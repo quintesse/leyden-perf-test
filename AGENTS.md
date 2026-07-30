@@ -431,6 +431,38 @@ vim tests/my-new-suite/my-test/test.sh
 
 ### Test Script Structure
 
+**IMPORTANT: Script Sourcing Order and Code Reuse**
+
+Test scripts are sourced in a hierarchical order, enabling powerful code reuse patterns:
+
+1. **Root level** (`tests/test.sh`) - sourced first
+2. **Suite level** (`tests/<suite>/test.sh`) - sourced second
+3. **Individual test level** (`tests/<suite>/<test>/test.sh`) - sourced last
+
+This sourcing order has two key implications:
+
+1. **Function Override**: Functions with the same name defined in later scripts override earlier ones. This allows individual tests to customize behavior while inheriting defaults from suite or root levels.
+
+2. **Helper Functions**: Earlier scripts (root or suite level) can define helper functions that later scripts can call. This is the recommended way to extract common code patterns and reduce duplication.
+
+**Example: Helper Functions in Suite-Level test.sh**
+
+```bash
+# In tests/gqaot/test.sh - define helper functions
+gqaot_infra_setup() {
+    local test_name=$1
+    clone "${REPO_URL}"
+    # Common setup logic...
+}
+
+# In tests/gqaot/quarkus-hibernate-orm-simple/test.sh - use the helper
+infra_setup() {
+    gqaot_infra_setup "quarkus-hibernate-orm-simple"
+}
+```
+
+This pattern keeps individual test files clean and maintainable while centralizing common logic at the appropriate level.
+
 Each `test.sh` file can implement these optional functions:
 
 ```bash
@@ -841,7 +873,11 @@ When modifying this project:
 ## Known Limitations
 
 1. **Windows Support**: No longer supported (Linux and macOS only)
-2. **Parallel Execution**: Tests run sequentially (no parallel support)
+2. **Sequential Test Execution**: Tests run sequentially, one at a time. Parallel execution is not supported and is not planned for future implementation. This design choice ensures:
+   - Consistent, reproducible performance measurements
+   - No resource contention between tests
+   - Simplified test infrastructure and debugging
+   - Reliable cleanup between test runs
 3. **Container Networking**: May require additional configuration in some environments
 4. **Resource Management**: Manual intervention may be needed if tests are interrupted (e.g., stopping containers, killing processes)
 5. **JDK Version Detection**: Relies on JBang for JDK management
@@ -850,14 +886,11 @@ When modifying this project:
 
 Potential improvements and features:
 
-1. **Parallel Test Execution**: Run multiple tests concurrently
-2. **Cloud Integration**: Support for cloud-based test execution
-3. **Real-time Monitoring**: Live dashboards during test execution
-4. **Historical Comparison**: Compare results across multiple test runs
-5. **CI/CD Integration**: GitHub Actions workflows for automated testing
-6. **Additional Drivers**: Support for more load testing tools
-7. **Container Orchestration**: Kubernetes-based test execution
-8. **Result Database**: Centralized storage for test results
+1. **Real-time Monitoring**: Live dashboards during test execution
+2. **Historical Comparison**: Compare results across multiple test runs
+3. **CI/CD Integration**: GitHub Actions workflows for automated testing
+4. **Additional Drivers**: Support for more load testing tools
+5. **Result Database**: Centralized storage for test results
 
 ## Quick Reference
 

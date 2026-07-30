@@ -14,7 +14,7 @@ app_setup() {
     # Make sure we connect to the right server
     REPO_DIR="repo/quarkus3"
     test_repo_path="${TEST_TEST_CACHE}/${REPO_DIR}"
-    sed -i "s/localhost:5432/${TEST_INFRA_HOST:-localhost}:5432/g" "$test_repo_path/src/main/resources/application.yml"
+    sqpc_configure_db_host "$test_repo_path/src/main/resources/application.yml"
 
     # Compile Quarkus app normally
     require_java "25+"
