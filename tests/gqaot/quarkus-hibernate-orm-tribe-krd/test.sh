@@ -10,32 +10,23 @@ app_start() {
 }
 
 infra_setup() {
-    clone "${REPO_URL}"
-    
-    # Prepare database init files on infra host
-    test_repo_path="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-tribe-krd"
-    rm -rf "${test_repo_path:?}/db"
-    mkdir -p "$test_repo_path/db"
-    cp -a "${TEST_TEST_DIR}/initdb.sql" "$test_repo_path/db"
-    echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ SQL pre-seeding database script for 'quarkus-hibernate-orm-tribe-krd' copied.${NORMAL}${CLREOL}"
+    gqaot_infra_setup "quarkus-hibernate-orm-tribe-krd"
 }
 
 infra_start() {
-    PG_INITDB_PATH="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-tribe-krd/db"
-    POSTGRES_CONTAINER_OPTS="-v ${PG_INITDB_PATH}:/docker-entrypoint-initdb.d/:z  -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=example -e POSTGRES_DB=gqaot"
-    start_postgres "${PG_CONTAINER_NAME}" "${POSTGRES_CONTAINER_OPTS}"
+    gqaot_infra_start "quarkus-hibernate-orm-tribe-krd" "${PG_CONTAINER_NAME}"
 }
 
 infra_stop() {
-    stop_postgres "${PG_CONTAINER_NAME}"
+    gqaot_infra_stop "${PG_CONTAINER_NAME}"
 }
 
 app_setup() {
     clone "${REPO_URL}"
     [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
 
+    # Test-specific configuration (must run before compilation)
     test_repo_path="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-tribe-krd"
-
     sed -i "s/localhost:5433/${TEST_INFRA_HOST:-localhost}:5432/g" "$test_repo_path/src/main/resources/application.properties"
     sed -i 's/quarkus-tribe-krd/gqaot/g' "$test_repo_path/src/main/resources/application.properties"
     sed -i 's/999-SNAPSHOT/3.32.0/g' "$test_repo_path/pom.xml"

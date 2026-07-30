@@ -15,14 +15,12 @@ app_setup() {
     # Make sure we connect to the right server
     REPO_DIR="repo/springboot3"
     test_repo_path="${TEST_TEST_CACHE}/${REPO_DIR}"
-    sed -i "s/localhost:5432/${TEST_INFRA_HOST:-localhost}:5432/g" "$test_repo_path/src/main/resources/application.yml"
+    sqpc_configure_db_host "$test_repo_path/src/main/resources/application.yml"
 
     # Compile Spring Boot app normally
     require_java "21+"
     compile_maven "${REPO_DIR}" ""
-    echo "   - Extracting Spring Boot Buildpack Executable..."
     target="${TEST_TEST_CACHE}/${REPO_DIR}/target"
-    rm -rf "${target}/application" > /dev/null 2>&1
-    java -Djarmode=tools -jar "${target}/springboot3.jar" extract --destination "${target}/application" > /dev/null
+    sqpc_extract_spring_boot_jar "${target}/springboot3.jar" "${target}/application"
 }
 
