@@ -9,6 +9,18 @@ app_start() {
     start_app "${TESTID}" "${app_jar}"
 }
 
+infra_setup() {
+    REPO_URL="https://github.com/gsmet/quarkus-aot.git"
+    clone "${REPO_URL}"
+    
+    # Prepare database init files on infra host
+    test_repo_path="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-spacefox"
+    rm -rf "${test_repo_path:?}/db"
+    mkdir -p "$test_repo_path/db"
+    cp -a "${TEST_TEST_DIR}/initdb.sql" "$test_repo_path/db"
+    echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ SQL pre-seeding database script for 'quarkus-hibernate-orm-spacefox' copied.${NORMAL}${CLREOL}"
+}
+
 infra_start() {
     PG_INITDB_PATH="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-spacefox/db"
     POSTGRES_CONTAINER_OPTS="-v ${PG_INITDB_PATH}:/docker-entrypoint-initdb.d/:z  -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=example -e POSTGRES_DB=gqaot"
@@ -31,10 +43,5 @@ app_setup() {
 
     require_java "25+"
     compile_maven "repo/quarkus-hibernate-orm-spacefox" "-Dquarkus.package.jar.type=aot-jar -Dquarkus.package.jar.appcds.use-aot=true"
-
-    rm -rf "${test_repo_path:?}/db"
-    mkdir -p "$test_repo_path/db"
-    cp -a "${TEST_TEST_DIR}/initdb.sql" "$test_repo_path/db"
-    echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ SQL pre-seeding database script for 'quarkus-hibernate-orm-spacefox' copied.${NORMAL}${CLREOL}"
 }
 
