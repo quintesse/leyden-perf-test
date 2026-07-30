@@ -9,7 +9,6 @@ app_start() {
 }
 
 app_setup() {
-    REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
     clone "${REPO_URL}"
     [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
 
