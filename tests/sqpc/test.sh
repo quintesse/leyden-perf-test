@@ -6,7 +6,6 @@ app_stop() {
 }
 
 infra_setup() {
-    REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
     clone "${REPO_URL}"
 }
 

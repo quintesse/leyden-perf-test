@@ -10,7 +10,6 @@ app_start() {
 }
 
 infra_setup() {
-    REPO_URL="https://github.com/gsmet/quarkus-aot.git"
     clone "${REPO_URL}"
     
     # Prepare database init files on infra host
@@ -32,7 +31,6 @@ infra_stop() {
 }
 
 app_setup() {
-    REPO_URL="https://github.com/gsmet/quarkus-aot.git"
     clone "${REPO_URL}"
     [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
 
