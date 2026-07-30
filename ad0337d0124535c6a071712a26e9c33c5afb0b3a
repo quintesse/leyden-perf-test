@@ -1,1 +1,5 @@
 {"id":"5f8558fd-994f-4619-a8d3-5e49c88067b0","ts":"2026-07-30T18:55:30.595Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/README.md","version":"1.0.0","taskID":"1764b168-9148-4409-a1fa-de0ede53835b"}
+
+{"id":"22bc3f0a-e711-469d-9f2d-671126a72b42","ts":"2026-07-30T19:05:10.384Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/src/scripts/bin/test.sh","version":"1.0.0","taskID":"e95a621f-ad10-4cb1-8235-8f787c994853"}
+{"id":"69314713-c77b-4683-bce4-36d6701b3314","ts":"2026-07-30T19:05:35.020Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/src/scripts/bin/qdup.sh","version":"1.0.0","taskID":"e95a621f-ad10-4cb1-8235-8f787c994853"}
+{"id":"b5cdb8fb-5568-40c8-81b3-8f4728c53679","ts":"2026-07-30T19:06:02.707Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/README.md","version":"1.0.0","taskID":"e95a621f-ad10-4cb1-8235-8f787c994853"}
