@@ -164,6 +164,11 @@ done
 
 export TEST_ROOT_DIR="${testsRootDir}"
 
+if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
+	profiles=("default")
+	echo "Info: Auto-activating 'default' profile"
+fi
+
 function run_qdup() {
 	local testpat=$1
 
