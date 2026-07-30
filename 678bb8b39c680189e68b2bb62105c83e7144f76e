@@ -12,3 +12,6 @@
 {"id":"e154d2d6-b64e-4053-a38c-3f9b49415f1c","ts":"2026-07-30T17:58:30.689Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/tests/sqpc/spring-normal/test.sh","version":"1.0.0","taskID":"c14d1539-84f7-419d-a045-1f23b57fc7e2"}
 {"id":"1e7e0202-2f87-43fc-b6c2-4286eee32c89","ts":"2026-07-30T17:58:38.225Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/tests/sqpc/spring-sbaot/test.sh","version":"1.0.0","taskID":"c14d1539-84f7-419d-a045-1f23b57fc7e2"}
 {"id":"d292e092-417a-422a-a428-e7586d548573","ts":"2026-07-30T17:58:45.067Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/tests/sqpc/quarkus-aot/test.sh","version":"1.0.0","taskID":"c14d1539-84f7-419d-a045-1f23b57fc7e2"}
+
+{"id":"270cd37c-a859-4cb1-9c1e-71e0ad30757f","ts":"2026-07-30T18:24:55.304Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/AGENTS.md","version":"1.0.0","taskID":"ed5a1d31-6a9f-488c-948c-a7671ffaa02b"}
+{"id":"5bd44420-fa9b-4cae-98ea-b4b61da6535f","ts":"2026-07-30T18:25:02.101Z","path":"/home/tschotan/projects/leyden/leyden-perf-test/AGENTS.md","version":"1.0.0","taskID":"ed5a1d31-6a9f-488c-948c-a7671ffaa02b"}
