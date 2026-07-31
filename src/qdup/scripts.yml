@@ -48,12 +48,17 @@ scripts:
     - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -P "${{PROFILES}}" ${{TEST}} start
     - signal: INFRA_READY
     - wait-for: TEST_END
+    - set-signal: INFRA_READY 0
     - script: stop_infra
     - queue-download: ${{INFRA_TEST_OUT}}${{RUN_TAG}}/
 
   stop_infra:
     - sh: echo "Stopping infrastructure on ${HOSTNAME}"
     - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -P "${{PROFILES}}" ${{TEST}} stop
+
+  dummy_infra:
+    - signal: INFRA_READY
+    - wait-for: TEST_END
 
   setup_app:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
@@ -64,12 +69,14 @@ scripts:
 
   run_app:
     - sh: echo "Application waiting for infrastructure on ${HOSTNAME}"
+    - set-signal: TEST_END 0
     - wait-for: INFRA_READY
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
     - sh: echo "Starting application on ${HOSTNAME}"
     - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} -P "${{PROFILES}}" ${{TEST}} start
     - signal: APP_READY
     - wait-for: TEST_END
+    - set-signal: APP_READY 0
     - script: stop_app
     - queue-download: ${{APP_TEST_OUT}}${{RUN_TAG}}/
 
