@@ -24,6 +24,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "  -d|--driver <driver>      Test driver to use (default: oha)"
 	echo "  -s|--strategy <strategy>  Test strategy to use (can be specified multiple times, comma-separated)."
 	echo "  -P|--profile <profile>    Test profile to use (can be specified multiple times)"
+	echo "  --hw-tweaks               Enable hardware tweaks on apphost for better performance measurements (requires sudo)"
 	echo "  -T|--tests-root <path>    Path to the test root folder (default: ./tests)"
 	echo ""
 	echo "This script can be used to run tests."
@@ -43,6 +44,7 @@ javaVersions=()
 strategies=()
 profiles=()
 testsRootDir="${TEST_DIR}/tests"
+enable_hw_tweaks=false
 export TEST_DRIVER="oha"
 
 while [[ $# -gt 0 ]]; do
@@ -150,6 +152,10 @@ while [[ $# -gt 0 ]]; do
 			fi
 			shift
 			;;
+        --hw-tweaks)
+			enable_hw_tweaks=true
+			shift
+			;;
         -*)
             echo "Error: Unknown option: $1"
 			exit 4
@@ -184,11 +190,18 @@ function run_qdup() {
 		echo "   - Using profiles: ${profiles_str}"
 	fi
 
+	# Build additional qDup states
+	local additional_states=()
+	if [[ "${enable_hw_tweaks}" == "true" ]]; then
+		additional_states+=("-S" "ENABLE_HW_TWEAKS=true")
+		echo "   - Hardware tweaks enabled for apphost"
+	fi
+
 	local result=0
 	for test in "${tests[@]}"; do
 		for javaVersion in "${javaVersions[@]}"; do
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" "${TEST_OUT_BASE}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" "${TEST_OUT_BASE}" "${additional_states[@]}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi

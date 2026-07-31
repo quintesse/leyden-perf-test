@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Source the hardware tweaks functions
+source "${SCRIPT_DIR}/src/scripts/hwtweakfuncs.sh"
+
 if [ -t 1 ] ; then
 	export BOLD="\033[1m"
 	export NORMAL="\033[0m"
@@ -36,54 +42,29 @@ if [ "$OS" == "windows" ]; then
 	exit 1
 fi
 
-source hardware-tweaks.conf
+# Source hardware configuration
+source "${SCRIPT_DIR}/hardware-tweaks.conf"
 
 echo "Requirements check:"
 
-if ! command -v cpupower >/dev/null 2>&1
-then
-	echo -e "   - \033[0;31m✗ cpupower: Command not found, please install it\033[0m"
+# Check requirements
+if ! check_hwtweak_requirements; then
 	exit 1
-else
-	echo -e "   - \033[0;32m✓ cpupower\033[0m"
 fi
+echo -e "   - \033[0;32m✓ All required tools found\033[0m"
 
-if ! command -v taskset >/dev/null 2>&1
-then
-	echo -e "   - \033[0;31m✗ taskset: Command not found, please install it\033[0m"
+# Detect CPU info
+if ! detect_cpu_info; then
 	exit 1
+fi
+
+if [[ "${IS_INTEL}" == "true" ]]; then
+	echo -e "   - \033[0;32m✓ Detected Intel CPU\033[0m"
 else
-	echo -e "   - \033[0;32m✓ taskset\033[0m"
+	echo -e "   - \033[0;32m✓ Detected non-Intel CPU\033[0m"
 fi
 
-if ! command -v perf >/dev/null 2>&1
-then
-	echo -e "   - \033[0;31m✗ perf: Command not found, please install it\033[0m"
-	exit 1
-else
-	echo -e "   - \033[0;32m✓ perf \033[0m"
-fi
-
-if [[ -z "${IS_INTEL}" ]]; then
-	CPU_INFO=$(lscpu -p=MODELNAME)
-	if grep -iq "Intel(R)" <<< "$CPU_INFO"; then
-		IS_INTEL=true
-		echo -e "   - \033[0;32m✓ Auto-detected Intel CPU\033[0m"
-	else
-		IS_INTEL=false
-		echo -e "   - \033[0;32m✓ Auto-detected non-Intel CPU\033[0m"
-	fi
-fi
-
-if [[ -z "${MIN_FREQ}" || -z "${MAX_FREQ}" ]]; then
-	IFS=" " read -r MIN_FREQ MAX_FREQ <<< "$(cpupower frequency-info -l | tail -n 1)"
-	if [[ -z "${MIN_FREQ}" || -z "${MAX_FREQ}" ]]; then
-		echo -e "\033[0;31mError: Could not auto-detect CPU frequencies. Please set MIN_FREQ and MAX_FREQ in hardware-tweaks.conf\033[0m"
-		exit 1
-	else
-		echo -e "   - \033[0;32m✓ Auto-detected MIN_FREQ=$MIN_FREQ, MAX_FREQ=$MAX_FREQ\033[0m"
-	fi
-fi
+echo -e "   - \033[0;32m✓ Auto-detected MIN_FREQ=$MIN_FREQ, MAX_FREQ=$MAX_FREQ\033[0m"
 
 if [ $HARDWARE_CONFIGURED == false ]; then
 	echo -e "\033[0;31mMake sure you edit the hardware-tweaks.conf file before you run this\033[0m"
@@ -96,64 +77,11 @@ echo -e "${BOLD}This command will ask you for your sudo password to tweak the ha
 echo -e "${BOLD}It will restore back all the hardware configuration, but it may fail.${NORMAL}"
 echo -e "${BOLD}Be careful using this command.${NORMAL}"
 
-echo "Disabling turbo boost"
-if [ $IS_INTEL == true ]; then
-	echo "1" | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
-else
-	sudo cpupower set --turbo-boost 0
-	echo ""
-fi
-echo -e "${CURUP}${CURUP}   - ${NORMAL}${GREEN}✓ Turbo boost disabled.${NORMAL}${CLREOL}${CLREOL}"
-
-echo "Setting a constant CPU frequency"
-sudo cpupower frequency-set --min $TEST_FREQ > /dev/null
-retVal=$?
-if [ $retVal -ne 0 ]; then
-	echo -e "   - ${BOLD}${RED}✗ CPU Frequency couldn't be tweaked. ${NORMAL}"
-fi
-sudo cpupower frequency-set --max $TEST_FREQ > /dev/null
-retVal=$?
-if [ $retVal -ne 0 ]; then
-	echo -e "   - ${BOLD}${RED}✗ CPU Frequency couldn't be tweaked. ${NORMAL}"
-else
-	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ CPU Frequency setup.${NORMAL}${CLREOL}"
-fi
-
-echo "Clearing IO Operations"
-( sudo sync && echo -e "   - ${NORMAL}${GREEN}✓ IO Operations cleared.${NORMAL}" ) || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
-
-echo "Clearing Swap"
-( echo 3 | sudo tee /proc/sys/vm/drop_caches && echo -e "   - ${NORMAL}${GREEN}✓ Caches dropped.${NORMAL}" ) || echo -e "   - ${BOLD}${RED}✗ Couldn't drop caches. ${NORMAL}"
-( sudo swapoff -a && sudo swapon -a && echo -e "   - ${NORMAL}${GREEN}✓ Swap cleared.${NORMAL}" ) || echo -e "   - ${BOLD}${RED}✗ Couldn't clear swap. ${NORMAL}"
-
-echo "Self-assigning CPU"
-taskset -cp ${TEST_FRAMEWORK_CPUS} $$
-echo -e "   - ${NORMAL}${GREEN}✓ Self-assigned CPU.${NORMAL}"
+# Apply hardware tweaks
+apply_hardware_tweaks
 
 # Launch run with all the configuration options
-./run "$@"
+"${SCRIPT_DIR}/run" "$@"
 
-echo -e "${BOLD}Trying to restore the hardware configuration${NORMAL}"
-echo "Restore CPU frequency"
-sudo cpupower frequency-set --min $MIN_FREQ > /dev/null
-retVal=$?
-if [ $retVal -ne 0 ]; then
-	echo -e "   - ${BOLD}${RED}✗ CPU Frequency couldn't be restored. ${NORMAL}"
-fi
-sudo cpupower frequency-set --max $MAX_FREQ > /dev/null
-retVal=$?
-if [ $retVal -ne 0 ]; then
-	echo -e "   - ${BOLD}${RED}✗ CPU Frequency couldn't be restored. ${NORMAL}"
-else
-	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ CPU Frequency restored.${NORMAL}${CLREOL}"
-fi
-
-
-echo "Re-enabling turbo boost"
-if [ $IS_INTEL == true ]; then
-	echo "1" | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
-else
-	sudo cpupower set --turbo-boost 1
-	echo ""
-fi
-echo -e "${CURUP}${CURUP}   - ${NORMAL}${GREEN}✓ Turbo boost restored.${NORMAL}${CLREOL}${CLREOL}"
+# Restore hardware settings
+restore_hardware_tweaks
