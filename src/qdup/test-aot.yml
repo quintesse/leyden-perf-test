@@ -39,6 +39,10 @@ roles:
       - setup_app:
 
     run-scripts:
+      - apply_hw_tweaks:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/app
+
       # FIRST COMPLETE CYCLE (for AOT training)
       - run_app:
         with:
@@ -56,6 +60,9 @@ roles:
       - stop_app:
         with:
           RUN_TAG: "aot"
+      - restore_hw_tweaks:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/app
 
   driver:
     hosts:
@@ -67,6 +74,10 @@ roles:
       - setup_driver:
 
     run-scripts:
+      - apply_hw_tweaks:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/driver
+
       # FIRST COMPLETE CYCLE (for AOT training)
       - run_driver:
         with:
@@ -76,3 +87,8 @@ roles:
       - run_driver:
         with:
           RUN_TAG: "aot"
+
+    cleanup-scripts:
+      - restore_hw_tweaks:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/driver

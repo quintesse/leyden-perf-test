@@ -4,6 +4,16 @@
 
 set -euo pipefail
 
+ctrl_c() {
+	echo ""
+	echo "Interrupted by user"
+	if [[ "${HW_TWEAKS_ENABLED:-false}" == "true" ]]; then
+		echo "Restoring hardware settings..."
+		restore_hardware_tweaks
+	fi
+	exit 130
+}
+
 trap ctrl_c INT
 
 if [[ ! -v TEST_SRC_DIR ]]; then
@@ -24,6 +34,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "  -s|--strategy <strategy>  Test strategy to use (can be specified multiple times, comma-separated)."
 	echo "  -P|--profile <profile>    Test profile to use (can be specified multiple times)"
 	echo "  -T|--tests-root <path>    Path to the test root folder (default: ./tests)"
+	echo "  --hw-tweaks               Apply hardware tweaks before running tests (requires sudo, Linux only)"
 	echo ""
 	echo "This script can be used to run tests."
 	echo ""
@@ -44,6 +55,7 @@ strategies=()
 profiles=()
 testsRootDir="${TEST_DIR}/tests"
 export TEST_DRIVER="oha"
+HW_TWEAKS_ENABLED=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -144,6 +156,10 @@ while [[ $# -gt 0 ]]; do
 			fi
 			shift
 			;;
+        --hw-tweaks)
+			HW_TWEAKS_ENABLED=true
+			shift
+			;;
         -*)
             echo "Error: Unknown option: $1"
 			exit 4
@@ -191,6 +207,70 @@ for profile in "${profiles[@]}"; do
 	source "${TEST_DIR}/profiles/${profile}.sh"
 done
 
+if [[ "${HW_TWEAKS_ENABLED}" == "true" ]]; then
+	source "${TEST_SRC_DIR}/scripts/hwtweakfuncs.sh"
+	
+	echo ""
+	echo -e "\033[0;91m\033[47m                                               \033[0m"
+	echo -e "\033[0;91m\033[47m   ****************************************    \033[0m"
+	echo -e "\033[0;91m\033[47m   **** YOU SHOULD NOT USE THIS OPTION ****    \033[0m"
+	echo -e "\033[0;91m\033[47m   ****************************************    \033[0m"
+	echo -e "\033[0;91m\033[47m                                               \033[0m"
+	echo ""
+	echo "This option tries to tweak your hardware to make tests less flaky, but still, this is NOT the way to run proper performance tests. Results here cannot be used to complain about performance."
+	echo ""
+	
+	OS=
+	case "$(uname -s)" in
+		Linux*)	OS=linux;;
+		Darwin*) OS=mac;;
+		CYGWIN*|MINGW*|MSYS*) OS=windows;;
+	esac
+	if [ "$OS" != "linux" ]; then
+		echo -e "\033[0;31mHardware tweaks are only supported on Linux.\033[0m"
+		exit 1
+	fi
+	
+	# Source hardware configuration
+	source "${TEST_DIR}/hardware-tweaks.conf"
+	
+	echo "Requirements check:"
+	
+	# Check requirements
+	if ! check_hwtweak_requirements; then
+		exit 1
+	fi
+	echo -e "   - \033[0;32m✓ All required tools found\033[0m"
+	
+	# Detect CPU info
+	if ! detect_cpu_info; then
+		exit 1
+	fi
+	
+	if [[ "${IS_INTEL}" == "true" ]]; then
+		echo -e "   - \033[0;32m✓ Detected Intel CPU\033[0m"
+	else
+		echo -e "   - \033[0;32m✓ Detected non-Intel CPU\033[0m"
+	fi
+	
+	echo -e "   - \033[0;32m✓ Auto-detected MIN_FREQ=$MIN_FREQ, MAX_FREQ=$MAX_FREQ\033[0m"
+	
+	if [ $HARDWARE_CONFIGURED == false ]; then
+		echo -e "\033[0;31mMake sure you edit the hardware-tweaks.conf file before you run this\033[0m"
+		exit 1
+	else
+		echo -e "   - \033[0;32m✓ configuration\033[0m"
+	fi
+	
+	echo -e "${BOLD}This command will ask you for your sudo password to tweak the hardware.${NORMAL}"
+	echo -e "${BOLD}It will restore back all the hardware configuration, but it may fail.${NORMAL}"
+	echo -e "${BOLD}Be careful using this command.${NORMAL}"
+	
+	# Apply hardware tweaks
+	apply_hardware_tweaks
+	echo ""
+fi
+
 setup_driver
 
 echo "   - Selected java versions ${javaVersions[*]}"
@@ -204,3 +284,9 @@ for javaVersion in "${javaVersions[@]}"; do
 		source "${TEST_SRC_DIR}/scripts/strategies/${strategy}/strategy.sh"
 	done
 done
+
+if [[ "${HW_TWEAKS_ENABLED}" == "true" ]]; then
+	echo ""
+	echo "Restoring hardware settings..."
+	restore_hardware_tweaks
+fi

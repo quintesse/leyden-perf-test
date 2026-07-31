@@ -1,14 +1,40 @@
 scripts:
   upload_code:
-    - sh: echo "Uploading test framework to ${HOSTNAME}..."
-    - upload: ${{ROOT_DIR}}/profiles/ ${{TEST_HOME}}/
-    - upload: ${{ROOT_DIR}}/src/ ${{TEST_HOME}}/
-    - upload: ${{ROOT_DIR}}/tests/ ${{TEST_HOME}}/
-    - upload: ${{ROOT_DIR}}/hwtweaked-run ${{TEST_HOME}}/
-    - upload: ${{ROOT_DIR}}/hardware-tweaks.conf ${{TEST_HOME}}/
-    - upload: ${{ROOT_DIR}}/local-settings.xml ${{TEST_HOME}}/
-    - upload: ${{ROOT_DIR}}/jbang ${{TEST_HOME}}/
-    - upload: ${{ROOT_DIR}}/run ${{TEST_HOME}}/
+  - sh: echo "Uploading test framework to ${HOSTNAME}..."
+  - upload: ${{TEST_DIR}}/profiles/ ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/src/ ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/tests/ ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/hwtweaked-run ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/hardware-tweaks.conf ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/local-settings.xml ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/jbang ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/run ${{TEST_HOME}}/
+
+  apply_hw_tweaks:
+  - sh: |
+      if [[ "${{ENABLE_HW_TWEAKS:-false}}" == "true" ]]; then
+        echo "Applying hardware tweaks on ${HOSTNAME}..."
+        source ${{TEST_HOME}}/hardware-tweaks.conf
+        source ${{TEST_HOME}}/src/scripts/hwtweakfuncs.sh
+        if check_hwtweak_requirements && detect_cpu_info; then
+          apply_hardware_tweaks
+        else
+          echo "Warning: Hardware tweaks requirements not met, skipping..."
+        fi
+      fi
+
+  restore_hw_tweaks:
+  - sh: |
+      if [[ "${{ENABLE_HW_TWEAKS:-false}}" == "true" ]]; then
+        echo "Restoring hardware settings on ${HOSTNAME}..."
+        source ${{TEST_HOME}}/hardware-tweaks.conf
+        source ${{TEST_HOME}}/src/scripts/hwtweakfuncs.sh
+        if detect_cpu_info; then
+          restore_hardware_tweaks
+        else
+          echo "Warning: Could not restore hardware settings"
+        fi
+      fi
 
   setup_infra:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25

@@ -26,10 +26,16 @@ roles:
       - setup_app:
 
     run-scripts:
+      - apply_hw_tweaks:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/app
       - run_app:
 
     cleanup-scripts:
       - stop_app:
+      - restore_hw_tweaks:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/app
 
   driver:
     hosts:
@@ -41,4 +47,12 @@ roles:
       - setup_driver:
 
     run-scripts:
+      - apply_hw_tweaks:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/driver
       - run_driver:
+
+    cleanup-scripts:
+      - restore_hw_tweaks:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/driver

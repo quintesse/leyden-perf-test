@@ -979,7 +979,7 @@ TEST_JAVA_OPTS="-Xmx512m" ./run test -j 25 sqpc/*
 ```bash
 # Solution: Use hardware tweaks (Linux only)
 # Edit hardware-tweaks.conf with your CPU settings
-./hwtweaked-run test -j 25 sqpc/*
+./run test -j 25 --hw-tweaks sqpc/*
 ```
 
 ### Debug Mode
@@ -1003,7 +1003,7 @@ Check these locations for debugging:
 ## Performance Optimization
 
 ### For Stable Results
-1. Use hardware tweaks (Linux): `./hwtweaked-run test ...`
+1. Use hardware tweaks (Linux): `./run test --hw-tweaks ...`
 2. Disable CPU frequency scaling
 3. Disable turbo boost
 4. Close unnecessary applications

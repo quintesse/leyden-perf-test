@@ -20,7 +20,10 @@ java_version="$3"
 
 testpat="${4:-all}"
 profiles="${5:-}"
-work_dir=${6:-/tmp/leyden-perf-test}
+work_dir="${6:-/tmp/leyden-perf-test}"
 
-# Build the qdup command with profiles as a state variable
-"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B ${work_dir}/qdup -S JAVA_VERSION="${java_version}" -S TEST="${testpat}" -S WORK_DIR="${work_dir}" -S PROFILES="${profiles}"
+# Shift past the first 6 positional arguments to get additional states
+shift 6
+
+# Build the qdup command with caller-provided states
+"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${work_dir}/qdup" "$@"
