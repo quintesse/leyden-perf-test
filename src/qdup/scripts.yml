@@ -12,26 +12,30 @@ scripts:
 
   setup_infra:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
-    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
-    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
-    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
-    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
-    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
-    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.INFRA_HOST
-    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} ${{TEST}} setup
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} $PROFILE_FLAGS ${{TEST}} setup
 
   run_infra:
     - sh: echo "Starting infrastructure on ${HOSTNAME}"
-    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
-    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
-    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
-    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
-    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
-    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
-    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} ${{TEST}} start
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} $PROFILE_FLAGS ${{TEST}} start
     - signal: INFRA_READY
     - wait-for: TEST_END
     - script: stop_infra
@@ -39,39 +43,45 @@ scripts:
 
   stop_infra:
     - sh: echo "Stopping infrastructure on ${HOSTNAME}"
-    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
-    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
-    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
-    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
-    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
-    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
-    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} ${{TEST}} stop
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} $PROFILE_FLAGS ${{TEST}} stop
 
   setup_app:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
-    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
-    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
-    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
-    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
-    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
-    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.APP_HOST
-    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}} -j ${{JAVA_VERSION}} ${{TEST}} setup
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}} -j ${{JAVA_VERSION}} $PROFILE_FLAGS ${{TEST}} setup
 
   run_app:
     - sh: echo "Application waiting for infrastructure on ${HOSTNAME}"
     - wait-for: INFRA_READY
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
-    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
-    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
-    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
-    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
-    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
-    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo "Starting application on ${HOSTNAME}"
-    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} ${{TEST}} start
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} $PROFILE_FLAGS ${{TEST}} start
     - signal: APP_READY
     - wait-for: TEST_END
     - script: stop_app
@@ -79,42 +89,56 @@ scripts:
 
   stop_app:
     - sh: echo "Stopping application on ${HOSTNAME}"
-    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
-    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
-    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
-    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
-    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
-    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
-    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} ${{TEST}} stop
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} $PROFILE_FLAGS ${{TEST}} stop
 
   setup_driver:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
-    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
-    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
-    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
-    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
-    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
-    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.DRIVER_HOST
-    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}} -d ${{TEST_DRIVER}} ${{TEST}} setup
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}} -d ${{TEST_DRIVER}} $PROFILE_FLAGS ${{TEST}} setup
 
   run_driver:
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
     - sh: export TEST_APP_HOST=${{APP_HOST}}
-    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
-    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
-    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
-    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
-    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
-    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo "Preparing driver on ${HOSTNAME}"
-    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} ${{TEST}} prime
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} $PROFILE_FLAGS ${{TEST}} prime
     - sh: echo "Driver waiting for application on ${HOSTNAME}"
     - wait-for: APP_READY
     - sh: echo "Running tests on ${HOSTNAME} ..."
-    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} ${{TEST}} run
+    - sh: |
+        PROFILE_FLAGS=""
+        if [[ -n "${{PROFILES}}" ]]; then
+          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
+          for profile in "${PROFILE_ARRAY[@]}"; do
+            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
+          done
+        fi
+        ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} $PROFILE_FLAGS ${{TEST}} run
     - signal: TEST_END
     - queue-download: ${{DRIVER_TEST_OUT}}${{RUN_TAG}}/
 
@@ -133,4 +157,5 @@ states:
   JAVA_VERSION: 25
   TEST_DRIVER: oha
   RUN_TAG: ""
+  PROFILES: ""
   
