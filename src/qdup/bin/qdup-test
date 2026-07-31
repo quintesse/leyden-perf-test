@@ -16,14 +16,16 @@ scripts_file="${script_dir}/../scripts.yml"
 strategy="$2"
 strategy_file="${script_dir}/../test-${strategy}.yml"
 
-java_version="$3"
+testpat="${3:-all}"
+results_dir="${4:-/tmp/leyden-perf-test/results}"
+cache_dir="${5:-/tmp/leyden-perf-test/cache}"
 
-testpat="${4:-all}"
-profiles="${5:-}"
-work_dir="${6:-/tmp/leyden-perf-test}"
+# Temporary directory for qDup working files
+temp_dir="/tmp/leyden-perf-test"
 
-# Shift past the first 6 positional arguments to get additional states
-shift 6
-
-# Build the qdup command with caller-provided states
-"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${work_dir}/qdup" "$@"
+"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" \
+    -B "${temp_dir}/qdup" \
+    -S TEST="${testpat}" \
+    -S RESULTS_DIR="${results_dir}" \
+    -S CACHE_DIR="${cache_dir}" \
+    -S TEMP_DIR="${temp_dir}"

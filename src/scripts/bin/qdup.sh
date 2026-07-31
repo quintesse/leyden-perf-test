@@ -186,39 +186,18 @@ function run_qdup() {
 
 	local qdupdir="${TEST_SRC_DIR}/qdup"
 
-	export TEST_OUT_BASE=${outputPath:-/tmp/leyden-perf-test/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
+	# Use project-relative output directory by default (matching run test behavior)
+	export TEST_OUT_BASE=${outputPath:-${TEST_DIR}/test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
 	mkdir -p "${TEST_OUT_BASE}"
 
-	# Convert profiles array to comma-separated string for qdup-test
-	local profiles_str=""
-	if [[ ${#profiles[@]} -gt 0 ]]; then
-		profiles_str=$(IFS=','; echo "${profiles[*]}")
-		echo "   - Using profiles: ${profiles_str}"
-	fi
+	# Set cache directory (matching run test behavior)
+	export TEST_CACHE_BASE="${TEST_DIR}/cache"
+	mkdir -p "${TEST_CACHE_BASE}"
 
 	local result=0
 	for test in "${tests[@]}"; do
-		for javaVersion in "${javaVersions[@]}"; do
-			local qdup_states=(
-				"-S" "TEST_DIR=${TEST_DIR}"
-				"-S" "TEST_ROOT_DIR=${TEST_ROOT_DIR}"
-				"-S" "JAVA_VERSION=${javaVersion}"
-				"-S" "TEST=${test}"
-				"-S" "WORK_DIR=${TEST_OUT_BASE}"
-				"-S" "PROFILES=${profiles_str}"
-			)
-
-			if [[ "${enable_hw_tweaks}" == "true" ]]; then
-				qdup_states+=("-S" "ENABLE_HW_TWEAKS=true")
-				echo "   - Hardware tweaks enabled for apphost"
-			fi
-
-			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" "${TEST_OUT_BASE}" "${qdup_states[@]}"
-			if [[ $? -ne 0 ]]; then
-				result=1
-			fi
-		done
+		echo -e "${BOLD}Running test: ${test}${NORMAL}"
+		"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${test}" "${TEST_OUT_BASE}" "${TEST_CACHE_BASE}"
 	done
 	return $result
 }

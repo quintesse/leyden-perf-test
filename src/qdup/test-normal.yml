@@ -46,13 +46,13 @@ roles:
           TEST_HOME: ${{DRIVER_TEST_HOME}}
       - setup_driver:
 
-    run-scripts:
-      - apply_hw_tweaks:
-        with:
-          TEST_HOME: ${{DRIVER_TEST_HOME}}
-      - run_driver:
-
-    cleanup-scripts:
-      - restore_hw_tweaks:
-        with:
-          TEST_HOME: ${{DRIVER_TEST_HOME}}
+states:
+  TEST_DIR: ${{ENV.SCRIPT_DIR}}/../..
+  TEMP_DIR: /tmp/leyden-perf-test
+  RESULTS_DIR: _set_outside_
+  CACHE_DIR: _set_outside_
+  TEST_HOME_BASE: ${{TEMP_DIR}}/arena
+  TEST_OUT_BASE: ${{RESULTS_DIR}}
+  TEST: _set_outside_
+  JAVA_VERSION: 25
+  TEST_DRIVER: oha
