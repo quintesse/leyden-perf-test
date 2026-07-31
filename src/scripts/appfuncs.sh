@@ -184,21 +184,7 @@ function check_app_process() {
 function wait_for_8080() {
     local results_name=$1
 
-	# Only check for the application when the caller process and application are on the same host
-	local app_pid=""
-	local app_host="${TEST_APP_HOST:-localhost}"
-	if [[ "${app_host}" == "${HOSTNAME}" || "${app_host}" == "localhost" ]]; then
-		echo "   - Waiting for port 8080..."
-		app_pid=$(get_app_pid "${results_name}")
-		if [[ "${app_pid}" != "" ]]; then
-			echo -e "   - ${BOLD}${GREEN}✓ Application process found${NORMAL}"
-		else
-			echo -e "   - ${BOLD}${RED}✗ Application process not found${NORMAL}"
-			return 2
-		fi
-	else
-		echo "   - Waiting for port 8080 on ${TEST_APP_HOST:-localhost}..."
-	fi
+	echo "   - Waiting for port 8080 on ${TEST_APP_HOST:-localhost}..."
 
     local timens=$(date +%s%N)
     local times=$(date +%s)
@@ -209,7 +195,6 @@ function wait_for_8080() {
 			break
 		fi
         if (( now - last_msg_time >= 3 )); then
-			[[ -n "${app_pid}" ]] && { check_app_process "${app_pid}" "${results_name}" || return 2; }
             echo "   - Still waiting ..."
             last_msg_time=$now
         fi
