@@ -1,0 +1,78 @@
+name: qdup-aot-strategy
+
+roles:
+  infra:
+    hosts:
+      - infrahost
+    setup-scripts:
+      - upload_code:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/infra
+      - setup_infra:
+
+    run-scripts:
+      # FIRST COMPLETE CYCLE (for AOT training)
+      - run_infra:
+        with:
+          RUN_TAG: "training"
+      - stop_infra:
+        with:
+          RUN_TAG: "training"
+
+      # SECOND COMPLETE CYCLE (for actual test run)
+      - run_infra:
+        with:
+          RUN_TAG: "aot"
+
+    cleanup-scripts:
+      - stop_infra:
+        with:
+          RUN_TAG: "aot"
+
+  app:
+    hosts:
+      - apphost
+    setup-scripts:
+      - upload_code:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/app
+      - setup_app:
+
+    run-scripts:
+      # FIRST COMPLETE CYCLE (for AOT training)
+      - run_app:
+        with:
+          RUN_TAG: "training"
+      - stop_app:
+        with:
+          RUN_TAG: "training"
+
+      # SECOND COMPLETE CYCLE (for actual test run)
+      - run_app:
+        with:
+          RUN_TAG: "aot"
+
+    cleanup-scripts:
+      - stop_app:
+        with:
+          RUN_TAG: "aot"
+
+  driver:
+    hosts:
+      - driverhost
+    setup-scripts:
+      - upload_code:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/driver
+      - setup_driver:
+
+    run-scripts:
+      # FIRST COMPLETE CYCLE (for AOT training)
+      - run_driver:
+        with:
+          RUN_TAG: "training"
+
+      # SECOND COMPLETE CYCLE (for actual test run)
+      - run_driver:
+        with:
+          RUN_TAG: "aot"

@@ -3,7 +3,7 @@ set -uo pipefail
 
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-export TEST_DIR=${script_dir}/../../..
+export ROOT_DIR=${script_dir}/../../..
 
 if [ -z "$1" ]; then
     echo "Usage: $0 [additional qdup options] <qdup_yaml_file>..."
@@ -15,7 +15,7 @@ if [ ! -z "${QDUP_SSH_PWD:-}" ]; then
     PWDFLAG="-p $QDUP_SSH_PWD"
 fi
 
-"${TEST_DIR}/jbang" io.hyperfoil.tools:qDup:0.11.2 $PWDFLAG $@
-#"${TEST_DIR}/jbang" io.hyperfoil.tools:qDup:0.11.2 -B /tmp/qdup $PWDFLAG $@
-#"${TEST_DIR}/jbang" qDup@hyperfoil -B /tmp/qdup $PWDFLAG $@
+"${ROOT_DIR}/jbang" io.hyperfoil.tools:qDup:0.11.2 $PWDFLAG $@
+#"${ROOT_DIR}/jbang" io.hyperfoil.tools:qDup:0.11.2 -B /tmp/qdup $PWDFLAG $@
+#"${ROOT_DIR}/jbang" qDup@hyperfoil -B /tmp/qdup $PWDFLAG $@
 #jbang qDup@hyperfoil -B /tmp/qdup $PWDFLAG $@

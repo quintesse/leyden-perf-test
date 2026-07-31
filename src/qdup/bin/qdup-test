@@ -11,6 +11,14 @@ else
     hosts_file="${script_dir}/../hosts/$1.yml"
 fi
 
-work_dir=${3:-/tmp/leyden-perf-test}
+scripts_file="${script_dir}/../scripts.yml"
 
-"$script_dir/qdup" "${hosts_file}" "${script_dir}/../testrun.yml" -B ${work_dir}/qdup -S TEST=$2 -S WORK_DIR=${work_dir}
+strategy="$2"
+strategy_file="${script_dir}/../test-${strategy}.yml"
+
+java_version="$3"
+
+testpat="${4:-all}"
+work_dir=${5:-/tmp/leyden-perf-test}
+
+"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B ${work_dir}/qdup -S JAVA_VERSION="${java_version}" -S TEST="${testpat}" -S WORK_DIR="${work_dir}"
