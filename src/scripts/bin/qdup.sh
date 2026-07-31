@@ -190,18 +190,23 @@ function run_qdup() {
 		echo "   - Using profiles: ${profiles_str}"
 	fi
 
-	# Build additional qDup states
-	local additional_states=()
-	if [[ "${enable_hw_tweaks}" == "true" ]]; then
-		additional_states+=("-S" "ENABLE_HW_TWEAKS=true")
-		echo "   - Hardware tweaks enabled for apphost"
-	fi
-
 	local result=0
 	for test in "${tests[@]}"; do
 		for javaVersion in "${javaVersions[@]}"; do
+			local qdup_states=(
+				"-S" "JAVA_VERSION=${javaVersion}"
+				"-S" "TEST=${test}"
+				"-S" "WORK_DIR=${TEST_OUT_BASE}"
+				"-S" "PROFILES=${profiles_str}"
+			)
+
+			if [[ "${enable_hw_tweaks}" == "true" ]]; then
+				qdup_states+=("-S" "ENABLE_HW_TWEAKS=true")
+				echo "   - Hardware tweaks enabled for apphost"
+			fi
+
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" "${TEST_OUT_BASE}" "${additional_states[@]}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" "${TEST_OUT_BASE}" "${qdup_states[@]}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi
