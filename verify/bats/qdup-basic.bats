@@ -26,7 +26,8 @@ teardown() {
 
 @test "qdup command exists and is executable" {
     [ -x "./run" ]
-    ./run qdup --help
+    run ./run qdup --help
+    [ "$status" -eq 2 ]
 }
 
 @test "qdup shows help with -h flag" {
