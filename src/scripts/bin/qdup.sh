@@ -178,6 +178,12 @@ function run_qdup() {
 	local testpat="$2"
 
 	local tests=( $(select_tests "${testpat}") )
+
+	if [[ ${#tests[@]} -eq 0 ]]; then
+		echo "Error: No tests match the pattern '${testpat}'."
+		return 1
+	fi
+
 	local qdupdir="${TEST_SRC_DIR}/qdup"
 
 	export TEST_OUT_BASE=${outputPath:-/tmp/leyden-perf-test/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
@@ -194,6 +200,7 @@ function run_qdup() {
 	for test in "${tests[@]}"; do
 		for javaVersion in "${javaVersions[@]}"; do
 			local qdup_states=(
+				"-S" "TEST_DIR=${TEST_DIR}"
 				"-S" "JAVA_VERSION=${javaVersion}"
 				"-S" "TEST=${test}"
 				"-S" "WORK_DIR=${TEST_OUT_BASE}"

@@ -128,6 +128,11 @@ function run_for_suite() {
 
 	local tests=( $(select_tests "${testpat}") )
 
+	if [[ ${#tests[@]} -eq 0 ]]; then
+		echo "Error: No tests match the pattern '${testpat}'."
+		return 1
+	fi
+
 	local result=0
 	local finalresult=0
 	local cursuite=""
@@ -164,6 +169,11 @@ function run_suite_commands_for_tests() {
 	fi
 
 	local tests=( $(select_tests "${testpat}") )
+
+	if [[ ${#tests[@]} -eq 0 ]]; then
+		echo "Error: No tests match the pattern '${testpat}'."
+		return 1
+	fi
 
 	local cursuite=""
 	local result=0

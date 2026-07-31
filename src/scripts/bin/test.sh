@@ -191,6 +191,12 @@ if [[ ${#javaVersions[@]} -eq 0 ]]; then
 	exit 4
 fi
 
+# Validate that the test pattern matches at least one test
+if ! "${TEST_DIR}/run" list -T "${testsRootDir}" "${testPat}" > /dev/null 2>&1; then
+	"${TEST_DIR}/run" list -T "${testsRootDir}" "${testPat}"
+	exit 1
+fi
+
 {
 	"${TEST_DIR}/run" list -T "${testsRootDir}" "${testPat}"
 	echo "Test driver: ${TEST_DRIVER}"
