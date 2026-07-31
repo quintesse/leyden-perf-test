@@ -7,6 +7,8 @@ scripts:
   - upload: ${{TEST_DIR}}/hwtweaked-run ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/hardware-tweaks.conf ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/local-settings.xml ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/jbang ${{TEST_HOME}}/
+  - upload: ${{TEST_DIR}}/run ${{TEST_HOME}}/
 
   apply_hw_tweaks:
   - sh: |
@@ -34,9 +36,6 @@ scripts:
         fi
       fi
 
-  - upload: ${{TEST_DIR}}/jbang ${{TEST_HOME}}/
-  - upload: ${{TEST_DIR}}/run ${{TEST_HOME}}/
-  
   setup_infra:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
     - sh: echo ${HOSTNAME}
