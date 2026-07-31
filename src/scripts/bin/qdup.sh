@@ -170,7 +170,8 @@ if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
 fi
 
 function run_qdup() {
-	local testpat=$1
+	local strategy="$1"
+	local testpat="$2"
 
 	local tests=( $(select_tests "${testpat}") )
 	local qdupdir="${TEST_SRC_DIR}/qdup"
@@ -180,10 +181,31 @@ function run_qdup() {
 
 	local result=0
 	for test in "${tests[@]}"; do
-		echo -e "${BOLD}Running test: ${test}${NORMAL}"
-		"$qdupdir/bin/qdup-test" "${hosts}" "${test}" "${TEST_OUT_BASE}"
+		for javaVersion in "${javaVersions[@]}"; do
+			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${TEST_OUT_BASE}"
+			if [[ $? -ne 0 ]]; then
+				result=1
+			fi
+		done
 	done
 	return $result
 }
 
-run_qdup "${1:-all}"
+if [[ ${#strategies[@]} -eq 0 ]]; then
+	strategies=("normal")
+fi
+
+if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
+	profiles=("default")
+fi
+
+if [[ ${#javaVersions[@]} -eq 0 ]]; then
+	echo "Error: No Java versions specified."
+	exit 4
+fi
+
+for strategy in "${strategies[@]}"; do
+	echo "   - Using strategy: ${strategy}"
+	run_qdup "${strategy}" "${1:-all}"
+done

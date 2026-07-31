@@ -1,0 +1,44 @@
+name: qdup-normal-strategy
+
+roles:
+  infra:
+    hosts:
+      - infrahost
+    setup-scripts:
+      - upload_code:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/infra
+      - setup_infra:
+
+    run-scripts:
+      - run_infra:
+
+    cleanup-scripts:
+      - stop_infra:
+
+  app:
+    hosts:
+      - apphost
+    setup-scripts:
+      - upload_code:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/app
+      - setup_app:
+
+    run-scripts:
+      - run_app:
+
+    cleanup-scripts:
+      - stop_app:
+
+  driver:
+    hosts:
+      - driverhost
+    setup-scripts:
+      - upload_code:
+        with:
+          TEST_HOME: ${{TEST_HOME_BASE}}/driver
+      - setup_driver:
+
+    run-scripts:
+      - run_driver:
