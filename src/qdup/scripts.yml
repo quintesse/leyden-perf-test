@@ -3,7 +3,7 @@ scripts:
   - sh: echo "Uploading test framework to ${HOSTNAME}..."
   - upload: ${{TEST_DIR}}/profiles/ ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/src/ ${{TEST_HOME}}/
-  - upload: ${{TEST_DIR}}/tests/ ${{TEST_HOME}}/
+  - upload: ${{TEST_ROOT_DIR}}/ ${{TEST_HOME}}/tests/
   - upload: ${{TEST_DIR}}/hardware-tweaks.conf ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/local-settings.xml ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/jbang ${{TEST_HOME}}/
@@ -40,11 +40,11 @@ scripts:
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.INFRA_HOST
-    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} -P "${{PROFILES}}" ${{TEST}} setup
+    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} -T ${{INFRA_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} setup
 
   run_infra:
     - sh: echo "Starting infrastructure on ${HOSTNAME}"
-    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -P "${{PROFILES}}" ${{TEST}} start
+    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -T ${{INFRA_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} start
     - signal: INFRA_READY
     - wait-for: TEST_END
     - set-signal: INFRA_READY 0
@@ -53,7 +53,7 @@ scripts:
 
   stop_infra:
     - sh: echo "Stopping infrastructure on ${HOSTNAME}"
-    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -P "${{PROFILES}}" ${{TEST}} stop
+    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -T ${{INFRA_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} stop
 
   dummy_infra:
     - signal: INFRA_READY
@@ -64,7 +64,7 @@ scripts:
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.APP_HOST
-    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}} -j ${{JAVA_VERSION}} -P "${{PROFILES}}" ${{TEST}} setup
+    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}} -j ${{JAVA_VERSION}} -T ${{APP_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} setup
 
   run_app:
     - sh: echo "Application waiting for infrastructure on ${HOSTNAME}"
@@ -72,7 +72,7 @@ scripts:
     - wait-for: INFRA_READY
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
     - sh: echo "Starting application on ${HOSTNAME}"
-    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} -P "${{PROFILES}}" ${{TEST}} start
+    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} -T ${{APP_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} start
     - signal: APP_READY
     - wait-for: TEST_END
     - set-signal: APP_READY 0
@@ -81,24 +81,24 @@ scripts:
 
   stop_app:
     - sh: echo "Stopping application on ${HOSTNAME}"
-    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} -P "${{PROFILES}}" ${{TEST}} stop
+    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} -T ${{APP_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} stop
 
   setup_driver:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.DRIVER_HOST
-    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}} -d ${{TEST_DRIVER}} -P "${{PROFILES}}" ${{TEST}} setup
+    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}} -d ${{TEST_DRIVER}} -T ${{DRIVER_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} setup
 
   run_driver:
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
     - sh: export TEST_APP_HOST=${{APP_HOST}}
     - sh: echo "Preparing driver on ${HOSTNAME}"
-    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} -P "${{PROFILES}}" ${{TEST}} prime
+    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} -T ${{DRIVER_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} prime
     - sh: echo "Driver waiting for application on ${HOSTNAME}"
     - wait-for: APP_READY
     - sh: echo "Running tests on ${HOSTNAME} ..."
-    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} -P "${{PROFILES}}" ${{TEST}} run
+    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} -T ${{DRIVER_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} run
     - signal: TEST_END
     - queue-download: ${{DRIVER_TEST_OUT}}${{RUN_TAG}}/
 
@@ -106,9 +106,12 @@ states:
   ROOT_DIR: ${{ENV.SCRIPT_DIR}}/../..
   WORK_DIR: /tmp/leyden-perf-test
   TEST_HOME_BASE: ${{WORK_DIR}}/arena
-  INFRA_RUN_CMD: ${{TEST_HOME_BASE}}/infra/run
-  APP_RUN_CMD: ${{TEST_HOME_BASE}}/app/run
-  DRIVER_RUN_CMD: ${{TEST_HOME_BASE}}/driver/run
+  INFRA_TEST_HOME: ${{TEST_HOME_BASE}}/infra
+  APP_TEST_HOME: ${{TEST_HOME_BASE}}/app
+  DRIVER_TEST_HOME: ${{TEST_HOME_BASE}}/driver
+  INFRA_RUN_CMD: ${{INFRA_TEST_HOME}}/run
+  APP_RUN_CMD: ${{APP_TEST_HOME}}/run
+  DRIVER_RUN_CMD: ${{DRIVER_TEST_HOME}}/run
   TEST_OUT_BASE: ${{WORK_DIR}}/results
   INFRA_TEST_OUT: ${{TEST_OUT_BASE}}
   APP_TEST_OUT: ${{TEST_OUT_BASE}}

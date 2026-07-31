@@ -7,7 +7,7 @@ roles:
     setup-scripts:
       - upload_code:
         with:
-          TEST_HOME: ${{TEST_HOME_BASE}}/infra
+          TEST_HOME: ${{INFRA_TEST_HOME}}
       - setup_infra:
 
     run-scripts:
@@ -35,13 +35,13 @@ roles:
     setup-scripts:
       - upload_code:
         with:
-          TEST_HOME: ${{TEST_HOME_BASE}}/app
+          TEST_HOME: ${{APP_TEST_HOME}}
       - setup_app:
 
     run-scripts:
       - apply_hw_tweaks:
         with:
-          TEST_HOME: ${{TEST_HOME_BASE}}/app
+          TEST_HOME: ${{APP_TEST_HOME}}
 
       # FIRST COMPLETE CYCLE (for AOT training)
       - run_app:
@@ -62,7 +62,7 @@ roles:
           RUN_TAG: "aot"
       - restore_hw_tweaks:
         with:
-          TEST_HOME: ${{TEST_HOME_BASE}}/app
+          TEST_HOME: ${{APP_TEST_HOME}}
 
   driver:
     hosts:
@@ -70,13 +70,13 @@ roles:
     setup-scripts:
       - upload_code:
         with:
-          TEST_HOME: ${{TEST_HOME_BASE}}/driver
+          TEST_HOME: ${{DRIVER_TEST_HOME}}
       - setup_driver:
 
     run-scripts:
       - apply_hw_tweaks:
         with:
-          TEST_HOME: ${{TEST_HOME_BASE}}/driver
+          TEST_HOME: ${{DRIVER_TEST_HOME}}
 
       # FIRST COMPLETE CYCLE (for AOT training)
       - run_driver:
@@ -91,4 +91,4 @@ roles:
     cleanup-scripts:
       - restore_hw_tweaks:
         with:
-          TEST_HOME: ${{TEST_HOME_BASE}}/driver
+          TEST_HOME: ${{DRIVER_TEST_HOME}}

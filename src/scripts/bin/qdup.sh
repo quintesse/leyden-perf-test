@@ -201,6 +201,7 @@ function run_qdup() {
 		for javaVersion in "${javaVersions[@]}"; do
 			local qdup_states=(
 				"-S" "TEST_DIR=${TEST_DIR}"
+				"-S" "TEST_ROOT_DIR=${TEST_ROOT_DIR}"
 				"-S" "JAVA_VERSION=${javaVersion}"
 				"-S" "TEST=${test}"
 				"-S" "WORK_DIR=${TEST_OUT_BASE}"
