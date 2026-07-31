@@ -143,12 +143,20 @@ while [[ $# -gt 0 ]]; do
 				echo "Error: Profile option specified but no value provided."
 				exit 4
 			fi
-			if [[ -f "${TEST_DIR}/profiles/$1.sh" ]]; then
-				profiles+=("$1")
+			# Accept comma-separated profiles
+			IFS=',' read -ra profile_list <<< "$1"
+			for profile in "${profile_list[@]}"; do
+				if [[ ! -f "${TEST_DIR}/profiles/${profile}.sh" ]]; then
+					echo "Error: Profile '${profile}' does not exist."
+					echo "Use './run list-profiles' to see the list of available profiles."
+					exit 4
+				fi
+			done
+			# Store as comma-separated string
+			if [[ -z "${profiles}" ]]; then
+				profiles="$1"
 			else
-				echo "Error: Profile '$1' does not exist."
-				echo "Use './run list-profiles' to see the list of available profiles."
-				exit 4
+				profiles="${profiles},$1"
 			fi
 			shift
 			;;
@@ -164,8 +172,8 @@ done
 
 export TEST_ROOT_DIR="${testsRootDir}"
 
-if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
-	profiles=("default")
+if [[ -z "${profiles}" && -f "${TEST_DIR}/profiles/default.sh" ]]; then
+	profiles="default"
 	echo "Info: Auto-activating 'default' profile"
 fi
 
@@ -179,18 +187,15 @@ function run_qdup() {
 	export TEST_OUT_BASE=${outputPath:-/tmp/leyden-perf-test/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
 	mkdir -p "${TEST_OUT_BASE}"
 
-	# Build profile arguments to pass to qdup-test
-	local profile_args=()
-	for profile in "${profiles[@]}"; do
-		echo "   - Using profile: ${profile}"
-		profile_args+=("-P" "${profile}")
-	done
+	if [[ -n "${profiles}" ]]; then
+		echo "   - Using profiles: ${profiles}"
+	fi
 
 	local result=0
 	for test in "${tests[@]}"; do
 		for javaVersion in "${javaVersions[@]}"; do
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${TEST_OUT_BASE}" "${profile_args[@]}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${TEST_OUT_BASE}" "${profiles}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi
@@ -201,10 +206,6 @@ function run_qdup() {
 
 if [[ ${#strategies[@]} -eq 0 ]]; then
 	strategies=("normal")
-fi
-
-if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
-	profiles=("default")
 fi
 
 if [[ ${#javaVersions[@]} -eq 0 ]]; then

@@ -15,27 +15,11 @@ scripts:
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.INFRA_HOST
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} $PROFILE_FLAGS ${{TEST}} setup
+    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} -P "${{PROFILES}}" ${{TEST}} setup
 
   run_infra:
     - sh: echo "Starting infrastructure on ${HOSTNAME}"
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} $PROFILE_FLAGS ${{TEST}} start
+    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -P "${{PROFILES}}" ${{TEST}} start
     - signal: INFRA_READY
     - wait-for: TEST_END
     - script: stop_infra
@@ -43,45 +27,21 @@ scripts:
 
   stop_infra:
     - sh: echo "Stopping infrastructure on ${HOSTNAME}"
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} $PROFILE_FLAGS ${{TEST}} stop
+    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -P "${{PROFILES}}" ${{TEST}} stop
 
   setup_app:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.APP_HOST
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}} -j ${{JAVA_VERSION}} $PROFILE_FLAGS ${{TEST}} setup
+    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}} -j ${{JAVA_VERSION}} -P "${{PROFILES}}" ${{TEST}} setup
 
   run_app:
     - sh: echo "Application waiting for infrastructure on ${HOSTNAME}"
     - wait-for: INFRA_READY
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
     - sh: echo "Starting application on ${HOSTNAME}"
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} $PROFILE_FLAGS ${{TEST}} start
+    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} -P "${{PROFILES}}" ${{TEST}} start
     - signal: APP_READY
     - wait-for: TEST_END
     - script: stop_app
@@ -89,56 +49,24 @@ scripts:
 
   stop_app:
     - sh: echo "Stopping application on ${HOSTNAME}"
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} $PROFILE_FLAGS ${{TEST}} stop
+    - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} -P "${{PROFILES}}" ${{TEST}} stop
 
   setup_driver:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.DRIVER_HOST
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}} -d ${{TEST_DRIVER}} $PROFILE_FLAGS ${{TEST}} setup
+    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}} -d ${{TEST_DRIVER}} -P "${{PROFILES}}" ${{TEST}} setup
 
   run_driver:
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
     - sh: export TEST_APP_HOST=${{APP_HOST}}
     - sh: echo "Preparing driver on ${HOSTNAME}"
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} $PROFILE_FLAGS ${{TEST}} prime
+    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} -P "${{PROFILES}}" ${{TEST}} prime
     - sh: echo "Driver waiting for application on ${HOSTNAME}"
     - wait-for: APP_READY
     - sh: echo "Running tests on ${HOSTNAME} ..."
-    - sh: |
-        PROFILE_FLAGS=""
-        if [[ -n "${{PROFILES}}" ]]; then
-          IFS=',' read -ra PROFILE_ARRAY <<< "${{PROFILES}}"
-          for profile in "${PROFILE_ARRAY[@]}"; do
-            PROFILE_FLAGS="$PROFILE_FLAGS -P $profile"
-          done
-        fi
-        ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} $PROFILE_FLAGS ${{TEST}} run
+    - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} -P "${{PROFILES}}" ${{TEST}} run
     - signal: TEST_END
     - queue-download: ${{DRIVER_TEST_OUT}}${{RUN_TAG}}/
 
