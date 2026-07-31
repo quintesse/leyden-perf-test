@@ -33,6 +33,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
 
 hosts="local"
 resultTag=""
@@ -40,7 +41,7 @@ jdkTag=""
 outputPath=""
 javaVersions=()
 strategies=()
-profiles=()
+profiles=""
 testsRootDir="${TEST_DIR}/tests"
 export TEST_DRIVER="oha"
 
@@ -143,20 +144,16 @@ while [[ $# -gt 0 ]]; do
 				echo "Error: Profile option specified but no value provided."
 				exit 4
 			fi
-			# Accept comma-separated profiles
-			IFS=',' read -ra profile_list <<< "$1"
-			for profile in "${profile_list[@]}"; do
-				if [[ ! -f "${TEST_DIR}/profiles/${profile}.sh" ]]; then
-					echo "Error: Profile '${profile}' does not exist."
-					echo "Use './run list-profiles' to see the list of available profiles."
-					exit 4
-				fi
-			done
-			# Store as comma-separated string
+			# Parse comma-separated profiles into temporary array
+			temp_profiles=()
+			if ! parse_profiles "$1" temp_profiles; then
+				exit 4
+			fi
+			# Convert array to comma-separated string
 			if [[ -z "${profiles}" ]]; then
-				profiles="$1"
+				profiles=$(IFS=','; echo "${temp_profiles[*]}")
 			else
-				profiles="${profiles},$1"
+				profiles="${profiles},$(IFS=','; echo "${temp_profiles[*]}")"
 			fi
 			shift
 			;;
