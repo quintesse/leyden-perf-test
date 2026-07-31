@@ -41,7 +41,7 @@ jdkTag=""
 outputPath=""
 javaVersions=()
 strategies=()
-profiles=""
+profiles=()
 testsRootDir="${TEST_DIR}/tests"
 export TEST_DRIVER="oha"
 
@@ -144,16 +144,9 @@ while [[ $# -gt 0 ]]; do
 				echo "Error: Profile option specified but no value provided."
 				exit 4
 			fi
-			# Parse comma-separated profiles into temporary array
-			temp_profiles=()
-			if ! parse_profiles "$1" temp_profiles; then
+			# Parse comma-separated profiles and append to array
+			if ! parse_profiles "$1" profiles; then
 				exit 4
-			fi
-			# Convert array to comma-separated string
-			if [[ -z "${profiles}" ]]; then
-				profiles=$(IFS=','; echo "${temp_profiles[*]}")
-			else
-				profiles="${profiles},$(IFS=','; echo "${temp_profiles[*]}")"
 			fi
 			shift
 			;;
@@ -169,8 +162,8 @@ done
 
 export TEST_ROOT_DIR="${testsRootDir}"
 
-if [[ -z "${profiles}" && -f "${TEST_DIR}/profiles/default.sh" ]]; then
-	profiles="default"
+if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
+	profiles=("default")
 	echo "Info: Auto-activating 'default' profile"
 fi
 
@@ -184,15 +177,18 @@ function run_qdup() {
 	export TEST_OUT_BASE=${outputPath:-/tmp/leyden-perf-test/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
 	mkdir -p "${TEST_OUT_BASE}"
 
-	if [[ -n "${profiles}" ]]; then
-		echo "   - Using profiles: ${profiles}"
+	# Convert profiles array to comma-separated string for qdup-test
+	local profiles_str=""
+	if [[ ${#profiles[@]} -gt 0 ]]; then
+		profiles_str=$(IFS=','; echo "${profiles[*]}")
+		echo "   - Using profiles: ${profiles_str}"
 	fi
 
 	local result=0
 	for test in "${tests[@]}"; do
 		for javaVersion in "${javaVersions[@]}"; do
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${TEST_OUT_BASE}" "${profiles}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${TEST_OUT_BASE}" "${profiles_str}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi
