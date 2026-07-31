@@ -62,10 +62,33 @@ Drivers execute the actual load testing:
 - Located in: `src/scripts/drivers/<driver-name>/`
 
 #### 3. Strategies
-Strategies define how tests are executed:
-- **normal**: Standard execution without special optimizations
-- **aot**: Performs training run, then restarts with AOT cache
+Strategies define the orchestration of a test run. A strategy is not a test implementation and not a driver; it is the layer that decides **which actions run, in what order, how many times, and with which strategy-specific environment variables**.
+
+Current built-in strategies:
+- **normal**: Runs a single end-to-end pass for each selected test
+- **aot**: Runs each selected test twice: first as a training pass that produces an AOT cache, then as the measured pass using that cache
 - Located in: `src/scripts/strategies/<strategy-name>/`
+
+What a strategy is responsible for:
+- Selecting the execution flow for each test
+- Calling `run_for_suite` to iterate over the selected tests
+- Calling `run_suite_commands` to execute test actions such as `infra_setup`, `app_setup`, `driver_setup`, `infra_start`, `driver_prime`, `app_start`, and `driver_run`
+- Optionally setting strategy-specific environment variables before invoking test actions, for example `TEST_STRAT_OPTS`
+- Optionally adding a run-id suffix via `run_for_suite ... <name_tag>` so output files from multiple passes do not collide
+- Optionally performing post-processing after a run, such as `generate_profiling_results`
+
+What a strategy is **not** responsible for:
+- Implementing application, infrastructure, or driver behavior directly
+- Discovering tests on its own outside the harness helpers
+- Assuming shared state between tests; each selected test is executed with its own test context
+
+The current implementation in `./run test` sources one strategy script per selected strategy, after:
+- profiles have been applied,
+- the driver has been set up once with `setup_driver`,
+- `TEST_APP_JAVA` has been set for the current Java version, and
+- the output directory for the `<jdk>-<strategy>` combination has been prepared.
+
+This means a strategy script executes in an already-initialized shell environment and is expected to start running immediately when sourced.
 
 #### 4. Profiles
 Profiles define environment variables and configuration:
@@ -608,32 +631,187 @@ src/scripts/strategies/<strategy-name>/
 └── DESCRIPTION         # One-line description
 ```
 
-### Strategy Implementation
+### How Strategies Are Loaded
+
+A strategy script is **sourced**, not executed as a separate process. In standard mode, `./run test` does the following before sourcing each selected strategy:
+
+1. Parses CLI options and selects tests, JDKs, strategies, profiles, and driver
+2. Applies all selected profiles
+3. Calls `setup_driver` once
+4. Sets `TEST_APP_JAVA` for the current JDK
+5. Creates and exports `TEST_OUT_DIR` for the current `<jdk>-<strategy>` output folder
+6. Sources `src/scripts/strategies/<strategy>/strategy.sh`
+
+Because the script is sourced into the current shell:
+- it should begin running immediately,
+- it can define helper functions and call them in the same file,
+- it has access to the harness helper functions already sourced by `test.sh`, especially from `suitefuncs.sh`, `appfuncs.sh`, `infrafuncs.sh`, and `driverfuncs.sh`,
+- and any exported variables it sets become visible to the test actions it invokes.
+
+The first positional argument passed to the strategy script is the selected test pattern, for example `all` or `sqpc/*`.
+
+### Core Helpers Used by Strategies
+
+The current strategy implementation relies primarily on these helpers from `src/scripts/suitefuncs.sh`:
+
+- `run_for_suite "<test-pattern>" "<function>" ["<name-tag>"]`
+  - Resolves the selected tests
+  - Sets per-test context variables such as `TEST_SUITE_NAME`, `TEST_TEST_NAME`, `TEST_TEST_DIR`, and `TEST_TEST_RUNID`
+  - Calls the named function once per selected test
+  - Optionally appends `<name-tag>` to `TEST_TEST_RUNID`
+
+- `run_suite_commands <cmd...> -- [args...]`
+  - Runs a sequence of actions for the current test context
+  - Supports paired commands in `start/stop` form, where the stop action is queued and executed automatically in reverse order
+  - Forwards any arguments after `--` to each invoked action
+
+This `start/stop` pairing is important. For example:
+
+```bash
+run_suite_commands \
+    "infra_setup" \
+    "app_setup" \
+    "driver_setup" \
+    "infra_start/infra_stop" \
+    "driver_prime" \
+    "app_start/app_stop" \
+    "driver_run" -- "${TEST_TEST_RUNID}"
+```
+
+This means:
+1. `infra_start` runs and `infra_stop` is queued
+2. `app_start` runs later and `app_stop` is queued
+3. `driver_run` executes the measured workload
+4. queued stop actions run automatically in reverse order: `app_stop`, then `infra_stop`
+
+### Strategy Responsibilities
+
+A custom strategy should focus on orchestration only. Typical responsibilities are:
+
+- choose the phases to run for each test,
+- decide whether a test runs once or multiple times,
+- set strategy-specific environment variables before invoking actions,
+- choose distinct run-id suffixes when multiple passes produce separate artifacts,
+- and optionally trigger post-processing after a pass.
+
+A strategy should generally **not**:
+- implement app, infra, or driver behavior directly,
+- bypass `run_for_suite` unless there is a very strong reason,
+- assume files from one test context should be reused by another unrelated test,
+- or assume the same strategy logic will only ever run locally rather than in more isolated environments.
+
+### Strategy-Specific Environment Variables
+
+The main built-in example is `TEST_STRAT_OPTS`.
+
+`TEST_STRAT_OPTS` is a predefined strategy hook used to pass additional Java runtime options from a strategy into the provided application-launch helpers.
+
+The AOT strategy exports `TEST_STRAT_OPTS` before invoking the test actions:
+- during training it points the JVM at an output cache path with `-XX:AOTCacheOutput=...`
+- during the measured run it enables AOT mode with `-XX:AOTMode=on -XX:AOTCache=...`
+
+In the current harness, the provided app helper functions consume `TEST_STRAT_OPTS` when launching Java applications, so strategy authors can use it without inventing a new integration point. This keeps strategy concerns separate from test implementation details.
+
+### Built-In Strategies as Reference Implementations
+
+#### `normal`
+The normal strategy:
+- defines a helper function that runs one end-to-end pass,
+- invokes `run_suite_commands` with the standard action order,
+- passes `TEST_TEST_RUNID` through to the actions,
+- and optionally calls `generate_profiling_results` if a JFR file exists for that run.
+
+Conceptually it is the baseline orchestration for one measured run per selected test.
+
+#### `aot`
+The AOT strategy:
+- refuses to run on Java versions below 25,
+- performs a first pass tagged `training`,
+- writes an AOT cache file named `<suite>-<test>-app.aot` into `TEST_OUT_DIR`,
+- performs a second pass tagged `aot`,
+- reuses the generated cache in the second pass,
+- and keeps the two passes distinct by using `run_for_suite ... "training"` and `run_for_suite ... "aot"`.
+
+This is a good example of a strategy that runs the same test multiple times while preserving separate output identities.
+
+### Recommended Implementation Pattern
 
 ```bash
 #!/bin/bash
 
-# Main strategy execution
-# This script is sourced and should orchestrate the test flow
+set -euo pipefail
 
-# Example: AOT strategy
-for testPath in $(resolve_tests "${testPat}"); do
-    suite=$(get_suite_name "${testPath}")
-    test=$(get_test_name "${testPath}")
-    
-    # Training run
-    run_test_phase "setup" "${testPath}"
-    run_test_phase "start" "${testPath}"
-    run_test_phase "prime" "${testPath}"
-    run_test_phase "run" "${testPath}"
-    run_test_phase "stop" "${testPath}"
-    
-    # Production run with AOT cache
-    run_test_phase "start" "${testPath}"
-    run_test_phase "run" "${testPath}"
-    run_test_phase "stop" "${testPath}"
-done
+testpattern=$1
+
+run_once() {
+    local result=0
+
+    export TEST_STRAT_OPTS="${TEST_STRAT_OPTS:-}"
+
+    run_suite_commands \
+        "infra_setup" \
+        "app_setup" \
+        "driver_setup" \
+        "infra_start/infra_stop" \
+        "driver_prime" \
+        "app_start/app_stop" \
+        "driver_run" -- "${TEST_TEST_RUNID}" || result=$?
+
+    return $result
+}
+
+echo "   - Starting custom strategy..."
+run_for_suite "${testpattern}" "run_once"
 ```
+
+### Multi-Pass Strategy Pattern
+
+If your strategy needs multiple passes, use distinct name tags so artifacts do not collide:
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+testpattern=$1
+
+warmup_pass() {
+    export TEST_STRAT_OPTS="-Dexample.mode=warmup"
+    run_suite_commands \
+        "infra_setup" \
+        "app_setup" \
+        "driver_setup" \
+        "infra_start/infra_stop" \
+        "driver_prime" \
+        "app_start/app_stop" \
+        "driver_run" -- "${TEST_TEST_RUNID}"
+}
+
+measured_pass() {
+    export TEST_STRAT_OPTS="-Dexample.mode=measure"
+    run_suite_commands \
+        "infra_setup" \
+        "app_setup" \
+        "driver_setup" \
+        "infra_start/infra_stop" \
+        "driver_prime" \
+        "app_start/app_stop" \
+        "driver_run" -- "${TEST_TEST_RUNID}"
+}
+
+run_for_suite "${testpattern}" "warmup_pass" "warmup"
+run_for_suite "${testpattern}" "measured_pass" "measure"
+```
+
+### Practical Guidance for Strategy Authors
+
+- Keep strategies small and declarative; put reusable app or infra logic in test scripts, not in the strategy.
+- Prefer `run_suite_commands` over manually invoking launcher internals.
+- Use `TEST_TEST_RUNID` consistently when naming logs or artifacts.
+- If you create multiple passes, always use distinct name tags.
+- If your strategy depends on a minimum JDK level or specific JVM feature, validate that early and fail clearly.
+- If you generate extra artifacts, write them under `TEST_OUT_DIR`.
+- If you add a new strategy, also add a `DESCRIPTION` file so `./run list-strategies` remains useful.
 
 ## Creating Profiles
 
