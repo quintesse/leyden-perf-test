@@ -165,10 +165,17 @@ Custom drivers can be created by copying `src/scripts/drivers/_template/`.
 
 ### Strategies
 
-Strategies define how tests are executed:
+A strategy controls the orchestration of a test run. It does not implement the application, infrastructure, or driver itself. Instead, it decides:
 
-- **normal** - Standard execution without special optimizations
-- **aot** - Performs training run, then restarts with AOT cache
+- which actions run for each selected test,
+- in what order they run,
+- whether a test runs once or multiple times,
+- and which strategy-specific environment variables are exported before those actions run.
+
+Built-in strategies:
+
+- **normal** - Runs one standard end-to-end pass for each selected test
+- **aot** - Runs a training pass to generate an AOT cache, then a measured pass that reuses that cache
 
 ```bash
 # Use specific strategy
@@ -181,7 +188,108 @@ Strategies define how tests are executed:
 ./run list-strategies
 ```
 
-If no strategy is specified, both "normal" and "aot" are used by default.
+If no strategy is specified, `./run test` currently runs both `normal` and `aot` by default.
+
+#### How strategies work
+
+In standard mode, `./run test` prepares the environment and then **sources** each selected strategy script from `src/scripts/strategies/<strategy>/strategy.sh`.
+
+Before a strategy is sourced, the harness has already:
+
+1. applied the selected profiles,
+2. called `setup_driver`,
+3. set `TEST_APP_JAVA` for the current JDK,
+4. created `TEST_OUT_DIR` for the current `j<VERSION>-<strategy>` output folder.
+
+Because the strategy is sourced into the current shell, it should start orchestrating immediately and can use helper functions that are already loaded from the harness.
+
+The two main helpers used by strategies are:
+
+- `run_for_suite "<test-pattern>" "<function>" ["<name-tag>"]`
+  - resolves the selected tests,
+  - sets per-test variables such as `TEST_SUITE_NAME`, `TEST_TEST_NAME`, `TEST_TEST_DIR`, and `TEST_TEST_RUNID`,
+  - calls the named function once per selected test,
+  - optionally appends a suffix to `TEST_TEST_RUNID`.
+
+- `run_suite_commands <cmd...> -- [args...]`
+  - runs the selected actions for the current test,
+  - supports paired commands such as `infra_start/infra_stop` and `app_start/app_stop`,
+  - automatically runs queued stop actions in reverse order,
+  - forwards arguments after `--` to each action.
+
+Typical action order looks like this:
+
+```bash
+run_suite_commands \
+    "infra_setup" \
+    "app_setup" \
+    "driver_setup" \
+    "infra_start/infra_stop" \
+    "driver_prime" \
+    "app_start/app_stop" \
+    "driver_run" -- "${TEST_TEST_RUNID}"
+```
+
+That sequence gives you the usual lifecycle of setup, start, prime, run, and automatic cleanup.
+
+#### Writing your own strategy
+
+Create a new directory:
+
+```text
+src/scripts/strategies/<strategy-name>/
+├── strategy.sh
+└── DESCRIPTION
+```
+
+Recommended pattern:
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+testpattern=$1
+
+run_once() {
+    local result=0
+
+    export TEST_STRAT_OPTS="${TEST_STRAT_OPTS:-}"
+
+    run_suite_commands \
+        "infra_setup" \
+        "app_setup" \
+        "driver_setup" \
+        "infra_start/infra_stop" \
+        "driver_prime" \
+        "app_start/app_stop" \
+        "driver_run" -- "${TEST_TEST_RUNID}" || result=$?
+
+    return $result
+}
+
+echo "   - Starting custom strategy..."
+run_for_suite "${testpattern}" "run_once"
+```
+
+For multi-pass strategies, use distinct run-id suffixes so artifacts do not collide:
+
+```bash
+run_for_suite "${testpattern}" "warmup_pass" "warmup"
+run_for_suite "${testpattern}" "measured_pass" "measure"
+```
+
+This is how the built-in `aot` strategy keeps its training and measured outputs separate.
+
+#### Strategy author guidelines
+
+- Keep strategies focused on orchestration only.
+- Put reusable app or infra behavior in test scripts, not in the strategy.
+- Use `TEST_TEST_RUNID` consistently when naming artifacts.
+- Write strategy-generated files under `TEST_OUT_DIR`.
+- If your strategy needs JVM-specific behavior, validate the JDK early.
+- `TEST_STRAT_OPTS` is a predefined strategy hook for passing extra Java runtime options into the provided application-launch helpers, so use it when your strategy needs to influence JVM startup.
+- Add a `DESCRIPTION` file so the strategy appears correctly in `./run list-strategies`.
 
 Custom strategies can be created by copying `src/scripts/strategies/_template/`.
 
