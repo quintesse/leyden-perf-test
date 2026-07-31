@@ -27,6 +27,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -lt 2 ]]; then
 	exit 2
 fi
 
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
 outputPath="test-results/manual_run"
@@ -59,11 +60,8 @@ while [[ $# -gt 0 ]]; do
 				echo "Error: Profile option specified but no value provided."
 				exit 4
 			fi
-			if [[ -f "${TEST_DIR}/profiles/$1.sh" ]]; then
-				profiles+=("$1")
-			else
-				echo "Error: Profile '$1' does not exist."
-				echo "Use './run list-profiles' to see the list of available profiles."
+			# Parse comma-separated profiles
+			if ! parse_profiles "$1" profiles; then
 				exit 4
 			fi
 			shift

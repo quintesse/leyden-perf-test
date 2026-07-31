@@ -19,6 +19,8 @@ strategy_file="${script_dir}/../test-${strategy}.yml"
 java_version="$3"
 
 testpat="${4:-all}"
-work_dir=${5:-/tmp/leyden-perf-test}
+profiles="${5:-}"
+work_dir=${6:-/tmp/leyden-perf-test}
 
-"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B ${work_dir}/qdup -S JAVA_VERSION="${java_version}" -S TEST="${testpat}" -S WORK_DIR="${work_dir}"
+# Build the qdup command with profiles as a state variable
+"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B ${work_dir}/qdup -S JAVA_VERSION="${java_version}" -S TEST="${testpat}" -S WORK_DIR="${work_dir}" -S PROFILES="${profiles}"

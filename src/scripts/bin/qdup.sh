@@ -33,6 +33,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
 
 hosts="local"
 resultTag=""
@@ -143,11 +144,8 @@ while [[ $# -gt 0 ]]; do
 				echo "Error: Profile option specified but no value provided."
 				exit 4
 			fi
-			if [[ -f "${TEST_DIR}/profiles/$1.sh" ]]; then
-				profiles+=("$1")
-			else
-				echo "Error: Profile '$1' does not exist."
-				echo "Use './run list-profiles' to see the list of available profiles."
+			# Parse comma-separated profiles and append to array
+			if ! parse_profiles "$1" profiles; then
 				exit 4
 			fi
 			shift
@@ -179,11 +177,18 @@ function run_qdup() {
 	export TEST_OUT_BASE=${outputPath:-/tmp/leyden-perf-test/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
 	mkdir -p "${TEST_OUT_BASE}"
 
+	# Convert profiles array to comma-separated string for qdup-test
+	local profiles_str=""
+	if [[ ${#profiles[@]} -gt 0 ]]; then
+		profiles_str=$(IFS=','; echo "${profiles[*]}")
+		echo "   - Using profiles: ${profiles_str}"
+	fi
+
 	local result=0
 	for test in "${tests[@]}"; do
 		for javaVersion in "${javaVersions[@]}"; do
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${TEST_OUT_BASE}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" "${TEST_OUT_BASE}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi
@@ -194,10 +199,6 @@ function run_qdup() {
 
 if [[ ${#strategies[@]} -eq 0 ]]; then
 	strategies=("normal")
-fi
-
-if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
-	profiles=("default")
 fi
 
 if [[ ${#javaVersions[@]} -eq 0 ]]; then
