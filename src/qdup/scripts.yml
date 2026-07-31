@@ -4,7 +4,6 @@ scripts:
   - upload: ${{TEST_DIR}}/profiles/ ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/src/ ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/tests/ ${{TEST_HOME}}/
-  - upload: ${{TEST_DIR}}/hwtweaked-run ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/hardware-tweaks.conf ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/local-settings.xml ${{TEST_HOME}}/
   - upload: ${{TEST_DIR}}/jbang ${{TEST_HOME}}/
