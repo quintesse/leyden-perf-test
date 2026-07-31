@@ -21,4 +21,8 @@ java_version="$3"
 testpat="${4:-all}"
 work_dir=${5:-/tmp/leyden-perf-test}
 
-"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B ${work_dir}/qdup -S JAVA_VERSION="${java_version}" -S TEST="${testpat}" -S WORK_DIR="${work_dir}"
+# Shift past the first 5 positional arguments to get profile states
+shift 5
+
+# Build the qdup command with profile states
+"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B ${work_dir}/qdup -S JAVA_VERSION="${java_version}" -S TEST="${testpat}" -S WORK_DIR="${work_dir}" "$@"

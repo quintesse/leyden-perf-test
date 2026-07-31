@@ -169,6 +169,29 @@ if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
 	echo "Info: Auto-activating 'default' profile"
 fi
 
+# Extract profile variables to pass to qDup
+function extract_profile_vars() {
+	local profile_file="$1"
+	
+	# Source the profile in a subshell and extract exported variables
+	# Filter out common system variables and PATH-like variables
+	(
+		# Start with clean environment
+		source "${profile_file}" 2>/dev/null || true
+		
+		# Export all variables and filter
+		export -p | grep -E '^declare -x TEST_' | while IFS= read -r line; do
+			# Extract variable name and value
+			# Format: declare -x VAR="value" or declare -x VAR=value
+			if [[ $line =~ declare\ -x\ ([^=]+)=\"(.*)\" ]]; then
+				echo "${BASH_REMATCH[1]}=${BASH_REMATCH[2]}"
+			elif [[ $line =~ declare\ -x\ ([^=]+)=(.*) ]]; then
+				echo "${BASH_REMATCH[1]}=${BASH_REMATCH[2]}"
+			fi
+		done
+	)
+}
+
 function run_qdup() {
 	local strategy="$1"
 	local testpat="$2"
@@ -179,11 +202,22 @@ function run_qdup() {
 	export TEST_OUT_BASE=${outputPath:-/tmp/leyden-perf-test/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
 	mkdir -p "${TEST_OUT_BASE}"
 
+	# Extract profile variables and build qDup state arguments
+	local profile_states=()
+	for profile in "${profiles[@]}"; do
+		echo "   - Extracting variables from profile: ${profile}"
+		while IFS='=' read -r var value; do
+			if [[ -n "${var}" ]]; then
+				profile_states+=("-S" "${var}=${value}")
+			fi
+		done < <(extract_profile_vars "${TEST_DIR}/profiles/${profile}.sh")
+	done
+
 	local result=0
 	for test in "${tests[@]}"; do
 		for javaVersion in "${javaVersions[@]}"; do
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${TEST_OUT_BASE}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${TEST_OUT_BASE}" "${profile_states[@]}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi

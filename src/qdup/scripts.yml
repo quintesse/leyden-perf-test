@@ -12,6 +12,12 @@ scripts:
 
   setup_infra:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
+    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
+    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
+    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
+    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
+    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
+    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.INFRA_HOST
@@ -19,6 +25,12 @@ scripts:
 
   run_infra:
     - sh: echo "Starting infrastructure on ${HOSTNAME}"
+    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
+    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
+    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
+    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
+    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
+    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} ${{TEST}} start
     - signal: INFRA_READY
     - wait-for: TEST_END
@@ -27,10 +39,22 @@ scripts:
 
   stop_infra:
     - sh: echo "Stopping infrastructure on ${HOSTNAME}"
+    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
+    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
+    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
+    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
+    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
+    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} ${{TEST}} stop
 
   setup_app:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
+    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
+    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
+    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
+    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
+    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
+    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.APP_HOST
@@ -40,6 +64,12 @@ scripts:
     - sh: echo "Application waiting for infrastructure on ${HOSTNAME}"
     - wait-for: INFRA_READY
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
+    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
+    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
+    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
+    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
+    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
+    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo "Starting application on ${HOSTNAME}"
     - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} ${{TEST}} start
     - signal: APP_READY
@@ -49,10 +79,22 @@ scripts:
 
   stop_app:
     - sh: echo "Stopping application on ${HOSTNAME}"
+    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
+    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
+    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
+    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
+    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
+    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: ${{APP_RUN_CMD}} app -o ${{APP_TEST_OUT}}${{RUN_TAG}} -j ${{JAVA_VERSION}} ${{TEST}} stop
 
   setup_driver:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
+    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
+    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
+    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
+    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
+    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
+    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.DRIVER_HOST
@@ -61,6 +103,12 @@ scripts:
   run_driver:
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
     - sh: export TEST_APP_HOST=${{APP_HOST}}
+    - sh: export TEST_JAVA_OPTS="${{TEST_JAVA_OPTS:-}}"
+    - sh: export TEST_DRIVER_CPUS="${{TEST_DRIVER_CPUS:-}}"
+    - sh: export TEST_DRIVER_DURATION="${{TEST_DRIVER_DURATION:-}}"
+    - sh: export TEST_DRIVER_RATE_LIMIT="${{TEST_DRIVER_RATE_LIMIT:-}}"
+    - sh: export TEST_PERF_CNT="${{TEST_PERF_CNT:-}}"
+    - sh: export TEST_INFRA_POSTGRES_MEM="${{TEST_INFRA_POSTGRES_MEM:-}}"
     - sh: echo "Preparing driver on ${HOSTNAME}"
     - sh: ${{DRIVER_RUN_CMD}} drive -o ${{DRIVER_TEST_OUT}}${{RUN_TAG}} -d ${{TEST_DRIVER}} ${{TEST}} prime
     - sh: echo "Driver waiting for application on ${HOSTNAME}"
