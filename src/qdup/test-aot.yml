@@ -15,9 +15,6 @@ roles:
       - run_infra:
         with:
           RUN_TAG: "training"
-      - stop_infra:
-        with:
-          RUN_TAG: "training"
 
       # SECOND COMPLETE CYCLE (for actual test run)
       - run_infra:
@@ -45,9 +42,6 @@ roles:
 
       # FIRST COMPLETE CYCLE (for AOT training)
       - run_app:
-        with:
-          RUN_TAG: "training"
-      - stop_app:
         with:
           RUN_TAG: "training"
 

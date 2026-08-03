@@ -1,0 +1,15 @@
+scripts:
+  subhello:
+  - sh: echo "Hello ${{NAME}}"
+  hello:
+  - script: subhello
+hosts:
+  local: LOCAL
+roles:
+  hello:
+    hosts:
+    - local
+    run-scripts:
+    - hello:
+      with:
+        NAME: World
