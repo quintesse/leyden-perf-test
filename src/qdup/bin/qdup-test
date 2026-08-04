@@ -21,9 +21,11 @@ java_version="$3"
 testpat="${4:-all}"
 profiles="${5:-}"
 work_dir="${6:-/tmp/leyden-perf-test}"
+result_dir="${7:-/tmp/leyden-perf-test/results}"
+qdup_temp="${8:-/tmp/qdup}"
 
-# Shift past the first 6 positional arguments to get additional states
-shift 6
+# Shift past the first 8 positional arguments to get additional states
+shift 8
 
 # Build the qdup command with caller-provided states
-"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${work_dir}/qdup" "$@"
+"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${qdup_temp}" "$@"

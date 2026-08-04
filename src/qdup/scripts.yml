@@ -46,6 +46,7 @@ scripts:
     - sh: echo "Starting infrastructure on ${HOSTNAME}"
     - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}}${{RUN_TAG}} -T ${{INFRA_TEST_HOME}}/tests/${{TEST_ROOT_DIR}} -P "${{PROFILES}}" ${{TEST}} start
     - signal: INFRA_READY
+    - set-signal: TEST_END 0
     - wait-for: TEST_END
     - set-signal: INFRA_READY 0
     - script: stop_infra
@@ -105,6 +106,7 @@ scripts:
 states:
   ROOT_DIR: ${{ENV.SCRIPT_DIR}}/../..
   WORK_DIR: /tmp/leyden-perf-test
+  RESULT_DIR: /tmp/leyden-perf-test/results
   TEST_HOME_BASE: ${{WORK_DIR}}/arena
   INFRA_TEST_HOME: ${{TEST_HOME_BASE}}/infra
   APP_TEST_HOME: ${{TEST_HOME_BASE}}/app
@@ -112,7 +114,7 @@ states:
   INFRA_RUN_CMD: ${{INFRA_TEST_HOME}}/run
   APP_RUN_CMD: ${{APP_TEST_HOME}}/run
   DRIVER_RUN_CMD: ${{DRIVER_TEST_HOME}}/run
-  TEST_OUT_BASE: ${{WORK_DIR}}/results
+  TEST_OUT_BASE: ${{RESULT_DIR}}
   INFRA_TEST_OUT: ${{TEST_OUT_BASE}}
   APP_TEST_OUT: ${{TEST_OUT_BASE}}
   DRIVER_TEST_OUT: ${{TEST_OUT_BASE}}
