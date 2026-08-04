@@ -186,8 +186,14 @@ function run_qdup() {
 
 	local qdupdir="${TEST_SRC_DIR}/qdup"
 
-	export TEST_OUT_BASE=${outputPath:-/tmp/leyden-perf-test/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
+	local_work_dir="${TEST_CACHE_DIR}/qdup"
+	mkdir -p "${local_work_dir}"
+
+	export TEST_OUT_BASE="${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}"
 	mkdir -p "${TEST_OUT_BASE}"
+
+	local_qdup_temp="/tmp/qdup-$$"
+	mkdir -p "${local_qdup_temp}"
 
 	# Convert profiles array to comma-separated string for qdup-test
 	local profiles_str=""
@@ -204,7 +210,8 @@ function run_qdup() {
 				"-S" "TEST_ROOT_DIR=${TEST_ROOT_DIR}"
 				"-S" "JAVA_VERSION=${javaVersion}"
 				"-S" "TEST=${test}"
-				"-S" "WORK_DIR=${TEST_OUT_BASE}"
+				"-S" "WORK_DIR=${local_work_dir}"
+				"-S" "RESULT_DIR=${TEST_OUT_BASE}"
 				"-S" "PROFILES=${profiles_str}"
 			)
 
@@ -214,7 +221,8 @@ function run_qdup() {
 			fi
 
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" "${TEST_OUT_BASE}" "${qdup_states[@]}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" \
+				"${local_work_dir}" "${TEST_OUT_BASE}" "${local_qdup_temp}" "${qdup_states[@]}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi
