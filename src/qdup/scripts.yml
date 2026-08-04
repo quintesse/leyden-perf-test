@@ -105,19 +105,17 @@ scripts:
 
 states:
   ROOT_DIR: ${{ENV.SCRIPT_DIR}}/../..
-  WORK_DIR: /tmp/leyden-perf-test
+  WORK_DIR: /tmp/leyden-perf-test/arena
   RESULT_DIR: /tmp/leyden-perf-test/results
-  TEST_HOME_BASE: ${{WORK_DIR}}/arena
-  INFRA_TEST_HOME: ${{TEST_HOME_BASE}}/infra
-  APP_TEST_HOME: ${{TEST_HOME_BASE}}/app
-  DRIVER_TEST_HOME: ${{TEST_HOME_BASE}}/driver
+  INFRA_TEST_HOME: ${{WORK_DIR}}/infra
+  APP_TEST_HOME: ${{WORK_DIR}}/app
+  DRIVER_TEST_HOME: ${{WORK_DIR}}/driver
   INFRA_RUN_CMD: ${{INFRA_TEST_HOME}}/run
   APP_RUN_CMD: ${{APP_TEST_HOME}}/run
   DRIVER_RUN_CMD: ${{DRIVER_TEST_HOME}}/run
-  TEST_OUT_BASE: ${{RESULT_DIR}}
-  INFRA_TEST_OUT: ${{TEST_OUT_BASE}}
-  APP_TEST_OUT: ${{TEST_OUT_BASE}}
-  DRIVER_TEST_OUT: ${{TEST_OUT_BASE}}
+  INFRA_TEST_OUT: ${{RESULT_DIR}}
+  APP_TEST_OUT: ${{RESULT_DIR}}
+  DRIVER_TEST_OUT: ${{RESULT_DIR}}
   TEST: _set_outside_
   JAVA_VERSION: 25
   TEST_DRIVER: oha

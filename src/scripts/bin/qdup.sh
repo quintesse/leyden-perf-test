@@ -186,7 +186,7 @@ function run_qdup() {
 
 	local qdupdir="${TEST_SRC_DIR}/qdup"
 
-	local_work_dir="${TEST_CACHE_DIR}/qdup"
+	local_work_dir="${TEST_CACHE_DIR}/qdup/arena"
 	mkdir -p "${local_work_dir}"
 
 	export TEST_OUT_BASE="${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}"
