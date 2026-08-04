@@ -20,7 +20,7 @@ java_version="$3"
 
 testpat="${4:-all}"
 profiles="${5:-}"
-work_dir="${6:-/tmp/leyden-perf-test}"
+work_dir="${6:-/tmp/leyden-perf-test/arena}"
 result_dir="${7:-/tmp/leyden-perf-test/results}"
 qdup_temp="${8:-/tmp/qdup}"
 
