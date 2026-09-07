@@ -5,7 +5,7 @@ script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export ROOT_DIR=${script_dir}/../../..
 
-if [ -z "$1" ]; then
+if [ -z "${1:-}" ]; then
     echo "Usage: $0 [additional qdup options] <qdup_yaml_file>..."
     exit 1
 fi

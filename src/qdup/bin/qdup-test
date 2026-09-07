@@ -3,6 +3,11 @@ set -uo pipefail
 
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+if [ "$#" -lt 3 ]; then
+    echo "Usage: $0 <hosts_file> <strategy> <java_version> [test_pattern] [profiles] [work_dir] [result_dir] [qdup_temp] [options]..."
+    exit 1
+fi
+
 if [[ "$1" == /* || "$1" == .* ]]; then
     # Path to a hosts yml file
     hosts_file="$1"
