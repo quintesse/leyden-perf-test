@@ -43,81 +43,78 @@ teardown() {
 }
 
 @test "qdup requires Java version to be specified" {
-    run ./run qdup tests-dummy/dummy/empty
+    run ./run qdup -T tests-dummy dummy/empty
     [ "$status" -eq 4 ]
     [[ "$output" =~ "No Java versions specified" ]]
 }
 
 @test "qdup can run dummy/empty test with Java 25" {
-    skip "Requires qDup binary and full test environment"
-    run ./run qdup -j 25 -o "${TEST_OUTPUT_DIR}" tests-dummy/dummy/empty
+    run ./run qdup -j 25 -o "${TEST_OUTPUT_DIR}" -T tests-dummy dummy/empty
     [ "$status" -eq 0 ]
 }
 
 @test "qdup creates output directory" {
-    skip "Requires qDup binary and full test environment"
-    ./run qdup -j 25 -o "${TEST_OUTPUT_DIR}/results" tests-dummy/dummy/empty
+    ./run qdup -j 25 -o "${TEST_OUTPUT_DIR}/results" -T tests-dummy dummy/empty
     [ -d "${TEST_OUTPUT_DIR}/results" ]
 }
 
 @test "qdup respects custom output directory" {
-    skip "Requires qDup binary and full test environment"
     custom_dir="${TEST_OUTPUT_DIR}/custom-output"
-    ./run qdup -j 25 -o "${custom_dir}" tests-dummy/dummy/empty
+    ./run qdup -j 25 -o "${custom_dir}" -T tests-dummy dummy/empty
     [ -d "${custom_dir}" ]
 }
 
 @test "qdup accepts profile option" {
-    run ./run qdup -j 25 -P lowmem tests-dummy/dummy/empty
+    run ./run qdup -j 25 -P lowmem -T tests-dummy dummy/empty
     # Should not fail on profile validation
     [[ ! "$output" =~ "Profile 'lowmem' does not exist" ]]
 }
 
 @test "qdup rejects non-existent profile" {
-    run ./run qdup -j 25 -P nonexistent tests-dummy/dummy/empty
+    run ./run qdup -j 25 -P nonexistent -T tests-dummy dummy/empty
     [ "$status" -eq 4 ]
     [[ "$output" =~ "Profile 'nonexistent' does not exist" ]]
 }
 
 @test "qdup accepts driver option" {
-    run ./run qdup -j 25 -d oha tests-dummy/dummy/empty
+    run ./run qdup -j 25 -d oha -T tests-dummy dummy/empty
     # Should not fail on driver validation
     [[ ! "$output" =~ "Test driver 'oha' does not exist" ]]
 }
 
 @test "qdup rejects non-existent driver" {
-    run ./run qdup -j 25 -d nonexistent tests-dummy/dummy/empty
+    run ./run qdup -j 25 -d nonexistent -T tests-dummy dummy/empty
     [ "$status" -eq 4 ]
     [[ "$output" =~ "Test driver 'nonexistent' does not exist" ]]
 }
 
 @test "qdup accepts strategy option" {
-    run ./run qdup -j 25 -s normal tests-dummy/dummy/empty
+    run ./run qdup -j 25 -s normal -T tests-dummy dummy/empty
     # Should not fail on strategy validation
     [[ ! "$output" =~ "Strategy 'normal' does not exist" ]]
 }
 
 @test "qdup rejects non-existent strategy" {
-    run ./run qdup -j 25 -s nonexistent tests-dummy/dummy/empty
+    run ./run qdup -j 25 -s nonexistent -T tests-dummy dummy/empty
     [ "$status" -eq 4 ]
     [[ "$output" =~ "Strategy 'nonexistent' does not exist" ]]
 }
 
 @test "qdup accepts hosts option" {
-    run ./run qdup -j 25 -H local tests-dummy/dummy/empty
+    run ./run qdup -j 25 -H local -T tests-dummy dummy/empty
     # Should not fail on hosts validation (local is default)
     [ "$status" -ne 4 ] || [[ ! "$output" =~ "Hosts option" ]]
 }
 
 @test "qdup accepts multiple Java versions" {
     skip "Requires qDup binary and full test environment"
-    run ./run qdup -j 25,26 -o "${TEST_OUTPUT_DIR}" tests-dummy/dummy/empty
+    run ./run qdup -j 25,26 -o "${TEST_OUTPUT_DIR}" -T tests-dummy dummy/empty
     [ "$status" -eq 0 ]
 }
 
 @test "qdup accepts tag option" {
     skip "Requires qDup binary and full test environment"
-    run ./run qdup -j 25 -t test-tag -o "${TEST_OUTPUT_DIR}" tests-dummy/dummy/empty
+    run ./run qdup -j 25 -t test-tag -o "${TEST_OUTPUT_DIR}" -T tests-dummy dummy/empty
     [ "$status" -eq 0 ]
     # Output directory should contain the tag
     [[ -d "${TEST_OUTPUT_DIR}"*-test-tag ]] || [[ "$output" =~ "test-tag" ]]
