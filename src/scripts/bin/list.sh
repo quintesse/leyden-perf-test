@@ -12,7 +12,7 @@ fi
 if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
 	echo "This command lists all available test suites and tests."
 	echo "Usage: ./run list [<options>] [<pattern>]"
-	echo "  -T|--tests-root <path> Path to the test root folder (default: ${TEST_DIR}/tests)."
+	echo "  -C|--catalog <name>    Name of the tests catalog to use (default: tests)."
 	echo "  If a pattern is provided, only tests matching the pattern are listed."
 	echo "  The pattern can be in the form of 'suite/*' to list all tests in a suite,"
 	echo "  or 'suite/test' to list a specific test. Partial matches are supported."
@@ -22,17 +22,17 @@ fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
-testsRootDir="${TEST_DIR}/tests"
+testsCatalog="tests"
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
-		-T|--tests-root)
+		-C|--catalog)
 			shift
 			if [[ $# -eq 0 ]]; then
-				echo "Error: Tests root option specified but no path provided."
+				echo "Error: Tests catalog option specified but no value provided."
 				exit 4
 			fi
-			testsRootDir="$1"
+			testsCatalog="$1"
 			shift
 			;;
 		-*)
@@ -45,7 +45,8 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-export TEST_ROOT_DIR="${testsRootDir}"
+export TEST_CATALOG="${testsCatalog}"
+export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
 
 if [[ $# -gt 0 ]]; then
 	tests=$(select_tests "$1")

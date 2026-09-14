@@ -25,7 +25,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "  -s|--strategy <strategy>  Test strategy to use (can be specified multiple times, comma-separated)."
 	echo "  -P|--profile <profile>    Test profile to use (can be specified multiple times)"
 	echo "  --hw-tweaks               Enable hardware tweaks on apphost for better performance measurements (requires sudo)"
-	echo "  -T|--tests-root <path>    Path to the test root folder (default: ./tests)"
+	echo "  -C|--catalog <name>       Name of the tests catalog to use (default: tests)"
 	echo ""
 	echo "This script can be used to run tests."
 	echo ""
@@ -43,7 +43,7 @@ outputPath=""
 javaVersions=()
 strategies=()
 profiles=()
-testsRootDir="${TEST_DIR}/tests"
+testsCatalog="tests"
 enable_hw_tweaks=false
 export TEST_DRIVER="oha"
 
@@ -58,13 +58,13 @@ while [[ $# -gt 0 ]]; do
             hosts="$1"
             shift
             ;;
-        -T|--tests-root)
+        -C|--catalog)
 			shift
 			if [[ $# -eq 0 ]]; then
-				echo "Error: Tests root option specified but no path provided."
+				echo "Error: Tests catalog option specified but no value provided."
 				exit 4
 			fi
-			testsRootDir="$1"
+			testsCatalog="$1"
 			shift
 			;;
         -t|--tag)
@@ -166,7 +166,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-export TEST_ROOT_DIR="${testsRootDir}"
+export TEST_CATALOG="${testsCatalog}"
+export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
 
 if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
 	profiles=("default")
@@ -207,8 +208,8 @@ function run_qdup() {
 		for javaVersion in "${javaVersions[@]}"; do
 			local qdup_states=(
 				"-S" "TEST_DIR=${TEST_DIR}"
-				"-S" "TEST_ROOT_DIR=${TEST_ROOT_DIR}"
 				"-S" "JAVA_VERSION=${javaVersion}"
+				"-S" "TEST_CATALOG=${TEST_CATALOG}"
 				"-S" "TEST=${test}"
 				"-S" "WORK_DIR=${local_work_dir}"
 				"-S" "RESULT_DIR=${TEST_OUT_BASE}"
@@ -221,8 +222,8 @@ function run_qdup() {
 			fi
 
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${test}" "${profiles_str}" \
-				"${local_work_dir}" "${TEST_OUT_BASE}" "${local_qdup_temp}" "${qdup_states[@]}"
+			echo "$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${local_qdup_temp}" "${qdup_states[@]}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${local_qdup_temp}" "${qdup_states[@]}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi

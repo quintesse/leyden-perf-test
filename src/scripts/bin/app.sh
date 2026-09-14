@@ -19,7 +19,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "  -o, --output <path>    Path to the output folder."
 	echo "  -j, --java <version>   Java version to use for the test application."
 	echo "  -P|--profile <profile> Test profile to use (can be specified multiple times)"
-	echo "  -T|--tests-root <path> Path to the test root folder (default: ./tests)."
+	echo "  -C|--catalog <name>    Name of the tests catalog to use (default: tests)."
 	echo ""
 	echo "This script can be used to manually start/stop a test application, and is normally"
 	echo "run with a <test-suite>/<test-name> argument referring to a single test. It is"
@@ -37,7 +37,7 @@ source "${TEST_SRC_DIR}"/scripts/infrafuncs.sh
 
 outputPath="test-results/manual_run"
 profiles=()
-testsRootDir="${TEST_DIR}/tests"
+testsCatalog="tests"
 export TEST_APP_JAVA=""
 
 while [[ $# -gt 0 ]]; do
@@ -51,13 +51,13 @@ while [[ $# -gt 0 ]]; do
             outputPath="$1"
             shift
             ;;
-        -T|--tests-root)
+        -C|--catalog)
 			shift
 			if [[ $# -eq 0 ]]; then
-				echo "Error: Tests root option specified but no path provided."
+				echo "Error: Tests catalog option specified but no value provided."
 				exit 4
 			fi
-			testsRootDir="$1"
+			testsCatalog="$1"
 			shift
 			;;
         -j|--java)
@@ -91,7 +91,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-export TEST_ROOT_DIR="${testsRootDir}"
+export TEST_CATALOG="${testsCatalog}"
+export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
 
 javaVersion="${TEST_APP_JAVA:-Unknown}"
 

@@ -33,7 +33,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "  -d|--driver <driver>      Test driver to use (default: oha)"
 	echo "  -s|--strategy <strategy>  Test strategy to use (can be specified multiple times, comma-separated)."
 	echo "  -P|--profile <profile>    Test profile to use (can be specified multiple times)"
-	echo "  -T|--tests-root <path>    Path to the test root folder (default: ./tests)"
+	echo "  -C|--catalog <name>       Name of the tests catalog to use (default: tests)"
 	echo "  --hw-tweaks               Apply hardware tweaks before running tests (requires sudo, Linux only)"
 	echo ""
 	echo "This script can be used to run tests."
@@ -53,7 +53,7 @@ outputPath=""
 javaVersions=()
 strategies=()
 profiles=()
-testsRootDir="${TEST_DIR}/tests"
+testsCatalog="tests"
 export TEST_DRIVER="oha"
 HW_TWEAKS_ENABLED=false
 
@@ -68,13 +68,13 @@ while [[ $# -gt 0 ]]; do
             resultTag="$1"
             shift
             ;;
-        -T|--tests-root)
+        -C|--catalog)
 			shift
 			if [[ $# -eq 0 ]]; then
-				echo "Error: Tests root option specified but no path provided."
+				echo "Error: Tests catalog option specified but no value provided."
 				exit 4
 			fi
-			testsRootDir="$1"
+			testsCatalog="$1"
 			shift
 			;;
         --jdk-tag)
@@ -147,11 +147,8 @@ while [[ $# -gt 0 ]]; do
 				echo "Error: Profile option specified but no value provided."
 				exit 4
 			fi
-			if [[ -f "${TEST_DIR}/profiles/$1.sh" ]]; then
-				profiles+=("$1")
-			else
-				echo "Error: Profile '$1' does not exist."
-				echo "Use './run list-profiles' to see the list of available profiles."
+			# Parse comma-separated profiles
+			if ! parse_profiles "$1" profiles; then
 				exit 4
 			fi
 			shift
@@ -170,7 +167,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-export TEST_ROOT_DIR="${testsRootDir}"
+export TEST_CATALOG="${testsCatalog}"
+export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
 
 export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
 mkdir -p "${TEST_OUT_BASE}"
@@ -192,8 +190,8 @@ if [[ ${#javaVersions[@]} -eq 0 ]]; then
 fi
 
 # Validate that the test pattern matches at least one test
-if ! "${TEST_DIR}/run" list -T "${testsRootDir}" "${testPat}" > /dev/null 2>&1; then
-	"${TEST_DIR}/run" list -T "${testsRootDir}" "${testPat}"
+if ! "${TEST_DIR}/run" list -C "${testsCatalog}" "${testPat}" > /dev/null 2>&1; then
+	"${TEST_DIR}/run" list -C "${testsCatalog}" "${testPat}"
 	exit 1
 fi
 

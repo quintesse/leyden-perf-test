@@ -20,7 +20,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "  -j, --java <version>   Java version used to tag the output folder."
 	echo "  -d|--driver <driver>   Test driver to use (default: oha)."
 	echo "  -P|--profile <profile> Test profile to use (can be specified multiple times)."
-	echo "  -T|--tests-root <path> Path to the test root folder (default: ./tests)."
+	echo "  -C|--catalog <name>    Name of the tests catalog to use (default: tests)."
 	echo ""
 	echo "This script can be used to manually run the test driver against an already running"
 	echo "test application. It is normally run with a <test-suite>/<test-name> argument"
@@ -37,7 +37,7 @@ source "${TEST_SRC_DIR}"/scripts/driverfuncs.sh
 
 outputPath="test-results/manual_run"
 profiles=()
-testsRootDir="${TEST_DIR}/tests"
+testsCatalog="tests"
 export TEST_APP_JAVA=""
 export TEST_DRIVER="oha"
 
@@ -52,13 +52,13 @@ while [[ $# -gt 0 ]]; do
             outputPath="$1"
             shift
             ;;
-        -T|--tests-root)
+        -C|--catalog)
 			shift
 			if [[ $# -eq 0 ]]; then
-				echo "Error: Tests root option specified but no path provided."
+				echo "Error: Tests catalog option specified but no value provided."
 				exit 4
 			fi
-			testsRootDir="$1"
+			testsCatalog="$1"
 			shift
 			;;
         -d|--driver)
@@ -97,7 +97,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-export TEST_ROOT_DIR="${testsRootDir}"
+export TEST_CATALOG="${testsCatalog}"
+export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
 
 _setup_test_output_dir "" "${outputPath}"
 export TEST_TEST_RUNID

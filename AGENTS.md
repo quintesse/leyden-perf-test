@@ -287,7 +287,7 @@ Options:
   -P|--profile <profile>    Configuration profile
   -t|--tag <tag>            Result folder tag
   -o|--output <path>        Output directory
-  -T|--tests-root <path>    Test root directory
+  -C|--catalog <name>       Test catalog name
 ```
 
 ### Examples

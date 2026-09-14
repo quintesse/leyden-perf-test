@@ -23,14 +23,10 @@ strategy_file="${script_dir}/../test-${strategy}.yml"
 
 java_version="$3"
 
-testpat="${4:-all}"
-profiles="${5:-}"
-work_dir="${6:-/tmp/leyden-perf-test/arena}"
-result_dir="${7:-/tmp/leyden-perf-test/results}"
-qdup_temp="${8:-/tmp/qdup}"
+qdup_temp="${4:-/tmp/qdup}"
 
-# Shift past the first 8 positional arguments to get additional states
-shift 8
+# Shift past the first 4 positional arguments to get additional states
+shift 4
 
 # Build the qdup command with caller-provided states
 "$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${qdup_temp}" "$@"
