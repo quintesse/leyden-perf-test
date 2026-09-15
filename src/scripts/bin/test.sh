@@ -197,7 +197,7 @@ if ! "${TEST_DIR}/run" list -C "${testsCatalog}" "${testPat}" > /dev/null 2>&1; 
 fi
 
 {
-	"${TEST_DIR}/run" list -T "${testsRootDir}" "${testPat}"
+	"${TEST_DIR}/run" list -C "${testsCatalog}" "${testPat}"
 	echo "Test driver: ${TEST_DRIVER}"
 	echo "Selected JDKs: ${javaVersions[*]}"
 	echo "Selected strategies: ${strategies[*]}"

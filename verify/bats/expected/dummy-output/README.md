@@ -22,7 +22,7 @@ for strategy in normal aot; do
     log_file="${tmp_dir}/${case_name}.log"
     fixture="verify/bats/expected/dummy-output/${case_name}.txt"
 
-    ./run test -j 25 -d dummy -s "${strategy}" -T tests-dummy "${test_id}" -o "${out_dir}" > "${log_file}" 2>&1
+    ./run test -j 25 -d dummy -s "${strategy}" -C tests-dummy "${test_id}" -o "${out_dir}" > "${log_file}" 2>&1
     grep -E '^[^[:space:]]' "${log_file}" > "${fixture}"
 
     rm -rf "${tmp_dir}"
@@ -43,7 +43,7 @@ out_dir="${tmp_dir}/${case_name}-results"
 log_file="${tmp_dir}/${case_name}.log"
 fixture="verify/bats/expected/dummy-output/${case_name}.txt"
 
-./run test -j 25 -d dummy -s "${strategy}" -T tests-dummy "${test_id}" -o "${out_dir}" > "${log_file}" 2>&1
+./run test -j 25 -d dummy -s "${strategy}" -C tests-dummy "${test_id}" -o "${out_dir}" > "${log_file}" 2>&1
 grep -E '^[^[:space:]]' "${log_file}" > "${fixture}"
 rm -rf "${tmp_dir}"
 ```

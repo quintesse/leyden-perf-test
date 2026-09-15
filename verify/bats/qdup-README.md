@@ -89,7 +89,7 @@ When adding new tests:
     skip "Requires qDup binary and full test environment"
     
     # Run the command
-    run ./run qdup -j 25 -o "${TEST_OUTPUT_DIR}" -T tests-dummy dummy/empty
+    run ./run qdup -j 25 -o "${TEST_OUTPUT_DIR}" -C tests-dummy dummy/empty
     
     # Validate exit code
     [ "$status" -eq 0 ]

@@ -30,9 +30,9 @@ assert_case_output_matches_fixture() {
   expected_file="${REPO_ROOT}/verify/bats/expected/dummy-output/${case_name}.txt"
 
   if command -v timeout >/dev/null 2>&1; then
-    timeout --foreground "${VERIFY_SETUP_TIMEOUT_SEC}" bash -c 'cd "$1" && ./run test -j 25 -d dummy -s "$2" -T tests-dummy "$3" -o "$4" > "$5" 2>&1' _ "${REPO_ROOT}" "${strategy}" "${test_id}" "${out_dir}" "${log_file}"
+    timeout --foreground "${VERIFY_SETUP_TIMEOUT_SEC}" bash -c 'cd "$1" && ./run test -j 25 -d dummy -s "$2" -C tests-dummy "$3" -o "$4" > "$5" 2>&1' _ "${REPO_ROOT}" "${strategy}" "${test_id}" "${out_dir}" "${log_file}"
   else
-    bash -c 'cd "$1" && ./run test -j 25 -d dummy -s "$2" -T tests-dummy "$3" -o "$4" > "$5" 2>&1' _ "${REPO_ROOT}" "${strategy}" "${test_id}" "${out_dir}" "${log_file}"
+    bash -c 'cd "$1" && ./run test -j 25 -d dummy -s "$2" -C tests-dummy "$3" -o "$4" > "$5" 2>&1' _ "${REPO_ROOT}" "${strategy}" "${test_id}" "${out_dir}" "${log_file}"
   fi
 
   grep -E '^[^[:space:]]' "${log_file}" > "${actual_file}"
