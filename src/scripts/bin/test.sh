@@ -42,6 +42,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	exit 2
 fi
 
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/infrafuncs.sh
@@ -144,12 +145,12 @@ while [[ $# -gt 0 ]]; do
         -P|--profile)
 			shift
 			if [[ $# -eq 0 ]]; then
-				echo "Error: Profile option specified but no value provided."
-				exit 4
-			fi
-			# Parse comma-separated profiles
-			if ! parse_profiles "$1" profiles; then
-				exit 4
+				echo "Warn: Profile option specified but no value provided."
+			else
+				# Parse comma-separated profiles
+				if ! parse_profiles "$1" profiles; then
+					exit 4
+				fi
 			fi
 			shift
 			;;

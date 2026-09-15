@@ -78,12 +78,12 @@ while [[ $# -gt 0 ]]; do
         -P|--profile)
 			shift
 			if [[ $# -eq 0 ]]; then
-				echo "Error: Profile option specified but no value provided."
-				exit 4
-			fi
-			# Parse comma-separated profiles
-			if ! parse_profiles "$1" profiles; then
-				exit 4
+				echo "Warn: Profile option specified but no value provided."
+			else
+				# Parse comma-separated profiles
+				if ! parse_profiles "$1" profiles; then
+					exit 4
+				fi
 			fi
 			shift
 			;;
