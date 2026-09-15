@@ -380,8 +380,10 @@ function _setup_test_output_dir() {
 		else
 			export TEST_OUT_DIR=${TEST_OUT_BASE}
 		fi
-		mkdir -p "${TEST_OUT_DIR}"
-		echo "   - Created test output folder ${TEST_OUT_DIR}"
+		if [[ ! -d "${TEST_OUT_DIR}" ]]; then
+			mkdir -p "${TEST_OUT_DIR}"
+			echo "   - Created test output folder ${TEST_OUT_DIR}"
+		fi
 	fi
 }
 
