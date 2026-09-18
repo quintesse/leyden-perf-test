@@ -13,7 +13,7 @@ fi
 
 if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "This command runs the driver (performance tests) against a running test application."
-	echo "Usage: ./run drive [<options>] <test-suite>/<test-name>"
+	echo "Usage: ./run drive [<options>] <test-suite>/<test-name> (setup|prime|run)"
 	echo ""
 	echo "Options:"
 	echo "  -o, --output <path>    Path to the output folder."
@@ -108,15 +108,17 @@ for profile in "${profiles[@]}"; do
 	source "${TEST_DIR}/profiles/${profile}.sh"
 done
 
+testPat=${1:-all}
+
 case "${2:-}" in
 	setup)
-		setup_driver
+		run_suite_commands_for_tests "${testPat}" "Setting up ${TEST_DRIVER} test driver for" "driver_setup"
 		;;
 	prime)
-		run_suite_commands_for_tests "${1:-all}" "Priming ${TEST_DRIVER} test driver for" "driver_prime"
+		run_suite_commands_for_tests "${testPat}" "Priming ${TEST_DRIVER} test driver for" "driver_prime"
 		;;
 	run)
-		run_suite_commands_for_tests "${1:-all}" "Running tests using ${TEST_DRIVER} driver for" "driver_run"
+		run_suite_commands_for_tests "${testPat}" "Running tests using ${TEST_DRIVER} driver for" "driver_run"
 		;;
 	*)
 		echo "ERROR: Second argument must be 'setup', 'prime' or 'run'."
