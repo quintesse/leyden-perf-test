@@ -276,8 +276,6 @@ if [[ "${HW_TWEAKS_ENABLED}" == "true" ]]; then
 	echo ""
 fi
 
-setup_driver
-
 echo "   - Selected java versions ${javaVersions[*]}"
 for javaVersion in "${javaVersions[@]}"; do
 	echo "   - Running tests with Java version ${javaVersion}"
