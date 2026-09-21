@@ -361,7 +361,7 @@ function detectJavaVersion() {
 	fi
 }
 
-# Sets up the test output directories if not already set.
+# Sets up the test output directories.
 # Arguments:
 #   subdir      - subdirectory name to create under TEST_OUT_BASE
 #   outputPath  - (optional) override for TEST_OUT_BASE path
@@ -373,17 +373,17 @@ function _setup_test_output_dir() {
 	local subdir="${1:-}"
 	local outputPath="${2:-}"
 	local resultTag="${3:-}"
-	if [[ ! -v TEST_OUT_DIR || -z "${TEST_OUT_DIR}" ]]; then
+	if [[ ! -v TEST_OUT_BASE || -z "${TEST_OUT_BASE}" ]]; then
 		export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
-		if [[ -n "${subdir}" ]]; then
-			export TEST_OUT_DIR=${TEST_OUT_BASE}/${subdir}
-		else
-			export TEST_OUT_DIR=${TEST_OUT_BASE}
-		fi
-		if [[ ! -d "${TEST_OUT_DIR}" ]]; then
-			mkdir -p "${TEST_OUT_DIR}"
-			echo "   - Created test output folder ${TEST_OUT_DIR}"
-		fi
+	fi
+	if [[ -n "${subdir}" ]]; then
+		export TEST_OUT_DIR=${TEST_OUT_BASE}/${subdir}
+	else
+		export TEST_OUT_DIR=${TEST_OUT_BASE}
+	fi
+	if [[ ! -d "${TEST_OUT_DIR}" ]]; then
+		mkdir -p "${TEST_OUT_DIR}"
+		echo "   - Created test output folder ${TEST_OUT_DIR}"
 	fi
 }
 
