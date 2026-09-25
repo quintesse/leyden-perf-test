@@ -32,14 +32,23 @@ infra_stop() {
 driver_setup() {
     echo "Dummy test driver_setup action"
     echo "setup" >> "${TEST_OUT_DIR:-.}/test-driver-${TEST_TEST_RUNID}.txt"
+    if [[ "${TEST_DRIVER}" == "dummy" ]]; then
+        setup_driver
+    fi
 }
 
 driver_prime() {
     echo "Dummy test driver_prime action"
     echo "prime" >> "${TEST_OUT_DIR:-.}/test-driver-${TEST_TEST_RUNID}.txt"
+    if [[ "${TEST_DRIVER}" == "dummy" ]]; then
+        prime_driver
+    fi
 }
 
 driver_run() {
     echo "Dummy test driver_run action"
     echo "run" >> "${TEST_OUT_DIR:-.}/test-driver-${TEST_TEST_RUNID}.txt"
+    if [[ "${TEST_DRIVER}" == "dummy" ]]; then
+        run_driver
+    fi
 }
