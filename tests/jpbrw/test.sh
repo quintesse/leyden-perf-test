@@ -1,14 +1,12 @@
 
-TESTID=${1:-}
-
 app_jar="${TEST_TEST_CACHE}/wrapper/target/quarkus-app/quarkus-run.jar"
 
 app_start() {
-    start_app "${TESTID}" "${TEST_TEST_CACHE}/wrapper/target/quarkus-app/quarkus-run.jar"
+    start_app "${TEST_TEST_RUNID}" "${TEST_TEST_CACHE}/wrapper/target/quarkus-app/quarkus-run.jar"
 }
 
 app_stop() {
-    stop_app "${TESTID}"
+    stop_app "${TEST_TEST_RUNID}"
 }
 
 app_setup() {

@@ -1,6 +1,4 @@
 
-TESTID=${1:-}
-
 app_setup() {
     echo "Empty test app_setup action"
     echo "setup" >> "${TEST_OUT_DIR:-.}/test-app-${TEST_TEST_RUNID}.txt"

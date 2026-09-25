@@ -1,6 +1,4 @@
 
-TESTID=${1:-}
-
 # Starts a native test application in background.
 # The PID of the application is written to a file in the TEST_OUT_DIR.
 # Arguments:
@@ -39,7 +37,7 @@ function start_app_native() {
 app_jar="${TEST_TEST_CACHE}/repo/quarkus3/target/quarkus3-runner"
 
 app_start() {
-    start_app_native "${TESTID}" "${app_jar}"
+    start_app_native "${TEST_TEST_RUNID}" "${app_jar}"
 }
 
 app_setup() {

@@ -4,8 +4,6 @@
 # TEST_SUITE_NAME, TEST_SUITE_DIR, TEST_SUITE_CACHE, TEST_TEST_NAME, TEST_TEST_DIR
 # and TEST_TEST_RUNID.
 
-TESTID=${1:-}
-
 # The app_setup action manages any work that needs to be done to prepare a
 # test for execution, again such as cloning repositories and compiling code.
 # This action is optional and can be removed if not needed

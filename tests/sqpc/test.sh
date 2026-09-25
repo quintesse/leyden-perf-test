@@ -1,8 +1,6 @@
 
-TESTID=${1:-}
-
 app_stop() {
-    stop_app "${TESTID}"
+    stop_app "${TEST_TEST_RUNID}"
 }
 
 infra_setup() {

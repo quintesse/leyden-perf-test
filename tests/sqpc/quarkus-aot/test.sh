@@ -1,10 +1,8 @@
 
-TESTID=${1:-}
-
 app_jar="${TEST_TEST_CACHE}/repo/quarkus3/target/quarkus-app/quarkus-run.jar"
 
 app_start() {
-    start_app "${TESTID}" "${app_jar}"
+    start_app "${TEST_TEST_RUNID}" "${app_jar}"
 }
 
 app_setup() {

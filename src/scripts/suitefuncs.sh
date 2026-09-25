@@ -161,8 +161,7 @@ function run_for_suite() {
 #   0 on success, or exit code of the command that caused abort
 function run_suite_commands_for_tests() {
 	local testpat=$1
-	local msg=$2
-	local cmds=("${@:3}")
+	local cmds=("${@:2}")
 
 	if [[ ${#cmds[@]} -eq 0 ]]; then
 		return 0

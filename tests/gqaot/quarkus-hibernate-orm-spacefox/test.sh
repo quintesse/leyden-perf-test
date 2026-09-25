@@ -1,12 +1,10 @@
 
-TESTID=${1:-}
-
 PG_CONTAINER_NAME="gqaot-spacefox-db"
 
 app_jar="${TEST_TEST_CACHE}/repo/quarkus-hibernate-orm-spacefox/target/quarkus-app/quarkus-run.jar"
 
 app_start() {
-    start_app "${TESTID}" "${app_jar}"
+    start_app "${TEST_TEST_RUNID}" "${app_jar}"
 }
 
 infra_setup() {

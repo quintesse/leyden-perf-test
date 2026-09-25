@@ -1,4 +1,2 @@
 
-
-TESTID=${1:-}
-
+# Empty

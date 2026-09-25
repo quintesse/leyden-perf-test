@@ -4,8 +4,6 @@
 # TEST_SUITE_NAME, TEST_SUITE_DIR, TEST_SUITE_CACHE, TEST_TEST_NAME, TEST_TEST_DIR,
 # TEST_TEST_CACHE and TEST_TEST_RUNID.
 
-TESTID=${1:-}
-
 # The app_setup action manages any work that needs to be done to prepare the
 # application being tested for execution, such as compiling the code.
 # This action is optional and can be removed if not needed
@@ -18,7 +16,7 @@ app_setup() {
 # This action is optional and can be removed if not needed.
 app_start() {
     # Typical implementation:
-    #start_app "${TESTID}" "path/to/your/app.jar"
+    #start_app "${TEST_TEST_RUNID}" "path/to/your/app.jar"
     :
 }
 
@@ -26,7 +24,7 @@ app_start() {
 # This action is optional and can be removed if not needed.
 app_stop() {
     # Typical implementation:
-    stop_app "${TESTID}"
+    stop_app "${TEST_TEST_RUNID}"
 }
 
 # The infra_setup action manages any one-time setup work needed for the

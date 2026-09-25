@@ -4,8 +4,6 @@
 # TEST_SUITE_NAME, TEST_SUITE_DIR, TEST_SUITE_CACHE, TEST_TEST_NAME, TEST_TEST_DIR
 # and TEST_TEST_RUNID.
 
-TESTID=${1:-}
-
 app_setup() {
     echo "Dummy global app_setup action"
     echo "setup" >> "${TEST_OUT_DIR:-.}/global-app-${TEST_TEST_RUNID}.txt"

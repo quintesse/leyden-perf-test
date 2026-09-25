@@ -1,8 +1,6 @@
 
-TESTID=${1:-}
-
 app_stop() {
-    stop_app "${TESTID}"
+    stop_app "${TEST_TEST_RUNID}"
 }
 
 # Helper function for gqaot tests with database infrastructure

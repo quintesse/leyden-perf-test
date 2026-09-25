@@ -503,7 +503,7 @@ app_setup() {
 app_start() {
     # Start the application under test
     # Typical implementation:
-    # start_app "${TESTID}" "path/to/your/app.jar"
+    # start_app "${TEST_TEST_RUNID}" "path/to/your/app.jar"
 }
 
 # The app_stop action stops the application that was tested.
@@ -511,7 +511,7 @@ app_start() {
 app_stop() {
     # Clean shutdown of application
     # Typical implementation:
-    # stop_app "${TESTID}"
+    # stop_app "${TEST_TEST_RUNID}"
 }
 
 # The infra_setup action manages any one-time setup work needed for the
@@ -545,7 +545,6 @@ infra_stop() {
 - `TEST_TEST_DIR`: Directory of the specific test
 - `TEST_TEST_CACHE`: Cache directory for the test
 - `TEST_TEST_RUNID`: Unique run identifier
-- `TESTID`: Test identifier passed as first argument
 
 ### Advanced: Driver Override Functions
 

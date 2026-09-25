@@ -112,13 +112,13 @@ testPat=${1:-all}
 
 case "${2:-}" in
 	setup)
-		run_suite_commands_for_tests "${testPat}" "Setting up ${TEST_DRIVER} test driver for" "driver_setup"
+		run_suite_commands_for_tests "${testPat}" "driver_setup"
 		;;
 	prime)
-		run_suite_commands_for_tests "${testPat}" "Priming ${TEST_DRIVER} test driver for" "driver_prime"
+		run_suite_commands_for_tests "${testPat}" "driver_prime"
 		;;
 	run)
-		run_suite_commands_for_tests "${testPat}" "Running tests using ${TEST_DRIVER} driver for" "driver_run"
+		run_suite_commands_for_tests "${testPat}" "driver_run"
 		;;
 	*)
 		echo "ERROR: Second argument must be 'setup', 'prime' or 'run'."
