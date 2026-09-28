@@ -15,6 +15,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -lt 2 ]]; then
 	echo ""
 	echo "Options:"
 	echo "  -o|--output <path>      Path to the output folder where test results will be stored (default: ./test-results/test-run-<timestamp>)"
+	echo "  -c|--cache <path>     Path to the cache folder."
 	echo "  -P|--profile <profile>  Test profile to use (can be specified multiple times)"
 	echo "  -C|--catalog <name>    Name of the tests catalog to use (default: tests)"
 	echo ""
@@ -31,6 +32,7 @@ source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
 outputPath="test-results/manual_run"
+cachePath="cache"
 profiles=()
 testsCatalog="tests"
 
@@ -43,6 +45,15 @@ while [[ $# -gt 0 ]]; do
                 exit 4
             fi
             outputPath="$1"
+            shift
+            ;;
+        -c|--cache)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "Error: Cache option specified but no path provided."
+                exit 4
+            fi
+            cachePath="$1"
             shift
             ;;
         -C|--catalog)
@@ -78,8 +89,9 @@ done
 
 export TEST_CATALOG="${testsCatalog}"
 export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
+export TEST_CACHE_DIR=$(realpath "${cachePath}")
 
-_setup_test_output_dir "" "${outputPath}"
+_setup_test_output_dir "${outputPath}"
 export TEST_TEST_RUNID
 
 for profile in "${profiles[@]}"; do

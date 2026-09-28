@@ -16,8 +16,9 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) || $# -eq 0 ]]; then
 	echo "Usage: ./run drive [<options>] <test-suite>/<test-name> (setup|prime|run)"
 	echo ""
 	echo "Options:"
-	echo "  -o, --output <path>    Path to the output folder."
-	echo "  -j, --java <version>   Java version used to tag the output folder."
+	echo "  -o|--output <path>    Path to the output folder."
+	echo "  -c|--cache <path>     Path to the cache folder."
+	echo "  -j|--java <version>   Java version used to tag the output folder."
 	echo "  -d|--driver <driver>   Test driver to use (default: oha)."
 	echo "  -P|--profile <profile> Test profile to use (can be specified multiple times)."
 	echo "  -C|--catalog <name>    Name of the tests catalog to use (default: tests)."
@@ -36,6 +37,7 @@ source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/driverfuncs.sh
 
 outputPath="test-results/manual_run"
+cachePath="cache"
 profiles=()
 testsCatalog="tests"
 export TEST_APP_JAVA=""
@@ -50,6 +52,15 @@ while [[ $# -gt 0 ]]; do
                 exit 4
             fi
             outputPath="$1"
+            shift
+            ;;
+        -c|--cache)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "Error: Cache option specified but no path provided."
+                exit 4
+            fi
+            cachePath="$1"
             shift
             ;;
         -C|--catalog)
@@ -99,8 +110,9 @@ done
 
 export TEST_CATALOG="${testsCatalog}"
 export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
+export TEST_CACHE_DIR=$(realpath "${cachePath}")
 
-_setup_test_output_dir "" "${outputPath}"
+_setup_test_output_dir "${outputPath}"
 export TEST_TEST_RUNID
 
 for profile in "${profiles[@]}"; do
