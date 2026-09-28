@@ -80,6 +80,7 @@ function stop_app() {
 	local app_pid
 	app_pid=$(get_app_pid "${results_name}")
 	if [[ "${app_pid}" == "" ]]; then
+		echo "   - No running ${results_name} test application found."
 		return
 	fi
 	stop_process "${app_pid}" "${results_name}"

@@ -4,7 +4,7 @@ set -uo pipefail
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 if [ "$#" -lt 3 ]; then
-    echo "Usage: $0 <hosts_file> <strategy> <java_version> [test_pattern] [profiles] [work_dir] [result_dir] [qdup_temp] [options]..."
+    echo "Usage: $0 <hosts_file> <strategy> <java_version> [qdup_output] [options]..."
     exit 1
 fi
 
@@ -23,10 +23,10 @@ strategy_file="${script_dir}/../test-${strategy}.yml"
 
 java_version="$3"
 
-qdup_temp="${4:-/tmp/qdup}"
+qdup_output="${4:-/tmp/qdup}"
 
 # Shift past the first 4 positional arguments to get additional states
 shift 4
 
 # Build the qdup command with caller-provided states
-"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${qdup_temp}" "$@"
+"$script_dir/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${qdup_output}" "$@"

@@ -51,6 +51,7 @@ source "${TEST_SRC_DIR}"/scripts/driverfuncs.sh
 resultTag=""
 jdkTag=""
 outputPath=""
+cachePath="cache"
 javaVersions=()
 strategies=()
 profiles=()
@@ -94,6 +95,15 @@ while [[ $# -gt 0 ]]; do
                 exit 4
             fi
             outputPath="$1"
+            shift
+            ;;
+        -c|--cache)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "Error: Cache option specified but no path provided."
+                exit 4
+            fi
+            cachePath="$1"
             shift
             ;;
         -j|--java)
@@ -170,11 +180,13 @@ done
 
 export TEST_CATALOG="${testsCatalog}"
 export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
-
-export TEST_OUT_BASE=${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}
-mkdir -p "${TEST_OUT_BASE}"
+export TEST_CACHE_DIR=$(realpath "${cachePath}")
 
 testPat=${1:-all}
+
+export TEST_RUNID="test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}"
+outputPath="${outputPath:-./test-results/${TEST_RUNID}}"
+mkdir -p "${outputPath}"
 
 if [[ ${#strategies[@]} -eq 0 ]]; then
 	strategies=("normal" "aot")
@@ -202,7 +214,7 @@ fi
 	echo "Selected JDKs: ${javaVersions[*]}"
 	echo "Selected strategies: ${strategies[*]}"
 	echo "Activated profiles: ${profiles[*]}"
-} > "${TEST_OUT_BASE}/test-run-info.txt"
+} > "${outputPath}/test-run-info.txt"
 
 export TEST_OUT_DIR
 export TEST_TEST_RUNID
@@ -283,7 +295,7 @@ for javaVersion in "${javaVersions[@]}"; do
 	
 	for strategy in "${strategies[@]}"; do
 		echo "   - Using strategy: ${strategy}"
-		_setup_test_output_dir "j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}" "${outputPath}" "${resultTag}"
+		_setup_test_output_dir "${outputPath}" "j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}" "${resultTag}"
 		source "${TEST_SRC_DIR}/scripts/strategies/${strategy}/strategy.sh"
 	done
 done

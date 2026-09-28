@@ -175,8 +175,9 @@ if [[ ${#profiles[@]} -eq 0 && -f "${TEST_DIR}/profiles/default.sh" ]]; then
 fi
 
 function run_qdup() {
-	local strategy="$1"
-	local testpat="$2"
+	local outputPath="${1:-}"
+	local strategy="$2"
+	local testpat="$3"
 
 	local tests=( $(select_tests "${testpat}") )
 
@@ -187,14 +188,15 @@ function run_qdup() {
 
 	local qdupdir="${TEST_SRC_DIR}/qdup"
 
-	local_work_dir="${TEST_CACHE_DIR}/qdup/arena"
-	mkdir -p "${local_work_dir}"
+	local qdup_work_dir="/tmp/qdup-code"
+	mkdir -p "${qdup_work_dir}"
 
-	export TEST_OUT_BASE="${outputPath:-./test-results/test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}}"
-	mkdir -p "${TEST_OUT_BASE}"
+	local qdup_cache_dir=$(realpath "./cache")
+	mkdir -p "${qdup_cache_dir}"
 
-	local_qdup_temp="/tmp/qdup-$$"
-	mkdir -p "${local_qdup_temp}"
+	export TEST_RUNID="test-run-$(date +%Y%m%d-%H%M%S)${resultTag:+-$resultTag}"
+	outputPath="${outputPath:-./test-results/${TEST_RUNID}}"
+	mkdir -p "${outputPath}"
 
 	# Convert profiles array to comma-separated string for qdup-test
 	local profiles_str=""
@@ -211,8 +213,10 @@ function run_qdup() {
 				"-S" "JAVA_VERSION=${javaVersion}"
 				"-S" "TEST_CATALOG=${TEST_CATALOG}"
 				"-S" "TEST=${test}"
-				"-S" "WORK_DIR=${local_work_dir}"
-				"-S" "RESULT_DIR=${TEST_OUT_BASE}"
+				"-S" "TEST_RUNID=${TEST_RUNID}"
+				"-S" "WORK_DIR=${qdup_work_dir}"
+				"-S" "CACHE_DIR=${qdup_cache_dir}"
+				"-S" "RESULT_DIR=${outputPath}"
 				"-S" "PROFILES=${profiles_str}"
 			)
 
@@ -222,8 +226,8 @@ function run_qdup() {
 			fi
 
 			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			echo "$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${local_qdup_temp}" "${qdup_states[@]}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${local_qdup_temp}" "${qdup_states[@]}"
+			echo "$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${outputPath}" "${qdup_states[@]}"
+			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${outputPath}" "${qdup_states[@]}"
 			if [[ $? -ne 0 ]]; then
 				result=1
 			fi
@@ -243,5 +247,5 @@ fi
 
 for strategy in "${strategies[@]}"; do
 	echo "   - Using strategy: ${strategy}"
-	run_qdup "${strategy}" "${1:-all}"
+	run_qdup "${outputPath}" "${strategy}" "${1:-all}"
 done
