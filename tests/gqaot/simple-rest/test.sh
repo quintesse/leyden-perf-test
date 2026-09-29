@@ -13,6 +13,6 @@ app_setup() {
     mv "${TEST_TEST_CACHE}/repo/quarkus-simple-rest-aot/pom.xml.2" "${TEST_TEST_CACHE}/repo/quarkus-simple-rest-aot/pom.xml"
 
     require_java "25+"
-    compile_maven "repo/quarkus-simple-rest-aot" "-Dquarkus.package.jar.type=aot-jar -Dquarkus.package.jar.appcds.use-aot=true"
+    compile_maven "repo/quarkus-simple-rest-aot" "-Dquarkus.package.jar.type=aot-jar -Dquarkus.package.jar.appcds.use-aot=true -DskipTests"
 }
 

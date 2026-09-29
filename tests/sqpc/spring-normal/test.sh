@@ -17,7 +17,7 @@ app_setup() {
 
     # Compile Spring Boot app normally
     require_java "21+"
-    compile_maven "${REPO_DIR}" ""
+    compile_maven "${REPO_DIR}" "-DskipTests"
     target="${TEST_TEST_CACHE}/${REPO_DIR}/target"
     sqpc_extract_spring_boot_jar "${target}/springboot3.jar" "${target}/application"
 }

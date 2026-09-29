@@ -20,7 +20,7 @@ app_setup() {
     # As described in https://docs.spring.io/spring-boot/reference/packaging/efficient.html
     # and in https://docs.spring.io/spring-boot/reference/packaging/aot.html
     require_java "21+"
-    compile_maven "${REPO_DIR}" "-Pnative"
+    compile_maven "${REPO_DIR}" "-Pnative -DskipTests"
     target="${TEST_TEST_CACHE}/${REPO_DIR}/target"
     sqpc_extract_spring_boot_jar "${target}/springboot3.jar" "${target}/application"
 }

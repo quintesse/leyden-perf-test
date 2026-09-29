@@ -12,11 +12,11 @@ app_stop() {
 app_setup() {
     clone "${REPO_BENCHMARK_URL}" "benchmark"
     require_java "25"
-    [[ $CLONE_CHANGED -eq 1 || ! -f "${app_jar}" ]] && compile_maven "benchmark"
+    [[ $CLONE_CHANGED -eq 1 || ! -f "${app_jar}" ]] && compile_maven "benchmark" "-DskipTests"
 
     clone "${REPO_WRAPPER_URL}" "wrapper"
     require_java "25+"
     [[ $CLONE_CHANGED -eq 0 && -f "${app_jar}" ]] && return 0
-    compile_maven "wrapper" "-Dquarkus.package.jar.type=aot-jar"
+    compile_maven "wrapper" "-Dquarkus.package.jar.type=aot-jar -DskipTests"
 }
 

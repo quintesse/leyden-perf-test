@@ -52,6 +52,6 @@ app_setup() {
     # Compile Quarkus app natively
     require_java "21+"
     # It should be -O2 additional build args
-    compile_maven "${REPO_DIR}" "-Dnative -Dquarkus.native.debug.enabled -Dquarkus.native.additional-build-args=-O0,-H:-OmitInlinedMethodDebugLineInfo"
+    compile_maven "${REPO_DIR}" "-Dnative -Dquarkus.native.debug.enabled -Dquarkus.native.additional-build-args=-O0,-H:-OmitInlinedMethodDebugLineInfo -DskipTests"
 }
 

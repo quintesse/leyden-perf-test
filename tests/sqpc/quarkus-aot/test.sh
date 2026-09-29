@@ -16,6 +16,6 @@ app_setup() {
 
     # Compile Quarkus app normally
     require_java "25+"
-    compile_maven "${REPO_DIR}" "-Dquarkus.package.jar.aot.enabled=true"
+    compile_maven "${REPO_DIR}" "-Dquarkus.package.jar.aot.enabled=true -DskipTests"
 }
 

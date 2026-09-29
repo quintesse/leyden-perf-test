@@ -30,6 +30,6 @@ app_setup() {
     sed -i 's/999-SNAPSHOT/3.32.0/g' "$test_repo_path/pom.xml"
 
     require_java "25+"
-    compile_maven "repo/quarkus-hibernate-orm-simple" "-Dquarkus.package.jar.type=aot-jar -Dquarkus.package.jar.appcds.use-aot=true"
+    compile_maven "repo/quarkus-hibernate-orm-simple" "-Dquarkus.package.jar.type=aot-jar -Dquarkus.package.jar.appcds.use-aot=true -DskipTests"
 }
 
