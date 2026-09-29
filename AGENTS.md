@@ -132,7 +132,8 @@ The harness automatically sets:
 - `TEST_SRC_DIR`: Source directory (./src)
 - `TEST_CACHE_DIR`: Cache directory (./cache)
 - `TEST_ENGINE`: Detected container engine (docker or podman)
-- `DETECTED_OS`: Operating system (linux, mac, windows)
+- `DETECTED_OS`: Operating system (linux, macos)
+- `DETECTED_ARCH`: Processor architecture (amd64, arm64)
 
 ## Running Tests with qDup (Recommended for Production)
 

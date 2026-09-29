@@ -7,13 +7,15 @@ source "${TEST_SRC_DIR}/scripts/appfuncs.sh"
 setup() {
     if ! command -v oha >/dev/null 2>&1; then
         echo -e "   - ${NORMAL}  oha   : Downloading 'oha' command...${NORMAL}"
+
         mkdir -p "${TEST_CACHE_DIR}"
-        curl -Lf --no-progress-meter -o "${TEST_CACHE_DIR}/oha" https://github.com/hatoo/oha/releases/download/v1.14.0/oha-linux-amd64
+        curl -Lf --no-progress-meter -o "${TEST_CACHE_DIR}/oha" \
+            "https://github.com/hatoo/oha/releases/download/v1.16.0/oha-${DETECTED_OS}-${DETECTED_ARCH}"
         chmod +x "${TEST_CACHE_DIR}/oha"
         echo -e "   - ${NORMAL}${GREEN}✓ oha   : Command installed correctly.${NORMAL}"
         return 0
     else
-        echo -e "   - ${NORMAL}${GREEN}✓ oha   : Command is installed.${NORMAL}"
+        echo -e "   - ${NORMAL}${GREEN}✓ oha   : Command is available.${NORMAL}"
         return 0
     fi
 }

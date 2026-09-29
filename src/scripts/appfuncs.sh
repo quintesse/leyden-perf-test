@@ -49,7 +49,7 @@ function start_app() {
 
 		echo "Clearing Swap..."
 		sudo -A swapoff -a && sudo -A swapon -a || echo -e "   - ${BOLD}${RED}✗ Couldn't clear swap. ${NORMAL}"
-	elif [[ "$DETECTED_OS" == "mac" ]]; then
+	elif [[ "$DETECTED_OS" == "macos" ]]; then
 		echo "Flushing disk buffers..."
 		sudo -A sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
 
