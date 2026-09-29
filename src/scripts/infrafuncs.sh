@@ -86,22 +86,27 @@ function start_container() {
 	echo "${container_name}" >> "${cidfile}"
 }
 
-# Stops a container for the specified application.
+# Stops a container for the specified application. Safe to call multiple times without
+# generating spurious messages.
 # Arguments:
 #   display_name   - name of the application
 #   container_name - name of the container
 # Variables used:
 #   TEST_OUT_DIR    - output directory for storing container IDs
-#   TEST_TEST_RUNID - id of the current test run (used for file names)
+#   TEST_TEST_RUNID - id of the current test run (used for .cid file names)
 #   TEST_SUITE_NAME - name of the current test suite (used as fallback for TEST_TEST_RUNID)
 #   TEST_ENGINE     - container runtime to use (docker or podman)
 function stop_container() {
 	local display_name=$1
 	local container_name=$2
-	echo "Stopping ${display_name}..."
-	${TEST_ENGINE} stop "${container_name}" || true
 	local cidfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID:-${TEST_SUITE_NAME}}-${container_name}.cid"
-	rm -f "${cidfile}" > /dev/null 2>&1 || true
+	if [[ -f "${cidfile}" ]]; then
+		echo "Stopping ${display_name}..."
+		${TEST_ENGINE} stop "${container_name}" || true
+		rm -f "${cidfile}" > /dev/null 2>&1 || true
+	else
+		${TEST_ENGINE} stop "${container_name}" > /dev/null 2>&1 || true
+	fi
 }
 
 # Stops all running containers started during the test run.
