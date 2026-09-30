@@ -72,12 +72,12 @@ function start_container() {
 	
 	local outfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID:-${TEST_SUITE_NAME}}-${container_name}-infra.out"
 	local cmd="${TEST_ENGINE} run -d --rm --name ${container_name} ${cpuopts[*]} ${container_opts} ${image} ${container_args}"
-	echo "   - Container: $cmd"
+	info "Container: $cmd"
 	echo "$cmd" > "$outfile"
 	local result=0
 	${TEST_ENGINE} run -d --rm --name "${container_name}" "${cpuopts[@]}" ${container_opts} "${image}" ${container_args} >> "$outfile" 2>&1 || result=$?
 	if [[ $result -ne 0 ]]; then
-		echo -e "   - ${NORMAL}${RED}Error: Failed to start container ${display_name}.${NORMAL}"
+		fail "Error: Failed to start container ${display_name}"
 		cat "$outfile" 2>/dev/null || true
 		return $result
 	fi

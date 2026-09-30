@@ -327,14 +327,14 @@ function _run_command() {
 	fi
 
 	local ctx="${TEST_SUITE_NAME}${TEST_TEST_NAME:+/${TEST_TEST_NAME}}"
-	echo "   - ${msg} test: ${ctx} ..."
+	info "${msg} test: ${ctx} ..."
 	local result=0
 	"${launcher_path}" "${cmd_paths[@]}" -- "${cmd}" "${args[@]}" || result=$?
 	if [[ $result -ne 0 ]]; then
-		echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${ctx}   : Failed.${NORMAL}"
+		fail "${msg} test ${ctx}   : Failed"
 		return $result
 	fi
-	echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${ctx}   : Done.${NORMAL}"
+	success "${msg} test ${ctx}   : Done"
 }
 
 # Detects the Java version from java command on the user's PATH
@@ -380,7 +380,7 @@ function _setup_test_output_dir() {
 	fi
 	if [[ ! -d "${TEST_OUT_DIR}" ]]; then
 		mkdir -p "${TEST_OUT_DIR}"
-		echo "   - Created test output folder ${TEST_OUT_DIR}"
+		info "Created test output folder ${TEST_OUT_DIR}"
 	fi
 }
 

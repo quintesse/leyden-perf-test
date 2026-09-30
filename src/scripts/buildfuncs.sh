@@ -25,17 +25,17 @@ function clone() {
 	CLONE_CHANGED=0
 	local result
     if [[ ! -d ${TEST_TEST_CACHE}/$repository ]]; then
-      echo "   - Cloning repository '$repo_url'..."
+      info "Cloning repository '$repo_url'..."
 	  local result=0
       $GIT_CMD clone --quiet --depth 1 "$repo_url" "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1 || result=$?
       if [ $result -ne 0 ]; then
-         echo -e "   - ${NORMAL}${RED}✗ Repository '$repo_url' failed to clone.${NORMAL}"
+         fail "Repository '$repo_url' failed to clone"
       else
          CLONE_CHANGED=1
-         echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Repository '$repo_url' cloned.${NORMAL}${CLREOL}"
+         success "Repository '$repo_url' cloned"
       fi
     else 
-      echo "   - Updating repository '$repo_url'..."
+      info "Updating repository '$repo_url'..."
 	  set +e
 	  local result=0
       if pushd "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1; then
@@ -50,10 +50,10 @@ function clone() {
 	  fi
 	  set -e
       if [ $result -ne 0 ]; then
-         echo -e "   - ${NORMAL}${RED}✗ Repository '$repo_url' failed to update.${NORMAL}"
+         fail "Repository '$repo_url' failed to update"
 		 cat /tmp/leyden-perf-test-clone-$$.log
       else 
-         echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Repository '$repo_url' updated.${NORMAL}${CLREOL}"
+         success "Repository '$repo_url' updated"
       fi
       popd > /dev/null
     fi
@@ -73,7 +73,7 @@ function compile_maven() {
     local repository=${1:-repo}
     local opts=${2:--DskipTests}
 
-    echo "   - Compiling application '$repository'..."
+    info "Compiling application '$repository'..."
 	set +e
     if pushd "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-build-$$.log 2>&1; then
 		local repo="${TEST_CACHE_DIR}/_mvn_repo"
@@ -82,10 +82,10 @@ function compile_maven() {
     local result=$?
 	set -e
     if [ $result -ne 0 ]; then
-       echo -e "   - ${NORMAL}${RED}✗ '$repository' failed to build.${NORMAL}"
+       fail "'$repository' failed to build"
 	   cat /tmp/leyden-perf-test-build-$$.log
     else 
-       echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ '$repository' built.${NORMAL}${CLREOL}"
+       success "'$repository' built"
 	   rm /tmp/leyden-perf-test-build-$$.log
     fi
     popd > /dev/null
@@ -108,13 +108,13 @@ function copy_build_artifacts() {
 	local artifacts=( "${@:3}" )
 
 	local dest="${TEST_TEST_CACHE}/$repository/$subfolder"
-	echo "   - Copying build artifacts for '$repository'..."
+	info "Copying build artifacts for '$repository'..."
 	rm -rf "${dest:?}"
 	mkdir -p "$dest"
 	pushd "$TEST_TEST_CACHE/$repository" > /dev/null
 	cp -a "${artifacts[@]}" "$dest"
 	popd > /dev/null
-	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Build artifacts for '$repository' copied.${NORMAL}${CLREOL}"
+	success "Build artifacts for '$repository' copied"
 }
 
 # Ensures that the specified JDK is available and set as active.
@@ -124,12 +124,12 @@ function copy_build_artifacts() {
 #   TEST_DIR - Root directory of leyden-perf-test project
 function require_java() {
 	local version=$1
-	echo "   - Ensuring Java $version is available..."
+	info "Ensuring Java $version is available..."
 	if [[ $1 =~ ^[0-9]+\+?$ ]]; then
 		eval "$("${TEST_DIR}"/jbang jdk env "$version")"
 	else
 		export JAVA_HOME=$version
 		export PATH="${JAVA_HOME}/bin:${PATH}"
 	fi
-	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Java $version set as active.${NORMAL}${CLREOL}"
+	success "Java $version set as active"
 }

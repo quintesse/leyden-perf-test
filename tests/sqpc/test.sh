@@ -22,7 +22,7 @@ sqpc_configure_db_host() {
 sqpc_extract_spring_boot_jar() {
     local jar_path=$1
     local dest_dir=$2
-    echo "   - Extracting Spring Boot Buildpack Executable..."
+    info "Extracting Spring Boot Buildpack Executable..."
     rm -rf "${dest_dir}" > /dev/null 2>&1
     java -Djarmode=tools -jar "${jar_path}" extract --destination "${dest_dir}" > /dev/null
 }

@@ -12,29 +12,11 @@ scripts:
 
   apply_hw_tweaks:
   - sh: |
-      if [[ "${{ENABLE_HW_TWEAKS:-false}}" == "true" ]]; then
-        echo "Applying hardware tweaks on ${HOSTNAME}..."
-        source ${{TEST_HOME}}/hardware-tweaks.conf
-        source ${{TEST_HOME}}/src/scripts/hwtweakfuncs.sh
-        if check_hwtweak_requirements && detect_cpu_info; then
-          apply_hardware_tweaks
-        else
-          echo "Warning: Hardware tweaks requirements not met, skipping..."
-        fi
-      fi
-
+      [[ "${ENABLE_HW_TWEAKS}" == "true" ]] && ${{TEST_HOME}}/src/qdup/bin/apply_hw_tweaks || true
+  
   restore_hw_tweaks:
   - sh: |
-      if [[ "${{ENABLE_HW_TWEAKS:-false}}" == "true" ]]; then
-        echo "Restoring hardware settings on ${HOSTNAME}..."
-        source ${{TEST_HOME}}/hardware-tweaks.conf
-        source ${{TEST_HOME}}/src/scripts/hwtweakfuncs.sh
-        if detect_cpu_info; then
-          restore_hardware_tweaks
-        else
-          echo "Warning: Could not restore hardware settings"
-        fi
-      fi
+      [[ "${ENABLE_HW_TWEAKS}" == "true" ]] && ${{TEST_HOME}}/src/qdup/bin/restore_hw_tweaks || true
 
   setup_infra:
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
@@ -125,4 +107,5 @@ states:
   TEST_DRIVER: oha
   RUN_TAG: ""
   PROFILES: ""
+  ENABLE_HW_TWEAKS: false
   

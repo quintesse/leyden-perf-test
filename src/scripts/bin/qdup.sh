@@ -4,7 +4,15 @@
 
 set -euo pipefail
 
-trap ctrl_c INT
+ctrl_c_qdup() {
+	echo ""
+	echo "Interrupted by user"
+	echo ""
+	echo -e "Results: \033[0;32m${total_passed} passed\033[0m, \033[0;31m${total_failed} failed\033[0m"
+	exit 130
+}
+
+trap ctrl_c_qdup INT
 
 if [[ ! -v TEST_SRC_DIR ]]; then
 	echo "ERROR: Please run this script via './run test ...' from the leyden-perf-test root directory."
@@ -202,7 +210,7 @@ function run_qdup() {
 	local profiles_str=""
 	if [[ ${#profiles[@]} -gt 0 ]]; then
 		profiles_str=$(IFS=','; echo "${profiles[*]}")
-		echo "   - Using profiles: ${profiles_str}"
+		info "Using profiles: ${profiles_str}"
 	fi
 
 	local result=0
@@ -222,14 +230,18 @@ function run_qdup() {
 
 			if [[ "${enable_hw_tweaks}" == "true" ]]; then
 				qdup_states+=("-S" "ENABLE_HW_TWEAKS=true")
-				echo "   - Hardware tweaks enabled for apphost"
+				info "Hardware tweaks enabled for apphost"
 			fi
 
-			echo -e "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			echo "$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${outputPath}" "${qdup_states[@]}"
-			"$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${outputPath}" "${qdup_states[@]}"
-			if [[ $? -ne 0 ]]; then
+			info "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
+			info "Command: $qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${outputPath}" "${qdup_states[@]}"
+			if ! "$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${outputPath}" "${qdup_states[@]}"; then
+				fail "Test failed: ${test}"
 				result=1
+				(( total_failed++ )) || true
+			else
+				success "Test passed: ${test}"
+				(( total_passed++ )) || true
 			fi
 		done
 	done
@@ -245,7 +257,13 @@ if [[ ${#javaVersions[@]} -eq 0 ]]; then
 	exit 4
 fi
 
+total_passed=0
+total_failed=0
+
 for strategy in "${strategies[@]}"; do
-	echo "   - Using strategy: ${strategy}"
-	run_qdup "${outputPath}" "${strategy}" "${1:-all}"
+	info "Using strategy: ${strategy}"
+	run_qdup "${outputPath}" "${strategy}" "${1:-all}" || true
 done
+
+echo ""
+echo -e "Results: \033[0;32m${total_passed} passed\033[0m, \033[0;31m${total_failed} failed\033[0m"

@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-source "${TEST_SRC_DIR}/scripts/appfuncs.sh"
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
+source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 
 prime() {
     # Prepare command prefix if CPU affinity is to be set
@@ -66,13 +67,13 @@ run() {
     while [ -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready" ]; do
         sleep 0.5
         if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
-            echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
-            echo -e "   - ${BOLD}${RED}✗ ${TEST_TEST_RUNID} test application not running${NORMAL}"
+            fail "${BOLD}Application process has exited unexpectedly${NORMAL}"
+            fail "${BOLD}${TEST_TEST_RUNID} test application not running${NORMAL}"
             sleep 2 # give time for output to be flushed
-            echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+            info "${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
             outfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID}-app.out"
             cat "$outfile" 2>/dev/null || true
-            echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+            info "${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
             kill -9 "$(pgrep -f HyperfoilWrk)" || true
             rm -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready"  || true
         fi

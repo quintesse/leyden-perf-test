@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-source "${TEST_SRC_DIR}/scripts/appfuncs.sh"
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
+source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 
 run() {
     wait_for_8080 "${TEST_TEST_RUNID}"
@@ -53,7 +54,7 @@ run() {
     HOST="host-gateway"
 
     cmd="${TEST_ENGINE} run -t --rm ${cpuopts[*]} --add-host=host.docker.internal:$HOST -v ${TEST_OUT_DIR:-.}:/test-results:z ghcr.io/hatoo/oha -q ${RATE} -z ${DURATION}s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o /test-results/${TEST_TEST_RUNID}-oha.json --db-url /test-results/${TEST_TEST_RUNID}-oha.db  --urls-from-file $URLS_FIXED_FILE"
-    echo "   - Driver command: ${cmd}"
+    info "Driver command: ${cmd}"
 
     ${TEST_ENGINE} run -t --rm "${cpuopts[@]}" "--add-host=host.docker.internal:$HOST" -v "${TEST_OUT_DIR:-.}:/test-results:z" ghcr.io/hatoo/oha -q "${RATE}" -z "${DURATION}"s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o "/test-results/${TEST_TEST_RUNID}-oha.json" --db-url "/test-results/${TEST_TEST_RUNID}-oha.db"  --urls-from-file "${URLS_FIXED_FILE}"
 }

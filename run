@@ -6,21 +6,6 @@ script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 export TEST_DIR=${script_dir}
 export TEST_SRC_DIR=${TEST_DIR}/src
 
-# Detects the operating system.
-case "$(uname -s)" in
-	Linux*)	export DETECTED_OS=linux;;
-	Darwin*) export DETECTED_OS=macos;;
-	#CYGWIN*|MINGW*|MSYS*) export DETECTED_OS=windows;;
-	*) echo -e "${RED}Error: Unsupported OS: $(uname -s)${NORMAL}"; exit 1 ;;
-esac
-
-# Detects the CPU architecture.
-case "$(uname -m)" in
-	x86_64)          export DETECTED_ARCH=amd64;;
-	aarch64|arm64)   export DETECTED_ARCH=arm64;;
-	*) echo -e "${RED}Error: Unsupported architecture: $(uname -m)${NORMAL}"; exit 1 ;;
-esac
-
 if [ -t 1 ] ; then
 	export BOLD="\033[1m"
 	export NORMAL="\033[0m"
@@ -37,10 +22,22 @@ else
 	export CLREOL=""
 fi
 
-if [[ "$DETECTED_OS" == "windows" ]]; then
-	echo -e "${RED}This script no longer supports Windows, sorry.${NORMAL}"
-	exit 1
-fi
+# Detects the operating system.
+case "$(uname -s)" in
+	Linux*)	export DETECTED_OS=linux;;
+	Darwin*) export DETECTED_OS=macos;;
+	#CYGWIN*|MINGW*|MSYS*) export DETECTED_OS=windows;;
+	*) echo -e "${RED}Error: Unsupported OS: $(uname -s)${NORMAL}"; exit 1 ;;
+esac
+
+# Detects the CPU architecture.
+case "$(uname -m)" in
+	x86_64)          export DETECTED_ARCH=amd64;;
+	aarch64|arm64)   export DETECTED_ARCH=arm64;;
+	*) echo -e "${RED}Error: Unsupported architecture: $(uname -m)${NORMAL}"; exit 1 ;;
+esac
+
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
 
 export TEST_ENGINE=""
 if command -v podman >/dev/null 2>&1; then
@@ -48,7 +45,7 @@ if command -v podman >/dev/null 2>&1; then
 elif command -v docker >/dev/null 2>&1; then
   TEST_ENGINE="docker"
 else
-	echo -e "   - ${BOLD}${RED}✗ Warning: Neither podman nor docker can be found!${NORMAL}"
+	fail "Warning: Neither podman nor docker can be found!"
 fi
 
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
@@ -58,9 +55,9 @@ function list_commands() {
 		name=$(basename "$filename" ".sh")
 		description=$( (grep -m 1 '^# DESCRIPTION=' "$filename" || true) | cut -d'=' -f2-)
 		if [[ -z "${description}" ]]; then
-			echo -e "  ${BOLD}$name${NORMAL}"
+			info "${BOLD}$name${NORMAL}"
 		else
-			echo -e "  ${BOLD}$name :${NORMAL} $description"
+			info "${BOLD}$name :${NORMAL} $description"
 		fi
 	done
 }

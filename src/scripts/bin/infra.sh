@@ -95,7 +95,7 @@ _setup_test_output_dir "${outputPath}"
 export TEST_TEST_RUNID
 
 for profile in "${profiles[@]}"; do
-	echo "   - Applying profile: ${profile}"
+	info "Applying profile: ${profile}"
 	source "${TEST_DIR}/profiles/${profile}.sh"
 done
 

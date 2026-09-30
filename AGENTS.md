@@ -760,7 +760,7 @@ run_once() {
     return $result
 }
 
-echo "   - Starting custom strategy..."
+info "Starting custom strategy..."
 run_for_suite "${testpattern}" "run_once"
 ```
 

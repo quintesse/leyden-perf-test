@@ -1,10 +1,16 @@
+# This script is just for testing purposes
 scripts:
   subhello:
   - sh: echo "Hello ${{NAME}}"
+  - sh: env
   hello:
   - script: subhello
 hosts:
   local: LOCAL
+  container:
+    local: true
+    platform: podman
+    container: quay.io/fedora/fedora
 roles:
   hello:
     hosts:

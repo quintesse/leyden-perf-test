@@ -30,8 +30,8 @@ for driver_dir in "$drivers_dir"/*/; do
 	fi
 	description=$(read_description "${driver_dir}/DESCRIPTION")
 	if [[ -z "${description}" ]]; then
-		echo -e "  ${BOLD}$name${NORMAL}"
+		info "${BOLD}$name${NORMAL}"
 	else
-		echo -e "  ${BOLD}$name :${NORMAL} $description"
+		info "${BOLD}$name :${NORMAL} $description"
 	fi
 done

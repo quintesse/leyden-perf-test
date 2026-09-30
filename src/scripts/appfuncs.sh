@@ -36,25 +36,25 @@ function start_app() {
 	
 	local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
 	local cmd="java ${TEST_JAVA_OPTS} ${TEST_STRAT_OPTS} -jar \"${jar_path}\""
-	echo "   - Command: $cmd"
+	info "Command: $cmd"
 	echo "$cmd" > "$outfile"
 	java -version >> "$outfile" 2>&1
 
 	if [[ "$DETECTED_OS" == "linux" ]]; then
 		echo "Flushing disk buffers..."
-		sudo -A sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
+		sudo -A sync || fail "${BOLD}Couldn't flush disk buffers. ${NORMAL}"
 
 		echo "Purging RAM caches..."
-		echo 3 | sudo -A tee /proc/sys/vm/drop_caches || echo -e "   - ${BOLD}${RED}✗ Couldn't drop caches. ${NORMAL}"
+		echo 3 | sudo -A tee /proc/sys/vm/drop_caches || fail "${BOLD}Couldn't drop caches. ${NORMAL}"
 
 		echo "Clearing Swap..."
-		sudo -A swapoff -a && sudo -A swapon -a || echo -e "   - ${BOLD}${RED}✗ Couldn't clear swap. ${NORMAL}"
+		sudo -A swapoff -a && sudo -A swapon -a || fail "${BOLD}Couldn't clear swap. ${NORMAL}"
 	elif [[ "$DETECTED_OS" == "macos" ]]; then
 		echo "Flushing disk buffers..."
-		sudo -A sync || echo -e "   - ${BOLD}${RED}✗ Couldn't flush disk buffers. ${NORMAL}"
+		sudo -A sync || fail "${BOLD}Couldn't flush disk buffers. ${NORMAL}"
 
 		echo "Purging RAM caches..."
-		sudo -A purge || echo -e "   - ${BOLD}${RED}✗ Couldn't purge RAM caches. ${NORMAL}"
+		sudo -A purge || fail "${BOLD}Couldn't purge RAM caches. ${NORMAL}"
 	fi
 
 	local app_pid
@@ -80,7 +80,7 @@ function stop_app() {
 	local app_pid
 	app_pid=$(get_app_pid "${results_name}")
 	if [[ "${app_pid}" == "" ]]; then
-		echo "   - No running ${results_name} test application found."
+		info "No running ${results_name} test application found."
 		return
 	fi
 	stop_process "${app_pid}" "${results_name}"
@@ -132,20 +132,20 @@ function stop_process() {
 	local pid=$1
 	local display_name=$2
 
-	echo "   - Stopping ${display_name} test application (#${pid})..."
+	info "Stopping ${display_name} test application (#${pid})..."
 	kill -TERM "${pid}" || true
 	local CNT=0
 	while kill -0 "${pid}" > /dev/null 2>&1 && [[ $CNT -lt 30 ]]; do
-		echo "   - Waiting for ${display_name} test application to exit..."
+		info "Waiting for ${display_name} test application to exit..."
 		sleep 5
 		CNT=$((CNT+1))
 	done
 	if kill -0 "${pid}" > /dev/null 2>&1; then
-		echo "   - Killing ${display_name} test application..."
+		info "Killing ${display_name} test application..."
 		kill -KILL "${pid}" || true
 		sleep 5
 	else
-		echo "   - ${display_name} test application exited cleanly"
+		info "${display_name} test application exited cleanly"
 	fi
 }
 
@@ -160,14 +160,14 @@ function check_app_process() {
 	local results_name=$2
 
 	if ! kill -0 "${pid}" > /dev/null 2>&1; then
-		echo -e "   - ${BOLD}${RED}✗ Application process has exited unexpectedly${NORMAL}"
+		fail "${BOLD}Application process has exited unexpectedly${NORMAL}"
 		if [[ -n "${results_name}" ]]; then
-			echo -e "   - ${BOLD}${RED}✗ ${results_name} test application not running${NORMAL}"
+			fail "${BOLD}${results_name} test application not running${NORMAL}"
 			sleep 2 # give time for output to be flushed
-			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+			info "${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
 			local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
 			cat "$outfile" 2>/dev/null || true
-			echo -e "   - ${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+			info "${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
 		fi
 		return 2
 	fi
@@ -185,7 +185,7 @@ function check_app_process() {
 function wait_for_8080() {
     local results_name=$1
 
-	echo "   - Waiting for port 8080 on ${TEST_APP_HOST:-localhost}..."
+	info "Waiting for port 8080 on ${TEST_APP_HOST:-localhost}..."
 
     local timens=$(date +%s%N)
     local times=$(date +%s)
@@ -196,18 +196,18 @@ function wait_for_8080() {
 			break
 		fi
         if (( now - last_msg_time >= 3 )); then
-            echo "   - Still waiting ..."
+            info "Still waiting ..."
             last_msg_time=$now
         fi
         # Using 127.0.0.1 is safer than localhost on macOS to avoid IPv6 ::1 mismatch
         if (echo -n < /dev/tcp/${TEST_APP_HOST:-127.0.0.1}/8080) >/dev/null 2>&1; then
 			local final_time=$(($(date +%s%N) - timens))
             echo "${results_name},${final_time}" >> "${TEST_OUT_DIR}/time-to-8080.csv"
-			echo -e "   - ${NORMAL}${GREEN}✓ Port open for ${results_name} (${i} attempts, ${final_time} ns).${NORMAL}"
+			success "Port open for ${results_name} (${i} attempts, ${final_time} ns)"
             return 0
         fi
     done
-    echo -e "   - ${BOLD}${RED}✗ Timeout waiting for port 8080${NORMAL}"
+    fail "${BOLD}Timeout waiting for port 8080${NORMAL}"
     return 1
 }
 
@@ -218,12 +218,12 @@ function wait_for_8080() {
 #   TEST_DIR - Root directory of leyden-perf-test project
 function require_java() {
 	local version=$1
-	echo "   - Ensuring Java $version is available..."
+	info "Ensuring Java $version is available..."
 	if [[ $1 =~ ^[0-9]+\+?$ ]]; then
 		eval "$("${TEST_DIR}"/jbang jdk env "$version")"
 	else
 		export JAVA_HOME=$version
 		export PATH="${JAVA_HOME}/bin:${PATH}"
 	fi
-	echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ Java $version set as active.${NORMAL}${CLREOL}"
+	success "Java $version set as active"
 }

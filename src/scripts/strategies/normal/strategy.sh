@@ -22,6 +22,6 @@ function _test() {
 	return $result
 }
 
-echo "   - Starting test run..."
+info "Starting test run..."
 testpattern=$1
 run_for_suite "${testpattern}" "_test"

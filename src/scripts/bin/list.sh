@@ -60,9 +60,9 @@ if [[ $# -gt 0 ]]; then
 		testnm=${test#*/}
 		description=$(read_test_description "$suitenm" "$testnm")
 		if [[ -z "${description}" ]]; then
-			echo -e "    ${BOLD}$test${NORMAL}"
+			info "${BOLD}$test${NORMAL}"
 		else
-			echo -e "    ${BOLD}$test :${NORMAL} $description"
+			info "${BOLD}$test :${NORMAL} $description"
 		fi
 	done
 	exit 0
@@ -76,17 +76,17 @@ for suite in $suites; do
 	fi
 	description=$(read_test_description "$suite")
 	if [[ -z "${description}" ]]; then
-			echo -e "${BOLD}$suite${NORMAL}"
+			info "${BOLD}$suite${NORMAL}"
 		else
-			echo -e "${BOLD}$suite :${NORMAL} $description"
+			info "${BOLD}$suite :${NORMAL} $description"
 	fi
 	tests=$(list_tests_in_suite "$suite")
 	for test in $tests; do
 		description=$(read_test_description "$suite" "$test")
 		if [[ -z "${description}" ]]; then
-			echo -e "    ${BOLD}$suite/$test${NORMAL}"
+			info "${BOLD}$suite/$test${NORMAL}"
 		else
-			echo -e "    ${BOLD}$suite/$test :${NORMAL} $description"
+			info "${BOLD}$suite/$test :${NORMAL} $description"
 		fi
 	done
 done

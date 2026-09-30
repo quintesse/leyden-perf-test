@@ -54,7 +54,7 @@ export TEST_ROOT_DIR="${TEST_DIR}/${testsCatalog}"
 
 if [[ "${cleanCache}" == true ]]; then
 	rm -rf "${TEST_CACHE_DIR}" > /dev/null || true
-	echo -e "   - ${NORMAL}${GREEN}✓ Cleaned 'cache' directory${NORMAL}"
+	success "Cleaned 'cache' directory"
 fi
 
 run_suite_commands_for_tests "${1:-all}" "infra_setup"

@@ -16,7 +16,7 @@ gqaot_infra_setup() {
     rm -rf "${test_repo_path:?}/db"
     mkdir -p "$test_repo_path/db"
     cp -a "${TEST_TEST_DIR}/initdb.sql" "$test_repo_path/db"
-    echo -e "${CURUP}   - ${NORMAL}${GREEN}✓ SQL pre-seeding database script for '${test_name}' copied.${NORMAL}${CLREOL}"
+    success "SQL pre-seeding database script for '${test_name}' copied"
 }
 
 gqaot_infra_start() {

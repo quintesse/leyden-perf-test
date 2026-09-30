@@ -34,13 +34,13 @@ function _run_command_for_driver() {
 	local cmd_path="${TEST_SRC_DIR}/scripts/drivers/${driver}/driver.sh"
 	local ctx="${TEST_SUITE_NAME:-}/${TEST_TEST_NAME:-}"
 	if [[ -f "${cmd_path}" ]]; then
-		echo "   - ${msg} test: ${ctx} ..."
+		info "${msg} test: ${ctx} ..."
 		local result=0
 		"${launcher_path}" "${cmd_path}" -- "${action}" "${args[@]}" || result=$?
 		if [[ $result -ne 0 ]]; then
-			echo -e "   - ${NORMAL}${RED}✗ ${msg} test ${ctx}   : Failed.${NORMAL}"
+			fail "${msg} test ${ctx}   : Failed"
 			return $result
 		fi
-		echo -e "   - ${NORMAL}${GREEN}✓ ${msg} test ${ctx}   : Done.${NORMAL}"
+		success "${msg} test ${ctx}   : Done"
 	fi
 }

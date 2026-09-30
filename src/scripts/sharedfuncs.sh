@@ -2,10 +2,22 @@
 
 # Shared utility functions used across multiple scripts
 
+function info() {
+    echo -e "   - $*${NORMAL}"
+}
+
+function success() {
+    echo -e "   ${GREEN}✓${NORMAL} $*${NORMAL}"
+}
+
+function fail() {
+    echo -e "   ${RED}✗${NORMAL} $*${NORMAL}"
+}
+
 # Parse comma-separated profile names and validate they exist
 # Usage: parse_profiles "profile1,profile2" profiles_array_name
 # The second argument is the name of the array variable to populate
-parse_profiles() {
+function parse_profiles() {
     local profile_string="$1"
     local -n result_array="$2"
     

@@ -2,20 +2,21 @@
 
 set -euo pipefail
 
-source "${TEST_SRC_DIR}/scripts/appfuncs.sh"
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
+source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 
 setup() {
     if ! command -v oha >/dev/null 2>&1; then
-        echo -e "   - ${NORMAL}  oha   : Downloading 'oha' command...${NORMAL}"
+        info "oha   : Downloading 'oha' command..."
 
         mkdir -p "${TEST_CACHE_DIR}"
         curl -Lf --no-progress-meter -o "${TEST_CACHE_DIR}/oha" \
             "https://github.com/hatoo/oha/releases/download/v1.16.0/oha-${DETECTED_OS}-${DETECTED_ARCH}"
         chmod +x "${TEST_CACHE_DIR}/oha"
-        echo -e "   - ${NORMAL}${GREEN}✓ oha   : Command installed correctly.${NORMAL}"
+        success "oha   : Command installed correctly."
         return 0
     else
-        echo -e "   - ${NORMAL}${GREEN}✓ oha   : Command is available.${NORMAL}"
+        success "oha   : Command is available."
         return 0
     fi
 }
@@ -27,7 +28,7 @@ run() {
     elif [[ -f "${TEST_CACHE_DIR}/oha" ]]; then
         OHA_CMD="${TEST_CACHE_DIR}/oha"
     else
-        echo "Error: 'oha' command not found, please run with 'setup' action first.${NORMAL}"
+        echo -e "${RED}Error:${NORMAL} 'oha' command not found, please run with 'setup' action first."
         exit 1
     fi
 
@@ -59,7 +60,7 @@ run() {
     if [[ ! -f "$URLS_FILE" ]]; then
         URLS_FILE="${TEST_SUITE_DIR}/urls.txt"
         if [[ ! -f "$URLS_FILE" ]]; then
-            echo "ERROR: URLs file not found: $URLS_FILE"
+            echo -e "${RED}Error:${NORMAL} URLs file not found: $URLS_FILE"
             exit 1
         fi
     fi
@@ -77,7 +78,7 @@ run() {
     fi
 
     cmd="$OHA_CMD -q ${RATE} -z ${DURATION}s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json --db-url ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db --urls-from-file $URLS_FIXED_FILE"
-    echo "   - Driver command: ${cmd}"
+    info "Driver command: ${cmd}"
 
     "${preamble[@]}" $OHA_CMD -q "${RATE}" -z "${DURATION}"s -c 50 -u ms --latency-correction -t=10s --no-tui --output-format json -o "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.json" --db-url "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-oha.db" --urls-from-file "${URLS_FIXED_FILE}"
 }

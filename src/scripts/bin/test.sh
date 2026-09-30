@@ -220,7 +220,7 @@ export TEST_OUT_DIR
 export TEST_TEST_RUNID
 
 for profile in "${profiles[@]}"; do
-	echo "   - Applying profile: ${profile}"
+	info "Applying profile: ${profile}"
 	source "${TEST_DIR}/profiles/${profile}.sh"
 done
 
@@ -257,7 +257,7 @@ if [[ "${HW_TWEAKS_ENABLED}" == "true" ]]; then
 	if ! check_hwtweak_requirements; then
 		exit 1
 	fi
-	echo -e "   - \033[0;32m✓ All required tools found\033[0m"
+	success "All required tools found"
 	
 	# Detect CPU info
 	if ! detect_cpu_info; then
@@ -265,18 +265,18 @@ if [[ "${HW_TWEAKS_ENABLED}" == "true" ]]; then
 	fi
 	
 	if [[ "${IS_INTEL}" == "true" ]]; then
-		echo -e "   - \033[0;32m✓ Detected Intel CPU\033[0m"
+		success "Detected Intel CPU"
 	else
-		echo -e "   - \033[0;32m✓ Detected non-Intel CPU\033[0m"
+		success "Detected non-Intel CPU"
 	fi
 	
-	echo -e "   - \033[0;32m✓ Auto-detected MIN_FREQ=$MIN_FREQ, MAX_FREQ=$MAX_FREQ\033[0m"
+	success "Auto-detected MIN_FREQ=$MIN_FREQ, MAX_FREQ=$MAX_FREQ"
 	
 	if [ $HARDWARE_CONFIGURED == false ]; then
 		echo -e "\033[0;31mMake sure you edit the hardware-tweaks.conf file before you run this\033[0m"
 		exit 1
 	else
-		echo -e "   - \033[0;32m✓ configuration\033[0m"
+		success "hardware configuration"
 	fi
 	
 	echo -e "${BOLD}This command will ask you for your sudo password to tweak the hardware.${NORMAL}"
@@ -288,13 +288,13 @@ if [[ "${HW_TWEAKS_ENABLED}" == "true" ]]; then
 	echo ""
 fi
 
-echo "   - Selected java versions ${javaVersions[*]}"
+info "Selected java versions ${javaVersions[*]}"
 for javaVersion in "${javaVersions[@]}"; do
-	echo "   - Running tests with Java version ${javaVersion}"
+	info "Running tests with Java version ${javaVersion}"
 	export TEST_APP_JAVA=${javaVersion}
 	
 	for strategy in "${strategies[@]}"; do
-		echo "   - Using strategy: ${strategy}"
+		info "Using strategy: ${strategy}"
 		_setup_test_output_dir "${outputPath}" "j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}" "${resultTag}"
 		source "${TEST_SRC_DIR}/scripts/strategies/${strategy}/strategy.sh"
 	done

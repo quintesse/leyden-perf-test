@@ -26,8 +26,8 @@ for profile_script in "$profiles_dir"/*.sh; do
 	fi
 	description=$( (grep -m 1 '^# DESCRIPTION=' "$profile_script" || true) | cut -d'=' -f2-)
 	if [[ -z "${description}" ]]; then
-		echo -e "  ${BOLD}$name${NORMAL}"
+		info "${BOLD}$name${NORMAL}"
 	else
-		echo -e "  ${BOLD}$name :${NORMAL} $description"
+		info "${BOLD}$name :${NORMAL} $description"
 	fi
 done

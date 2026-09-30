@@ -1,0 +1,13 @@
+#!/bin/bash
+set -uo pipefail
+
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+echo "Restoring hardware settings on ${HOSTNAME}..."
+source "${script_dir}/../../../hardware-tweaks.conf"
+source "${script_dir}/../../scripts/hwtweakfuncs.sh"
+if detect_cpu_info; then
+    restore_hardware_tweaks
+else
+    echo "Warning: Could not restore hardware settings"
+fi

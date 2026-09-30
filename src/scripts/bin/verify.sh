@@ -43,13 +43,13 @@ run_bats_checks() {
 		return 0
 	fi
 
-	echo "   - Running ${description} from ${bats_root}"
+	info "Running ${description} from ${bats_root}"
 	if (cd "${TEST_DIR}" && "${bats_cmd[@]}" "${bats_root}"/${pattern}); then
-		echo -e "   - ${NORMAL}${GREEN}✓ ${description} passed.${NORMAL}"
+		success "${description} passed"
 		return 0
 	fi
 
-	echo -e "   - ${NORMAL}${RED}✗ ${description} failed.${NORMAL}"
+	fail "${description} failed"
 	return 1
 }
 

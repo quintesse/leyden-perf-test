@@ -20,7 +20,7 @@ function start_app_native() {
     fi
 
     local outfile="${TEST_OUT_DIR}/${results_name}-app.out"
-    echo "   - Command: $preamble$exec_path"
+    info "Command: $preamble$exec_path"
     echo "$preamble$exec_path" > "$outfile"
 
     local app_pid

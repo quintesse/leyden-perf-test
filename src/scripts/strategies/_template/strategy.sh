@@ -36,5 +36,5 @@ function _test() {
 
 # This is the toplevel part of the strategy.
 # It runs all tests matching the given pattern using the _test function defined above.
-echo "   - Starting test run..."
+info "Starting test run..."
 run_for_suite "${testpattern}" "_test"
