@@ -226,6 +226,7 @@ function run_qdup() {
 				"-S" "CACHE_DIR=${qdup_cache_dir}"
 				"-S" "RESULT_DIR=${outputPath}"
 				"-S" "PROFILES=${profiles_str}"
+				"-S" "TEST_DRIVER=${TEST_DRIVER}"
 			)
 
 			if [[ "${enable_hw_tweaks}" == "true" ]]; then
