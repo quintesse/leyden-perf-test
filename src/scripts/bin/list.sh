@@ -20,6 +20,7 @@ if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
 	exit 2
 fi
 
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/suitefuncs.sh
 
 testsCatalog="tests"

@@ -4,6 +4,8 @@
 
 set -euo pipefail
 
+source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
+
 bats_root="${TEST_DIR}/verify/bats"
 qdup_only=false
 
