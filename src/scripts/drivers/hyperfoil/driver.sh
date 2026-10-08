@@ -5,6 +5,12 @@ set -euo pipefail
 source "${TEST_SRC_DIR}"/scripts/sharedfuncs.sh
 source "${TEST_SRC_DIR}"/scripts/appfuncs.sh
 
+setup() {
+    if ! command -v pidstat >/dev/null 2>&1; then
+        fail "${BOLD}Warning: pidstat command not found! Statistics collection will not work."
+    fi
+}
+
 prime() {
     # Prepare command prefix if CPU affinity is to be set
     declare -a preamble=()
@@ -49,33 +55,44 @@ prime() {
     GC="-XX:+UseEpsilonGC"
     EXP_OPTS="-XX:+UnlockExperimentalVMOptions"
 
-    echo "${preamble[*]} jbang --java-options="${EXP_OPTS}" --java-options=\"-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0\" --java-options=\"-Dio.hyperfoil.gc.check.enabled=false\" --java-options=\"-XX:+DisableExplicitGC\" --java-options=\"-Xmx1G\" --java-options=\"-Xms1G\" --java-options=\""${GC}"\" --java-options=\"-XX:+AlwaysPreTouch\" src/scripts/drivers/hyperfoil/HyperfoilWrk.java -R ${RATE} -d ${DURATION}s -c 50 -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URLS_FIXED_FILE}" -i "${TEST_TEST_RUNID}" 
-    "${preamble[@]}" jbang --java-options="${EXP_OPTS}" --java-options="-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0" --java-options="-Dio.hyperfoil.gc.check.enabled=false" --java-options="-XX:+DisableExplicitGC" --java-options="-Xmx1G" --java-options="-Xms1G" --java-options="${GC}" --java-options="-XX:+AlwaysPreTouch" src/scripts/drivers/hyperfoil/HyperfoilWrk.java -R "${RATE}" -d "${DURATION}"s -t 1 -o "${TEST_OUT_DIR:-.}" -f "${URLS_FIXED_FILE}" -i "${TEST_TEST_RUNID}" > "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}"-hyperfoil.log &
-    pidstat -t -p $(pgrep -f HyperfoilWrk) 1  > "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-hyperfoil-pidstat.log" &
+    local hyperfoil_java="${TEST_SRC_DIR}/scripts/drivers/hyperfoil/HyperfoilWrk.java"
+    echo "${preamble[*]} jbang --java-options="${EXP_OPTS}" --java-options=\"-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0\" --java-options=\"-Dio.hyperfoil.gc.check.enabled=false\" --java-options=\"-XX:+DisableExplicitGC\" --java-options=\"-Xmx1G\" --java-options=\"-Xms1G\" --java-options=\""${GC}"\" --java-options=\"-XX:+AlwaysPreTouch\" ${hyperfoil_java} -R ${RATE} -d ${DURATION}s -c 50 -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URLS_FIXED_FILE}" -i "${TEST_TEST_RUNID}" 
+    "${preamble[@]}" jbang --java-options="${EXP_OPTS}" --java-options="-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0" --java-options="-Dio.hyperfoil.gc.check.enabled=false" --java-options="-XX:+DisableExplicitGC" --java-options="-Xmx1G" --java-options="-Xms1G" --java-options="${GC}" --java-options="-XX:+AlwaysPreTouch" "${hyperfoil_java}" -R "${RATE}" -d "${DURATION}"s -t 1 -o "${TEST_OUT_DIR:-.}" -f "${URLS_FIXED_FILE}" -i "${TEST_TEST_RUNID}" > "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}"-hyperfoil.log &
+
+    local hyperfoil_pid
+    hyperfoil_pid=$(pgrep -f HyperfoilWrk)
     rm -f "${TEST_OUT_DIR:-.}"/hyperfoil.did
-    pgrep -f HyperfoilWrk > "${TEST_OUT_DIR:-.}"/hyperfoil.did
-    while [ ! -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready" ]; do
-        :
+    echo "${hyperfoil_pid}" > "${TEST_OUT_DIR:-.}"/hyperfoil.did
+
+    if command -v pidstat >/dev/null 2>&1; then
+        pidstat -t -p "${hyperfoil_pid}" 1  > "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-hyperfoil-pidstat.log" &
+    fi
+
+    local ready_file="${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready"
+    local ready_deadline=$((SECONDS + 60))
+    while [[ ! -f "${ready_file}" ]]; do
+        if (( SECONDS >= ready_deadline )); then
+            fail "Timed out after 60 seconds waiting for Hyperfoil ready file: ${ready_file}. Check ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-hyperfoil.log"
+            return 1
+        fi
+        sleep 0.5
     done
 }
 
 run() {
     kill -s SIGCONT $(pgrep -f HyperfoilWrk)
 
-    app_pid=$(get_app_pid "${TEST_TEST_RUNID}")
-
+    # Allow the workload duration plus 60 seconds for completion and output.
+    local run_duration="${DURATION:-$(( ${TEST_PERF_CNT:-10000} / ${TEST_DRIVER_RATE_LIMIT:-1000} ))}"
+    local run_timeout=$((run_duration + 60))
+    local run_deadline=$((SECONDS + run_timeout))
     while [ -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready" ]; do
-        sleep 0.5
-        if ! kill -0 "${app_pid}" > /dev/null 2>&1; then
-            fail "${BOLD}Application process has exited unexpectedly${NORMAL}"
-            fail "${BOLD}${TEST_TEST_RUNID} test application not running${NORMAL}"
-            sleep 2 # give time for output to be flushed
-            info "${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
-            outfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID}-app.out"
-            cat "$outfile" 2>/dev/null || true
-            info "${RED}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NORMAL}"
+        if (( SECONDS >= run_deadline )); then
+            fail "Timed out after ${run_timeout} seconds waiting for Hyperfoil to finish. Check ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-hyperfoil.log"
             kill -9 "$(pgrep -f HyperfoilWrk)" || true
             rm -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready"  || true
+            return 2
         fi
+        sleep 0.5
     done
 }
