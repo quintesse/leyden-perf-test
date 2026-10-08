@@ -55,14 +55,11 @@ prime() {
     GC="-XX:+UseEpsilonGC"
     EXP_OPTS="-XX:+UnlockExperimentalVMOptions"
 
+    local hyperfoil_pid
     local hyperfoil_java="${TEST_SRC_DIR}/scripts/drivers/hyperfoil/HyperfoilWrk.java"
     echo "${preamble[*]} jbang --java-options="${EXP_OPTS}" --java-options=\"-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0\" --java-options=\"-Dio.hyperfoil.gc.check.enabled=false\" --java-options=\"-XX:+DisableExplicitGC\" --java-options=\"-Xmx1G\" --java-options=\"-Xms1G\" --java-options=\""${GC}"\" --java-options=\"-XX:+AlwaysPreTouch\" ${hyperfoil_java} -R ${RATE} -d ${DURATION}s -c 50 -o ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.csv -f ${URLS_FIXED_FILE}" -i "${TEST_TEST_RUNID}" 
     "${preamble[@]}" jbang --java-options="${EXP_OPTS}" --java-options="-Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0" --java-options="-Dio.hyperfoil.gc.check.enabled=false" --java-options="-XX:+DisableExplicitGC" --java-options="-Xmx1G" --java-options="-Xms1G" --java-options="${GC}" --java-options="-XX:+AlwaysPreTouch" "${hyperfoil_java}" -R "${RATE}" -d "${DURATION}"s -t 1 -o "${TEST_OUT_DIR:-.}" -f "${URLS_FIXED_FILE}" -i "${TEST_TEST_RUNID}" > "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}"-hyperfoil.log &
-
-    local hyperfoil_pid
-    hyperfoil_pid=$(pgrep -f HyperfoilWrk)
-    rm -f "${TEST_OUT_DIR:-.}"/hyperfoil.did
-    echo "${hyperfoil_pid}" > "${TEST_OUT_DIR:-.}"/hyperfoil.did
+    record_app "hyperfoil-driver" hyperfoil_pid
 
     if command -v pidstat >/dev/null 2>&1; then
         pidstat -t -p "${hyperfoil_pid}" 1  > "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-hyperfoil-pidstat.log" &
@@ -73,6 +70,7 @@ prime() {
     while [[ ! -f "${ready_file}" ]]; do
         if (( SECONDS >= ready_deadline )); then
             fail "Timed out after 60 seconds waiting for Hyperfoil ready file: ${ready_file}. Check ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-hyperfoil.log"
+            stop_app "hyperfoil-driver"
             return 1
         fi
         sleep 0.5
@@ -80,7 +78,10 @@ prime() {
 }
 
 run() {
-    kill -s SIGCONT $(pgrep -f HyperfoilWrk)
+    local hyperfoil_pid
+    get_app_pid "hyperfoil-driver" hyperfoil_pid
+
+    kill -s SIGCONT "${hyperfoil_pid}"
 
     # Allow the workload duration plus 60 seconds for completion and output.
     local run_duration="${DURATION:-$(( ${TEST_PERF_CNT:-10000} / ${TEST_DRIVER_RATE_LIMIT:-1000} ))}"
@@ -89,10 +90,12 @@ run() {
     while [ -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready" ]; do
         if (( SECONDS >= run_deadline )); then
             fail "Timed out after ${run_timeout} seconds waiting for Hyperfoil to finish. Check ${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}-hyperfoil.log"
-            kill -9 "$(pgrep -f HyperfoilWrk)" || true
-            rm -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready"  || true
+            stop_app "hyperfoil-driver"
+            rm -f "${TEST_OUT_DIR:-.}/${TEST_TEST_RUNID}.hyperfoil-ready" || true
             return 2
         fi
         sleep 0.5
     done
+
+    cleanup_app "hyperfoil-driver"
 }

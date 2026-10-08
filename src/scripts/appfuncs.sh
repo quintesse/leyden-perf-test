@@ -57,15 +57,32 @@ function start_app() {
 		sudo -A purge || fail "${BOLD}Couldn't purge RAM caches. ${NORMAL}"
 	fi
 
-	local app_pid
 	"${preamble[@]}" java ${TEST_JAVA_OPTS} ${TEST_STRAT_OPTS} -jar "${jar_path}" >> "$outfile" 2>&1 &
-	app_pid=$!
-	
-	sleep 5 # give the application some time to start and potentially fail before we check the PID
-	check_app_process "${app_pid}" "${results_name}" || return 2
+	record_app "${results_name}"
+}
 
-	local pidfile="${TEST_OUT_DIR}/${results_name}-app.pid"
-	echo "$app_pid" > "$pidfile"
+# Records the PID of a running test application.
+# This should be called immediately after starting the application.
+# Arguments:
+#   results_name - Base name to use for output files
+#   pid_output - (optional) Variable to store the PID of the application
+# Variables used:
+#   TEST_OUT_DIR - Directory where pid files can be found
+function record_app() {
+	local results_name=$1
+	local __app_pid
+	__app_pid=$!
+
+	sleep 5 # give the application some time to start and potentially fail before we check the PID
+	check_app_process "${__app_pid}" "${results_name}" || return 2
+
+	local __pidfile="${TEST_OUT_DIR}/${results_name}-app.pid"
+	echo "$__app_pid" > "${__pidfile}"
+
+	if [[ -n "${2-}" ]]; then
+		local -n __pid_output=${2}
+		__pid_output="${__app_pid}"
+	fi
 }
 
 # Stops a running test application.
@@ -78,12 +95,21 @@ function start_app() {
 function stop_app() {
 	local results_name=$1
 	local app_pid
-	app_pid=$(get_app_pid "${results_name}")
-	if [[ "${app_pid}" == "" ]]; then
+	if ! get_app_pid "${results_name}" app_pid; then
 		info "No running ${results_name} test application found."
 		return
 	fi
 	stop_process "${app_pid}" "${results_name}"
+	cleanup_app "${results_name}"
+}
+
+# Removes the PID file of an application if it exists.
+# Arguments:
+#   results_name - Base name to use for output files
+# Variables used:
+#   TEST_OUT_DIR - Directory where pid files can be found
+function cleanup_app() {
+	local results_name=$1
 	local pidfile="${TEST_OUT_DIR}/${results_name}-app.pid"
 	rm -f "${pidfile}" > /dev/null 2>&1 || true
 }
@@ -104,24 +130,27 @@ function stop_all_apps() {
 # Gets the PID of a running test application.
 # Arguments:
 #   results_name - Base name to use for output files
+#   pid_output - Variable to store the PID of the application
 # Variables used:
 #   TEST_OUT_DIR - Directory where pid files can be found
 # Returns:
 #   PID of the application, or empty string if not found
 function get_app_pid() {
 	local results_name=$1
-	local pidfile="${TEST_OUT_DIR}/${results_name}-app.pid"
-	if [[ ! -f "${pidfile}" ]]; then
+	local __pidfile="${TEST_OUT_DIR}/${results_name}-app.pid"
+	if [[ ! -f "${__pidfile}" ]]; then
 		# No pid file found, assume not running
-		return
+		return 1
 	fi
-	local app_pid
-	app_pid=$(cat "${pidfile}")
-	if [[ ! "${app_pid}" =~ ^[0-9]+$ ]]; then
+	local __app_pid
+	__app_pid=$(cat "${__pidfile}")
+	if [[ ! "${__app_pid}" =~ ^[0-9]+$ ]]; then
 		# Not a valid PID, can't do anything anyway
-		return
+		return 1
 	fi
-	echo "${app_pid}"
+
+	local -n __pid_output=$2
+	__pid_output="${__app_pid}"
 }
 
 # Stops a running process by PID.
