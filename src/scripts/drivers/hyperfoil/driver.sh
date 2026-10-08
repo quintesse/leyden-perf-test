@@ -97,5 +97,5 @@ run() {
         sleep 0.5
     done
 
-    cleanup_app "hyperfoil-driver"
+    stop_app "hyperfoil-driver"
 }
