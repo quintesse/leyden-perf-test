@@ -53,6 +53,7 @@ strategies=()
 profiles=()
 testsCatalog="tests"
 enable_hw_tweaks=false
+enable_dry_run=false
 export TEST_DRIVER="oha"
 
 while [[ $# -gt 0 ]]; do
@@ -164,6 +165,10 @@ while [[ $# -gt 0 ]]; do
 			enable_hw_tweaks=true
 			shift
 			;;
+        --dry-run)
+			enable_dry_run=true
+			shift
+			;;
         -*)
             echo "Error: Unknown option: $1"
 			exit 4
@@ -206,7 +211,7 @@ function run_qdup() {
 	outputPath="${outputPath:-./test-results/${TEST_RUNID}}"
 	mkdir -p "${outputPath}"
 
-	# Convert profiles array to comma-separated string for qdup-test
+	# Convert profiles array to comma-separated string for qdup
 	local profiles_str=""
 	if [[ ${#profiles[@]} -gt 0 ]]; then
 		profiles_str=$(IFS=','; echo "${profiles[*]}")
@@ -234,9 +239,21 @@ function run_qdup() {
 				info "Hardware tweaks enabled for apphost"
 			fi
 
+			local scripts_file="${TEST_SRC_DIR}/qdup/scripts.yml"
+			local strategy_file="${TEST_SRC_DIR}/qdup/test-${strategy}.yml"
+
+			local hosts_file
+			if [[ "${hosts}" == /* || "${hosts}" == .* ]]; then
+				# Path to a hosts yml file
+				hosts_file="${hosts}"
+			else
+				# Name of a hosts file in the ../hosts directory
+				hosts_file="${TEST_SRC_DIR}/qdup/hosts/${hosts}.yml"
+			fi
+	
 			info "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			info "Command: $qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${outputPath}" "${qdup_states[@]}"
-			if ! "$qdupdir/bin/qdup-test" "${hosts}" "${strategy}" "${javaVersion}" "${outputPath}" "${qdup_states[@]}"; then
+			info "Command: $qdupdir/bin/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${outputPath}" "${qdup_states[@]}"
+			if [[ "${enable_dry_run}" != "true" ]] && ! "$qdupdir/bin/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${outputPath}" "${qdup_states[@]}"; then
 				fail "Test failed: ${test}"
 				result=1
 				(( total_failed++ )) || true
