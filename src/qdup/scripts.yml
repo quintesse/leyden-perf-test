@@ -87,16 +87,16 @@ states:
   WORK_DIR: _set_outside_
   CACHE_DIR: /tmp/qdup-cache
   RESULT_DIR: _set_outside_
-  TEST_RUNID: ""
+  TEST_SUBDIR: _set_outside_
   INFRA_TEST_HOME: ${{WORK_DIR}}/infrahost
   APP_TEST_HOME: ${{WORK_DIR}}/apphost
   DRIVER_TEST_HOME: ${{WORK_DIR}}/driverhost
   INFRA_RUN_CMD: ${{INFRA_TEST_HOME}}/run
   APP_RUN_CMD: ${{APP_TEST_HOME}}/run
   DRIVER_RUN_CMD: ${{DRIVER_TEST_HOME}}/run
-  INFRA_TEST_OUT: /tmp/qdup-output/${{TEST_RUNID}}/infrahost
-  APP_TEST_OUT: /tmp/qdup-output/${{TEST_RUNID}}/apphost
-  DRIVER_TEST_OUT: /tmp/qdup-output/${{TEST_RUNID}}/driverhost
+  INFRA_TEST_OUT: /tmp/qdup-output/${{TEST_SUBDIR}}/infrahost
+  APP_TEST_OUT: /tmp/qdup-output/${{TEST_SUBDIR}}/apphost
+  DRIVER_TEST_OUT: /tmp/qdup-output/${{TEST_SUBDIR}}/driverhost
   TEST: _set_outside_
   TEST_CATALOG: tests
   JAVA_VERSION: 25

@@ -221,15 +221,19 @@ function run_qdup() {
 	local result=0
 	for test in "${tests[@]}"; do
 		for javaVersion in "${javaVersions[@]}"; do
+			export TEST_RUNSUBID="j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}"
+			local finalOutputPath="${outputPath}/${TEST_RUNSUBID}"
+			mkdir -p "${finalOutputPath}"
+
 			local qdup_states=(
 				"-S" "TEST_DIR=${TEST_DIR}"
 				"-S" "JAVA_VERSION=${javaVersion}"
 				"-S" "TEST_CATALOG=${TEST_CATALOG}"
 				"-S" "TEST=${test}"
-				"-S" "TEST_RUNID=${TEST_RUNID}"
+				"-S" "TEST_SUBDIR=${TEST_RUNID}/${TEST_RUNSUBID}"
 				"-S" "WORK_DIR=${qdup_work_dir}"
 				"-S" "CACHE_DIR=${qdup_cache_dir}"
-				"-S" "RESULT_DIR=${outputPath}"
+				"-S" "RESULT_DIR=${finalOutputPath}"
 				"-S" "PROFILES=${profiles_str}"
 				"-S" "TEST_DRIVER=${TEST_DRIVER}"
 			)
@@ -252,8 +256,8 @@ function run_qdup() {
 			fi
 	
 			info "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			info "Command: $qdupdir/bin/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${outputPath}" "${qdup_states[@]}"
-			if [[ "${enable_dry_run}" != "true" ]] && ! "$qdupdir/bin/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${outputPath}" "${qdup_states[@]}"; then
+			info "Command: $qdupdir/bin/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${finalOutputPath}" "${qdup_states[@]}"
+			if [[ "${enable_dry_run}" != "true" ]] && ! "$qdupdir/bin/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${finalOutputPath}" "${qdup_states[@]}"; then
 				fail "Test failed: ${test}"
 				result=1
 				(( total_failed++ )) || true
