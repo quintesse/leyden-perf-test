@@ -42,19 +42,19 @@ function start_app() {
 
 	if [[ "$DETECTED_OS" == "linux" ]]; then
 		echo "Flushing disk buffers..."
-		sudo -A sync || fail "${BOLD}Couldn't flush disk buffers. ${NORMAL}"
+		run_sudo -A sync || fail "${BOLD}Couldn't flush disk buffers. ${NORMAL}"
 
 		echo "Purging RAM caches..."
-		echo 3 | sudo -A tee /proc/sys/vm/drop_caches || fail "${BOLD}Couldn't drop caches. ${NORMAL}"
+		echo 3 | run_sudo -A tee /proc/sys/vm/drop_caches || fail "${BOLD}Couldn't drop caches. ${NORMAL}"
 
 		echo "Clearing Swap..."
-		sudo -A swapoff -a && sudo -A swapon -a || fail "${BOLD}Couldn't clear swap. ${NORMAL}"
+		run_sudo -A swapoff -a && run_sudo -A swapon -a || fail "${BOLD}Couldn't clear swap. ${NORMAL}"
 	elif [[ "$DETECTED_OS" == "macos" ]]; then
 		echo "Flushing disk buffers..."
-		sudo -A sync || fail "${BOLD}Couldn't flush disk buffers. ${NORMAL}"
+		run_sudo -A sync || fail "${BOLD}Couldn't flush disk buffers. ${NORMAL}"
 
 		echo "Purging RAM caches..."
-		sudo -A purge || fail "${BOLD}Couldn't purge RAM caches. ${NORMAL}"
+		run_sudo -A purge || fail "${BOLD}Couldn't purge RAM caches. ${NORMAL}"
 	fi
 
 	"${preamble[@]}" java ${TEST_JAVA_OPTS} ${TEST_STRAT_OPTS} -jar "${jar_path}" >> "$outfile" 2>&1 &

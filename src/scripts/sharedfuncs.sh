@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Shared utility functions used across multiple scripts
 
 function info() {
@@ -47,4 +49,18 @@ function parse_profiles() {
     done
     
     return 0
+}
+
+function run_sudo() {
+    if [[ $EUID -ne 0 ]]; then
+        local sudo_args
+        if [[ -n "${SUDO_ASKPASS:-}" ]]; then
+            sudo_args="-A"
+        else
+            sudo_args="-n"
+        fi
+        sudo ${sudo_args} "$@"
+    else
+        "$@"
+    fi
 }

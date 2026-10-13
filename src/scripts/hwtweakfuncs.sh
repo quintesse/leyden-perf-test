@@ -62,39 +62,39 @@ apply_hardware_tweaks() {
 	# Disable turbo boost
 	echo "  - Disabling turbo boost..."
 	if [[ "${IS_INTEL}" == "true" ]]; then
-		echo "1" | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 || {
+		echo "1" | run_sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 || {
 			echo "    Warning: Could not disable turbo boost" >&2
 		}
 	else
-		sudo cpupower set --turbo-boost 0 >/dev/null 2>&1 || {
+		run_sudo cpupower set --turbo-boost 0 >/dev/null 2>&1 || {
 			echo "    Warning: Could not disable turbo boost" >&2
 		}
 	fi
 	
 	# Set constant CPU frequency
 	echo "  - Setting constant CPU frequency to ${test_freq}..."
-	sudo cpupower frequency-set --min "${test_freq}" >/dev/null 2>&1 || {
+	run_sudo cpupower frequency-set --min "${test_freq}" >/dev/null 2>&1 || {
 		echo "    Warning: Could not set minimum CPU frequency" >&2
 	}
-	sudo cpupower frequency-set --max "${test_freq}" >/dev/null 2>&1 || {
+	run_sudo cpupower frequency-set --max "${test_freq}" >/dev/null 2>&1 || {
 		echo "    Warning: Could not set maximum CPU frequency" >&2
 	}
 	
 	# Clear IO operations
 	echo "  - Clearing IO operations..."
-	sudo sync 2>&1 || {
+	run_sudo sync 2>&1 || {
 		echo "    Warning: Could not sync filesystems" >&2
 	}
 	
 	# Drop caches
 	echo "  - Dropping caches..."
-	echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1 || {
+	echo 3 | run_sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1 || {
 		echo "    Warning: Could not drop caches" >&2
 	}
 	
 	# Clear swap
 	echo "  - Clearing swap..."
-	sudo swapoff -a 2>&1 && sudo swapon -a 2>&1 || {
+	run_sudo swapoff -a 2>&1 && run_sudo swapon -a 2>&1 || {
 		echo "    Warning: Could not clear swap" >&2
 	}
 	
@@ -115,21 +115,21 @@ restore_hardware_tweaks() {
 	
 	# Restore CPU frequency
 	echo "  - Restoring CPU frequency..."
-	sudo cpupower frequency-set --min "${MIN_FREQ}" >/dev/null 2>&1 || {
+	run_sudo cpupower frequency-set --min "${MIN_FREQ}" >/dev/null 2>&1 || {
 		echo "    Warning: Could not restore minimum CPU frequency" >&2
 	}
-	sudo cpupower frequency-set --max "${MAX_FREQ}" >/dev/null 2>&1 || {
+	run_sudo cpupower frequency-set --max "${MAX_FREQ}" >/dev/null 2>&1 || {
 		echo "    Warning: Could not restore maximum CPU frequency" >&2
 	}
 	
 	# Re-enable turbo boost
 	echo "  - Re-enabling turbo boost..."
 	if [[ "${IS_INTEL}" == "true" ]]; then
-		echo "0" | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 || {
+		echo "0" | run_sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 || {
 			echo "    Warning: Could not re-enable turbo boost" >&2
 		}
 	else
-		sudo cpupower set --turbo-boost 1 >/dev/null 2>&1 || {
+		run_sudo cpupower set --turbo-boost 1 >/dev/null 2>&1 || {
 			echo "    Warning: Could not re-enable turbo boost" >&2
 		}
 	fi
