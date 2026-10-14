@@ -546,6 +546,47 @@ For more stable performance testing on Mac/Linux:
 
 **Warning:** This script modifies CPU frequency scaling and turbo boost settings. Use with caution!
 
+Many of the commands used to apply and restore hardware tweaks require root access, including changing CPU settings, dropping caches, and clearing swap. The harness uses `sudo` for these commands when run as a regular user. Since tests must run unattended, configure one of the following options before starting a run:
+
+#### Option 1: Allow passwordless sudo with visudo
+
+Run `sudo visudo` and add a rule for the account running the tests, replacing `your_username` with its username:
+
+```sudoers
+your_username ALL=(ALL) NOPASSWD: ALL
+```
+
+This allows that account to run any command through sudo without a password. You can instead restrict passwordless access to specific commands, for example:
+
+```sudoers
+your_username ALL=(ALL:ALL) NOPASSWD: /usr/bin/sync, /usr/bin/cpupower
+```
+
+That example only covers `sync` and `cpupower`. To cover all Linux hardware tweaks, also allow `swapoff -a`, `swapon -a`, and `tee` with the specific destinations `/proc/sys/vm/drop_caches` and `/sys/devices/system/cpu/intel_pstate/no_turbo` (for Intel CPUs). Use the actual executable paths on your system, which you can find with `command -v sync cpupower swapoff swapon tee`. Restrict `tee` to those destinations rather than allowing it to write arbitrary files as root.
+
+Leave `SUDO_ASKPASS` unset for this option. The harness uses `sudo -n`, which fails instead of prompting if a command still requires a password.
+
+#### Option 2: Supply the password with SUDO_ASKPASS
+
+Create a script that prints the sudo password to standard output without prompting, for example at `$HOME/.local/bin/leyden-sudo-askpass`:
+
+```sh
+#!/bin/sh
+printf '%s\n' 'replace-with-your-sudo-password'
+```
+
+Make it executable and readable only by your account, then export its absolute path before running the tests:
+
+```bash
+chmod 700 "$HOME/.local/bin/leyden-sudo-askpass"
+export SUDO_ASKPASS="$HOME/.local/bin/leyden-sudo-askpass"
+./run --hw-tweaks test 'sqpc/*'
+```
+
+When `SUDO_ASKPASS` is set, the harness uses `sudo -A` to obtain the password from that script. The script must return a valid password without user interaction; it can retrieve the password from a secret store instead of storing it directly. Keep any script containing a password out of version control.
+
+For qDup runs, configure sudo on the application host for the account running the tweaks. An askpass script must exist on that host, and `SUDO_ASKPASS` must be set in the environment where the remote commands run.
+
 ## Known Limitations
 
 1. **Platform Support**: Linux and macOS only (Windows no longer supported)
