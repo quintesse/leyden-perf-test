@@ -568,7 +568,7 @@ Leave `SUDO_ASKPASS` unset for this option. The harness uses `sudo -n`, which fa
 
 #### Option 2: Supply the password with SUDO_ASKPASS
 
-Create a script that prints the sudo password to standard output without prompting, for example at `$HOME/.local/bin/leyden-sudo-askpass`:
+When running these tests in "local" mode (using `--hosts local`, which is the default) you can also use `SUDO_ASKPASS` to obtain the necessary `sudo` password. You can create a script that prints the sudo password to standard output without prompting, for example at `$HOME/.local/bin/leyden-sudo-askpass`:
 
 ```sh
 #!/bin/sh
@@ -582,6 +582,8 @@ chmod 700 "$HOME/.local/bin/leyden-sudo-askpass"
 export SUDO_ASKPASS="$HOME/.local/bin/leyden-sudo-askpass"
 ./run --hw-tweaks test 'sqpc/*'
 ```
+
+NB: Another option is to install `openssh-askpass` and set `export SUDO_ASKPASS=openssh-askpass`. This will then pop up a dialog where you can enter the `sudo` password. Simpler and with less security issues, but it of course means the tests will no longer run unattended.
 
 When `SUDO_ASKPASS` is set, the harness uses `sudo -A` to obtain the password from that script. The script must return a valid password without user interaction; it can retrieve the password from a secret store instead of storing it directly. Keep any script containing a password out of version control.
 
