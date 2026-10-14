@@ -537,12 +537,12 @@ Check these locations for debugging:
 2. Reduce test duration in profiles
 3. Use cached builds (avoid clean builds)
 
-### Hardware Tweaks (Linux Only)
+### Hardware Tweaks (Mac/Linux Only)
 
-For more stable performance testing on Linux:
+For more stable performance testing on Mac/Linux:
 
 1. Edit [`hardware-tweaks.conf`](hardware-tweaks.conf) with your system's CPU settings
-2. Run tests with: `./hwtweaked-run test sqpc/*`
+2. Run tests with: `./run --hw-tweaks test sqpc/*`
 
 **Warning:** This script modifies CPU frequency scaling and turbo boost settings. Use with caution!
 
