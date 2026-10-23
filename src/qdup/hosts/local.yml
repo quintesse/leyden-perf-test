@@ -5,3 +5,5 @@ hosts:
     local: true
   driverhost:
     local: true
+states:
+  CACHE_DIR: ${{USR_CACHE_DIR}}

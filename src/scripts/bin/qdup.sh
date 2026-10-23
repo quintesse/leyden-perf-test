@@ -232,7 +232,7 @@ function run_qdup() {
 				"-S" "TEST=${test}"
 				"-S" "TEST_SUBDIR=${TEST_RUNID}/${TEST_RUNSUBID}"
 				"-S" "WORK_DIR=${qdup_work_dir}"
-				"-S" "CACHE_DIR=${qdup_cache_dir}"
+				"-S" "USR_CACHE_DIR=${qdup_cache_dir}"
 				"-S" "RESULT_DIR=${finalOutputPath}"
 				"-S" "PROFILES=${profiles_str}"
 				"-S" "TEST_DRIVER=${TEST_DRIVER}"
@@ -256,8 +256,8 @@ function run_qdup() {
 			fi
 	
 			info "${BOLD}Running test: ${test} with Java version: ${javaVersion}${NORMAL}"
-			info "Command: $qdupdir/bin/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${finalOutputPath}" "${qdup_states[@]}"
-			if [[ "${enable_dry_run}" != "true" ]] && ! "$qdupdir/bin/qdup" "${scripts_file}" "${hosts_file}" "${strategy_file}" -B "${finalOutputPath}" "${qdup_states[@]}"; then
+			info "Command: $qdupdir/bin/qdup" "${hosts_file}" "${scripts_file}" "${strategy_file}" -B "${finalOutputPath}" "${qdup_states[@]}"
+			if [[ "${enable_dry_run}" != "true" ]] && ! "$qdupdir/bin/qdup" "${hosts_file}" "${scripts_file}" "${strategy_file}" -B "${finalOutputPath}" "${qdup_states[@]}"; then
 				fail "Test failed: ${test}"
 				result=1
 				(( total_failed++ )) || true
