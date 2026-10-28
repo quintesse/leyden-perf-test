@@ -56,6 +56,16 @@ app_setup() {
     fi
 }
 
+driver_setup() {
+    skip_aot_training || return 0
+    setup_driver
+}
+
+driver_prime() {
+    skip_aot_training || return 0
+    prime_driver
+}
+
 driver_run() {
     skip_aot_training || return 0
     run_driver

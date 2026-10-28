@@ -33,6 +33,7 @@ setup() {
     info() { printf '%s\n' "$*"; }
     start_app() { printf 'start %s %s %s\n' "$1" "${TEST_APP_JAVA}" "${TEST_STRAT_OPTS}" >> "${CALLS}"; }
     stop_app() { printf 'stop %s\n' "$1" >> "${CALLS}"; }
+    prime_driver() { printf 'prime\n' >> "${CALLS}"; }
     run_driver() { printf 'drive\n' >> "${CALLS}"; }
 }
 
@@ -94,16 +95,26 @@ setup() {
     app_setup
     app_start
     app_stop
+    driver_prime
     driver_run
     [[ ! -s "${CALLS}" ]]
     TEST_RUN_TAG=aot
     app_setup
     app_start
     app_stop
+    driver_prime
     driver_run
     grep -q '^start ' "${CALLS}"
     grep -q '^stop ' "${CALLS}"
+    grep -q '^prime$' "${CALLS}"
     grep -q '^drive$' "${CALLS}"
+}
+
+@test "normal strategy primes and runs the driver even with a training tag" {
+    TEST_RUN_TAG=training
+    driver_prime
+    driver_run
+    [[ "$(cat "${CALLS}")" == $'prime\ndrive' ]]
 }
 
 @test "each workload selects its own training profile" {
