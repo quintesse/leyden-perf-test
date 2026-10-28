@@ -11,15 +11,7 @@ roles:
       - setup_infra:
 
     run-scripts:
-      # FIRST COMPLETE CYCLE (for AOT training)
-      - run_infra:
-        with:
-          RUN_TAG: "training"
-
-      # SECOND COMPLETE CYCLE (for actual test run)
-      - run_infra:
-        with:
-          RUN_TAG: "aot"
+      - run_aot_infra:
 
     cleanup-scripts:
       - stop_infra:
@@ -36,19 +28,7 @@ roles:
       - setup_app:
 
     run-scripts:
-      - apply_hw_tweaks:
-        with:
-          TEST_HOME: ${{APP_TEST_HOME}}
-
-      # FIRST COMPLETE CYCLE (for AOT training)
-      - run_app:
-        with:
-          RUN_TAG: "training"
-
-      # SECOND COMPLETE CYCLE (for actual test run)
-      - run_app:
-        with:
-          RUN_TAG: "aot"
+      - run_aot_app:
 
     cleanup-scripts:
       - stop_app:
@@ -68,21 +48,58 @@ roles:
       - setup_driver:
 
     run-scripts:
-      - apply_hw_tweaks:
-        with:
-          TEST_HOME: ${{DRIVER_TEST_HOME}}
-
-      # FIRST COMPLETE CYCLE (for AOT training)
-      - run_driver:
-        with:
-          RUN_TAG: "training"
-
-      # SECOND COMPLETE CYCLE (for actual test run)
-      - run_driver:
-        with:
-          RUN_TAG: "aot"
+      - run_aot_driver:
 
     cleanup-scripts:
       - restore_hw_tweaks:
         with:
           TEST_HOME: ${{DRIVER_TEST_HOME}}
+
+# Entries in run-scripts execute concurrently. Use one sequential script per
+# role, with a barrier after all training work (including app/infra shutdown).
+# Each pass has separate readiness/end signals so training cannot release AOT.
+scripts:
+  run_aot_infra:
+    - script: run_infra
+      with:
+        RUN_TAG: "training"
+        RUN_SIGNAL_PREFIX: "TRAINING_"
+    - signal: TRAINING_INFRA_DONE
+    - wait-for: TRAINING_APP_DONE
+    - wait-for: TRAINING_DRIVER_DONE
+    - script: run_infra
+      with:
+        RUN_TAG: "aot"
+        RUN_SIGNAL_PREFIX: "AOT_"
+
+  run_aot_app:
+    - script: apply_hw_tweaks
+      with:
+        TEST_HOME: ${{APP_TEST_HOME}}
+    - script: run_app
+      with:
+        RUN_TAG: "training"
+        RUN_SIGNAL_PREFIX: "TRAINING_"
+    - signal: TRAINING_APP_DONE
+    - wait-for: TRAINING_INFRA_DONE
+    - wait-for: TRAINING_DRIVER_DONE
+    - script: run_app
+      with:
+        RUN_TAG: "aot"
+        RUN_SIGNAL_PREFIX: "AOT_"
+
+  run_aot_driver:
+    - script: apply_hw_tweaks
+      with:
+        TEST_HOME: ${{DRIVER_TEST_HOME}}
+    - script: run_driver
+      with:
+        RUN_TAG: "training"
+        RUN_SIGNAL_PREFIX: "TRAINING_"
+    - signal: TRAINING_DRIVER_DONE
+    - wait-for: TRAINING_INFRA_DONE
+    - wait-for: TRAINING_APP_DONE
+    - script: run_driver
+      with:
+        RUN_TAG: "aot"
+        RUN_SIGNAL_PREFIX: "AOT_"
