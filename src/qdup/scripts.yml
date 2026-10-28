@@ -12,24 +12,26 @@ scripts:
 
   apply_hw_tweaks:
   - sh: |
-      [[ "${ENABLE_HW_TWEAKS}" == "true" ]] && ${{TEST_HOME}}/src/qdup/bin/apply_hw_tweaks || true
+      [[ "${{ENABLE_HW_TWEAKS}}" == "true" ]] && ${{TEST_HOME}}/src/qdup/bin/apply_hw_tweaks || true
   
   restore_hw_tweaks:
   - sh: |
-      [[ "${ENABLE_HW_TWEAKS}" == "true" ]] && ${{TEST_HOME}}/src/qdup/bin/restore_hw_tweaks || true
+      [[ "${{ENABLE_HW_TWEAKS}}" == "true" ]] && ${{TEST_HOME}}/src/qdup/bin/restore_hw_tweaks || true
 
   setup_infra:
     - sh: export TEST_RUN_TAG="${{RUN_TAG}}"
+    - sh: export TEST_STRATEGY="${{TEST_STRATEGY}}"
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
     - sh: echo ${HOSTNAME}
       then:
         - set-state: RUN.INFRA_HOST
-    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} -C ${{TEST_CATALOG}} -P "${{PROFILES}}" ${{TEST}} setup
+    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} -c ${{CACHE_DIR}} -C ${{TEST_CATALOG}} -P "${{PROFILES}}" ${{TEST}} setup
 
   run_infra:
     - sh: export TEST_RUN_TAG="${{RUN_TAG}}"
+    - sh: export TEST_STRATEGY="${{TEST_STRATEGY}}"
     - sh: echo "Starting infrastructure on ${HOSTNAME}"
-    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} -C ${{TEST_CATALOG}} -P "${{PROFILES}}" ${{TEST}} start
+    - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} -c ${{CACHE_DIR}} -C ${{TEST_CATALOG}} -P "${{PROFILES}}" ${{TEST}} start
     - signal: ${{RUN_SIGNAL_PREFIX}}INFRA_READY
     - wait-for: ${{RUN_SIGNAL_PREFIX}}TEST_END
     - script: stop_infra
@@ -37,6 +39,7 @@ scripts:
 
   stop_infra:
     - sh: export TEST_RUN_TAG="${{RUN_TAG}}"
+    - sh: export TEST_STRATEGY="${{TEST_STRATEGY}}"
     - sh: echo "Stopping infrastructure on ${HOSTNAME}"
     - sh: ${{INFRA_RUN_CMD}} infra -o ${{INFRA_TEST_OUT}} -c ${{CACHE_DIR}} -C ${{TEST_CATALOG}} -P "${{PROFILES}}" ${{TEST}} stop
 
@@ -46,6 +49,7 @@ scripts:
 
   setup_app:
     - sh: export TEST_RUN_TAG="${{RUN_TAG}}"
+    - sh: export TEST_STRATEGY="${{TEST_STRATEGY}}"
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
     - sh: echo ${HOSTNAME}
       then:
@@ -71,6 +75,7 @@ scripts:
 
   setup_driver:
     - sh: export TEST_RUN_TAG="${{RUN_TAG}}"
+    - sh: export TEST_STRATEGY="${{TEST_STRATEGY}}"
     - sh: export JBANG_DEFAULT_JAVA_VERSION=25
     - sh: echo ${HOSTNAME}
       then:
@@ -79,6 +84,7 @@ scripts:
 
   run_driver:
     - sh: export TEST_RUN_TAG="${{RUN_TAG}}"
+    - sh: export TEST_STRATEGY="${{TEST_STRATEGY}}"
     - sh: export TEST_INFRA_HOST=${{INFRA_HOST}}
     - sh: export TEST_APP_HOST=${{APP_HOST}}
     - sh: echo "Preparing driver on ${HOSTNAME}"
@@ -107,12 +113,13 @@ states:
   DRIVER_TEST_OUT: /tmp/qdup-output/${{TEST_SUBDIR}}/driverhost
   TEST: _set_outside_
   TEST_CATALOG: tests
-  JAVA_VERSION: 25
   TEST_DRIVER: oha
+  TEST_STRATEGY: normal
+  JAVA_VERSION: 25
+  ENABLE_HW_TWEAKS: false
+  PROFILES: ""
   # Keep normal runs unprefixed; multi-pass strategies isolate their signals.
   RUN_SIGNAL_PREFIX: ""
   # Passed to role commands as TEST_RUN_TAG to suffix artifact names.
   RUN_TAG: ""
-  PROFILES: ""
-  ENABLE_HW_TWEAKS: false
   

@@ -11,6 +11,7 @@ set -euo pipefail
 #   TEST_TEST_CACHE - cache directory for the current test
 # Returns:
 #   0 if the repository was cloned/updated successfully, non-zero otherwise.
+#   Sets CLONE_CHANGED in the calling shell: 1 for a new/updated HEAD, else 0.
 function clone() {
 	local repo_url=$1
 	local repository=${2:-repo}
@@ -115,21 +116,4 @@ function copy_build_artifacts() {
 	cp -a "${artifacts[@]}" "$dest"
 	popd > /dev/null
 	success "Build artifacts for '$repository' copied"
-}
-
-# Ensures that the specified JDK is available and set as active.
-# Arguments:
-#   version - JDK to activate (either version number or path to JAVA_HOME)
-# Variables used:
-#   TEST_DIR - Root directory of leyden-perf-test project
-function require_java() {
-	local version=$1
-	info "Ensuring Java $version is available..."
-	if [[ $1 =~ ^[0-9]+\+?$ ]]; then
-		eval "$("${TEST_DIR}"/jbang jdk env "$version")"
-	else
-		export JAVA_HOME=$version
-		export PATH="${JAVA_HOME}/bin:${PATH}"
-	fi
-	success "Java $version set as active"
 }
