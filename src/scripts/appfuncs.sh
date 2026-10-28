@@ -18,9 +18,7 @@ function start_app() {
 	local results_name=$1
 	local jar_path=$2
 	
-	if [[ -v TEST_APP_JAVA ]]; then
-		require_java "${TEST_APP_JAVA}"
-	fi
+	require_java
 
 	TEST_JAVA_OPTS=${TEST_JAVA_OPTS:-}
 	TEST_STRAT_OPTS=${TEST_STRAT_OPTS:-}
@@ -238,21 +236,4 @@ function wait_for_8080() {
     done
     fail "${BOLD}Timeout waiting for port 8080${NORMAL}"
     return 1
-}
-
-# Ensures that the specified JDK is available and set as active.
-# Arguments:
-#   version - JDK to activate (either version number or path to JAVA_HOME)
-# Variables used:
-#   TEST_DIR - Root directory of leyden-perf-test project
-function require_java() {
-	local version=$1
-	info "Ensuring Java $version is available..."
-	if [[ $1 =~ ^[0-9]+\+?$ ]]; then
-		eval "$("${TEST_DIR}"/jbang jdk env "$version")"
-	else
-		export JAVA_HOME=$version
-		export PATH="${JAVA_HOME}/bin:${PATH}"
-	fi
-	success "Java $version set as active"
 }

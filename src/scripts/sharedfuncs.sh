@@ -64,3 +64,27 @@ function run_sudo() {
         "$@"
     fi
 }
+
+# Ensures that the specified JDK is available and set as active.
+# If no version is specified it will ensure the globally defined Java
+# version will be used. And if that is not set it will do nothing.
+# Arguments:
+#   version - JDK to activate (either version number or path to JAVA_HOME)
+#              If not specified, defaults to TEST_APP_JAVA if set.
+# Variables used:
+#   TEST_DIR - Root directory of leyden-perf-test project
+#   TEST_APP_JAVA - Globally set Java version for the application
+function require_java() {
+	local version=${1:-${TEST_APP_JAVA:-}}
+	if [[ -z "$version" ]]; then
+		return 0
+	fi
+	info "Ensuring Java $version is available..."
+	if [[ "$version" =~ ^[0-9]+\+?$ ]]; then
+		eval "$("${TEST_DIR}"/jbang jdk env "$version")"
+	else
+		export JAVA_HOME=$version
+		export PATH="${JAVA_HOME}/bin:${PATH}"
+	fi
+	success "Java $version set as active"
+}

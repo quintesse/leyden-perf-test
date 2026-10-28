@@ -295,6 +295,8 @@ for javaVersion in "${javaVersions[@]}"; do
 	
 	for strategy in "${strategies[@]}"; do
 		info "Using strategy: ${strategy}"
+		export TEST_STRATEGY=${strategy}
+
 		_setup_test_output_dir "${outputPath}" "j${javaVersion}-${strategy}${jdkTag:+-$jdkTag}" "${resultTag}"
 		source "${TEST_SRC_DIR}/scripts/strategies/${strategy}/strategy.sh"
 	done

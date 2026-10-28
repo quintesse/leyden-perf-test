@@ -235,6 +235,7 @@ function run_qdup() {
 				"-S" "USR_CACHE_DIR=${qdup_cache_dir}"
 				"-S" "RESULT_DIR=${finalOutputPath}"
 				"-S" "PROFILES=${profiles_str}"
+				"-S" "TEST_STRATEGY=${strategy}"
 				"-S" "TEST_DRIVER=${TEST_DRIVER}"
 			)
 
