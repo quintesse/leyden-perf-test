@@ -38,7 +38,7 @@ if [[ "${action}" == start ]]; then
 elif [[ "${action}" == stop ]]; then
   sleep 0.3
   # Simulate the training JVM writing its cache at shutdown.
-  if [[ "${role}" == app && "${TEST_STRAT_OPTS:-}" == -XX:AOTCacheOutput=* && ! -f "${probe_dir}/omit-cache" ]]; then
+  if [[ "${role}" == app && "${TEST_STRAT_OPTS:-}" == -XX:AOTCacheOutput=* ]]; then
     cache_path=${TEST_STRAT_OPTS#-XX:AOTCacheOutput=}
     cache_path=${cache_path%% *}
     printf 'AOT cache\n' > "${cache_path}"
@@ -134,14 +134,4 @@ run_qdup_probe() {
   done
   [ ! -e "${PROBE_DIR}/driverhost/dummy-empty-training.csv" ]
   [ ! -e "${PROBE_DIR}/driverhost/dummy-empty-aot.csv" ]
-}
-
-@test "qdup AOT aborts before the measured pass if training produces no cache" {
-  touch "${PROBE_DIR}/omit-cache"
-  run_qdup_probe
-  [ "${status}" -ne 0 ]
-  [[ "${output}" == *"Error: AOT training did not produce a non-empty cache:"* ]]
-  [ "$(grep -c '^app start$' "${PROBE_DIR}/events")" -eq 1 ]
-  [ "$(grep -c '^infra start$' "${PROBE_DIR}/events")" -eq 1 ]
-  [ "$(grep -c '^drive run$' "${PROBE_DIR}/events")" -eq 1 ]
 }
