@@ -14,8 +14,17 @@ printf '%s %s\n' "${role}" "${action}" >> "${probe_dir}/events"
 if [[ "${action}" == start ]]; then
   # A second start before stop completes must fail, like a named container.
   mkdir "${probe_dir}/${role}-active"
+  if [[ "${role}" == app ]]; then
+    printf '%s\n' "${TEST_STRAT_OPTS:-}" >> "${probe_dir}/app-options"
+  fi
 elif [[ "${action}" == stop ]]; then
   sleep 0.3
+  # Simulate the training JVM writing its cache at shutdown.
+  if [[ "${role}" == app && "${TEST_STRAT_OPTS:-}" == -XX:AOTCacheOutput=* && ! -f "${probe_dir}/omit-cache" ]]; then
+    cache_path=${TEST_STRAT_OPTS#-XX:AOTCacheOutput=}
+    cache_path=${cache_path%% *}
+    printf 'AOT cache\n' > "${cache_path}"
+  fi
   rmdir "${probe_dir}/${role}-active"
   printf '%s stopped\n' "${role}" >> "${probe_dir}/events"
 fi
@@ -27,7 +36,7 @@ teardown() {
   rm -rf "${PROBE_DIR}"
 }
 
-@test "qdup AOT waits for training shutdown before starting the second pass" {
+run_aot_probe() {
   local timeout_cmd=()
   if command -v timeout >/dev/null 2>&1; then
     timeout_cmd=(timeout --foreground 60)
@@ -50,7 +59,21 @@ teardown() {
     -S "APP_TEST_OUT=${PROBE_DIR}/app" \
     -S "DRIVER_TEST_OUT=${PROBE_DIR}/driver"
   echo "${output}"
+}
+
+@test "qdup AOT waits for training shutdown and passes phase-specific JVM options" {
+  run_aot_probe
   [ "${status}" -eq 0 ]
+
+  local cache_path="${PROBE_DIR}/app/dummy-empty-app.aot"
+  local training_opts measured_opts
+  training_opts="$(sed -n '1p' "${PROBE_DIR}/app-options")"
+  measured_opts="$(sed -n '2p' "${PROBE_DIR}/app-options")"
+  [[ "${training_opts}" == "-XX:AOTCacheOutput=${cache_path} "* ]]
+  [[ "${training_opts}" == *"file=${PROBE_DIR}/app/dummy-empty-training-aot.map:none:filesize=0"* ]]
+  [[ "${training_opts}" == *"file=${PROBE_DIR}/app/dummy-empty-training.log:level,tags" ]]
+  [ "${measured_opts}" = "-XX:AOTMode=on -XX:AOTCache=${cache_path} -Xlog:aot=warning:file=${PROBE_DIR}/app/dummy-empty-aot.log:level,tags" ]
+  [ "$(wc -l < "${PROBE_DIR}/app-options")" -eq 2 ]
 
   # Both passes must run, and ALL second-pass work must follow BOTH stops.
   awk '
@@ -66,4 +89,14 @@ teardown() {
             stopped["infra"] != 2 || stopped["app"] != 2)
     }
   ' "${PROBE_DIR}/events"
+}
+
+@test "qdup AOT aborts before the measured pass if training produces no cache" {
+  touch "${PROBE_DIR}/omit-cache"
+  run_aot_probe
+  [ "${status}" -ne 0 ]
+  [[ "${output}" == *"Error: AOT training did not produce a non-empty cache:"* ]]
+  [ "$(grep -c '^app start$' "${PROBE_DIR}/events")" -eq 1 ]
+  [ "$(grep -c '^infra start$' "${PROBE_DIR}/events")" -eq 1 ]
+  [ "$(grep -c '^drive run$' "${PROBE_DIR}/events")" -eq 1 ]
 }

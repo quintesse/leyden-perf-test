@@ -76,13 +76,28 @@ scripts:
     - script: apply_hw_tweaks
       with:
         TEST_HOME: ${{APP_TEST_HOME}}
+    # These exports run on apphost and are inherited by ./run app.
+    # Keep one cache path for both passes and separate their JVM log files.
+    - sh: |
+        aot_test="${{TEST}}"
+        aot_run_id="${aot_test//\//-}"
+        aot_cache="${{APP_TEST_OUT}}/${aot_run_id}-app.aot"
+        export TEST_STRAT_OPTS="-XX:AOTCacheOutput=${aot_cache} -Xlog:aot+map=trace,aot+map+oops=trace:file=${{APP_TEST_OUT}}/${aot_run_id}-training-aot.map:none:filesize=0 -Xlog:${TEST_LOG_LABEL:-}aot=warning:file=${{APP_TEST_OUT}}/${aot_run_id}-training.log:level,tags"
     - script: run_app
       with:
         RUN_TAG: "training"
         RUN_SIGNAL_PREFIX: "TRAINING_"
+    # run_app returns after shutdown, when the JVM has written its cache.
+    - sh: |
+        if [[ ! -s "${aot_cache}" ]]; then
+          echo "Error: AOT training did not produce a non-empty cache: ${aot_cache}" >&2
+          false
+        fi
     - signal: TRAINING_APP_DONE
     - wait-for: TRAINING_INFRA_DONE
     - wait-for: TRAINING_DRIVER_DONE
+    - sh: |
+        export TEST_STRAT_OPTS="-XX:AOTMode=on -XX:AOTCache=${aot_cache} -Xlog:${TEST_LOG_LABEL:-}aot=warning:file=${{APP_TEST_OUT}}/${aot_run_id}-aot.log:level,tags"
     - script: run_app
       with:
         RUN_TAG: "aot"
