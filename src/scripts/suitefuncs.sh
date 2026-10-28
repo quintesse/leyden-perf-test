@@ -157,6 +157,7 @@ function run_for_suite() {
 # Variables used:
 #   TEST_SRC_DIR  - directory where the test framework scripts are located
 #   TEST_ROOT_DIR - root directory where test suites are located
+#   TEST_RUN_TAG  - optional run-ID suffix for individual role commands
 # Returns:
 #   0 on success, or exit code of the command that caused abort
 function run_suite_commands_for_tests() {
@@ -180,7 +181,7 @@ function run_suite_commands_for_tests() {
 	for test in "${tests[@]}"; do
 		local suitenm="${test%%/*}"
 		local testnm="${test#*/}"
-		_set_test_context "${suitenm}" "${testnm}"
+		_set_test_context "${suitenm}" "${testnm}" "${TEST_RUN_TAG:-}"
 		if [[ "${TEST_SUITE_NAME}" != "${cursuite}" ]]; then
 			cursuite="${TEST_SUITE_NAME}"
 			# We no longer run suite commands here, but leaving the block here for now
