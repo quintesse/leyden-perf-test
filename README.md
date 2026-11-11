@@ -81,6 +81,10 @@ When running all components (infrastructure, application, driver) on a single sy
 
 **Note**: Multi-server mode requires SSH access to all hosts and a hosts configuration file. See `src/qdup/hosts/` for examples.
 
+qDup discovers all role hostnames before running setup, then runs setup in order:
+application, infrastructure, and driver. This also prevents setup races when
+roles share a cache on the same host.
+
 ## Architecture Overview
 
 ### Core Components

@@ -25,10 +25,13 @@ function clone() {
 
 	CLONE_CHANGED=0
 	local result
+	local clonelogfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID:-unknown}-clone-$$.log"
     if [[ ! -d ${TEST_TEST_CACHE}/$repository ]]; then
       info "Cloning repository '$repo_url'..."
-	  local result=0
-      $GIT_CMD clone --quiet --depth 1 "$repo_url" "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1 || result=$?
+      local result=0
+      echo $GIT_CMD clone --quiet --depth 1 "$repo_url" "${TEST_TEST_CACHE}/$repository"
+      $GIT_CMD clone --quiet --depth 1 "$repo_url" "${TEST_TEST_CACHE}/$repository" > "$clonelogfile" 2>&1 || result=$?
+	  echo "Clone result: $result"
       if [ $result -ne 0 ]; then
          fail "Repository '$repo_url' failed to clone"
       else
@@ -39,24 +42,28 @@ function clone() {
       info "Updating repository '$repo_url'..."
 	  set +e
 	  local result=0
-      if pushd "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-clone-$$.log 2>&1; then
-	      if $GIT_CMD reset HEAD --hard > /tmp/leyden-perf-test-clone-$$.log 2>&1; then
+      if pushd "${TEST_TEST_CACHE}/$repository" > "$clonelogfile" 2>&1; then
+	      if $GIT_CMD reset HEAD --hard >> "$clonelogfile" 2>&1; then
 		      local before
 		      before=$($GIT_CMD rev-parse HEAD)
-		      $GIT_CMD pull > /tmp/leyden-perf-test-clone-$$.log 2>&1 || result=$?
+		      $GIT_CMD pull >> "$clonelogfile" 2>&1 || result=$?
 		      local after
 		      after=$($GIT_CMD rev-parse HEAD)
 		      [[ "$before" != "$after" ]] && CLONE_CHANGED=1
+		  else
+		      result=$?
 		  fi
+		  popd > /dev/null
+	  else
+	      result=$?
 	  fi
 	  set -e
       if [ $result -ne 0 ]; then
          fail "Repository '$repo_url' failed to update"
-		 cat /tmp/leyden-perf-test-clone-$$.log
+		 cat "$clonelogfile"
       else 
          success "Repository '$repo_url' updated"
       fi
-      popd > /dev/null
     fi
 	return $result
 }
@@ -76,20 +83,23 @@ function compile_maven() {
 
     info "Compiling application '$repository'..."
 	set +e
-    if pushd "${TEST_TEST_CACHE}/$repository" > /tmp/leyden-perf-test-build-$$.log 2>&1; then
+	local buildlogfile="${TEST_OUT_DIR}/${TEST_TEST_RUNID:-unknown}-build-$$.log"
+	local result=0
+    if pushd "${TEST_TEST_CACHE}/$repository" > "$buildlogfile" 2>&1; then
 		local repo="${TEST_CACHE_DIR}/_mvn_repo"
-	    ./mvnw deploy -s "${TEST_DIR}/local-settings.xml" "-Dperf.test.repo=${repo}" "-DaltDeploymentRepository=local-repo::default::file:${repo}" $opts > /tmp/leyden-perf-test-build-$$.log 2>&1
+	    ./mvnw deploy -s "${TEST_DIR}/local-settings.xml" "-Dperf.test.repo=${repo}" "-DaltDeploymentRepository=local-repo::default::file:${repo}" $opts >> "$buildlogfile" 2>&1 || result=$?
+		popd > /dev/null
+	else
+		result=$?
 	fi
-    local result=$?
 	set -e
     if [ $result -ne 0 ]; then
        fail "'$repository' failed to build"
-	   cat /tmp/leyden-perf-test-build-$$.log
+	   cat "$buildlogfile"
     else 
        success "'$repository' built"
-	   rm /tmp/leyden-perf-test-build-$$.log
+	   rm -f "$buildlogfile"
     fi
-    popd > /dev/null
     return $result
 }
 

@@ -19,7 +19,10 @@ YAML
 set -euo pipefail
 probe_dir="$(dirname "$0")"
 [[ "${!#}" == setup ]]
+printf '%s start\n' "$1" >> "${probe_dir}/setup-events"
+sleep 0.3
 printf '%s\n' "${TEST_INFRA_HOST:-unset}" "${TEST_APP_HOST:-unset}" > "${probe_dir}/$1-hosts"
+printf '%s end\n' "$1" >> "${probe_dir}/setup-events"
 SH
   chmod +x "${PROBE_DIR}/run"
 }
@@ -51,12 +54,13 @@ assert_setup_hostnames() {
   [ "$(head -n 1 "${PROBE_DIR}/app-hosts")" = infrahost.example ]
   [ "$(cat "${PROBE_DIR}/drive-hosts")" = $'infrahost.example\napphost.example' ]
   [ -f "${PROBE_DIR}/infra-hosts" ]
+  [ "$(cat "${PROBE_DIR}/setup-events")" = $'app start\napp end\ninfra start\ninfra end\ndrive start\ndrive end' ]
 }
 
-@test "qdup normal shares hostnames before application and driver setup" {
+@test "qdup normal shares hostnames and serializes setup" {
   assert_setup_hostnames normal
 }
 
-@test "qdup AOT shares hostnames before application and driver setup" {
+@test "qdup AOT shares hostnames and serializes setup" {
   assert_setup_hostnames aot
 }
